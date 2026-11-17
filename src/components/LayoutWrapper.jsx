@@ -21,6 +21,7 @@ import ThemeToggleFloating from "./ThemeToggleFloating";
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const isLinusku = pathname === "/linusku" || pathname?.startsWith("/linusku/");
   const isChat = pathname?.startsWith("/chat");
   const isTeman = pathname?.startsWith("/teman");
   const hideFooter = isAdmin || isChat;
@@ -93,7 +94,7 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <SesiProvider>
-      {isAdmin ? (
+      {isAdmin || isLinusku ? (
         children
       ) : (
         <div className={cn(

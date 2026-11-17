@@ -53,6 +53,18 @@ const nextConfig = {
           { key: "X-XSS-Protection", value: "1; mode=block" },
         ],
       },
+      {
+        source: "/linusku",
+        headers: [
+          { key: "Permissions-Policy", value: 'camera=(), microphone=(), geolocation=(self "https://linusku.vercel.app")' },
+        ],
+      },
+      {
+        source: "/linusku/:path*",
+        headers: [
+          { key: "Permissions-Policy", value: 'camera=(), microphone=(), geolocation=(self "https://linusku.vercel.app")' },
+        ],
+      },
     ];
   },
   async redirects() {
