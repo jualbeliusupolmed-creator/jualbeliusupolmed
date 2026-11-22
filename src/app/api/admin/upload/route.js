@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import sharp from "sharp";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { uploadMedia } from "@/lib/mediaStorage";
 
@@ -33,14 +32,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Ukuran file maksimal 5MB" }, { status: 400 });
     }
 
-    const webpBuffer = await sharp(Buffer.from(arrayBuffer))
-      .rotate()
-      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 82, effort: 3 })
-      .toBuffer();
-
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-    const { url, provider } = await uploadMedia(webpBuffer, fileName, "image/webp");
+    const ext = file.type === "image/webp" ? "webp" : (file.type === "image/jpeg" || file.type === "image/jpg" ? "jpg" : file.type === "image/png" ? "png" : "gif");
+    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { url, provider } = await uploadMedia(Buffer.from(arrayBuffer), fileName, file.type);
 
     return NextResponse.json({ ok: true, url, provider });
   } catch (e) {

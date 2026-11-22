@@ -15,13 +15,13 @@ export const metadata = {
   // Judul & deskripsi beranda ditulis di sini (bukan dari pengaturan admin),
   // jadi inilah yang muncul di tab peramban, hasil Google, dan pratinjau tautan
   // saat alamatnya dibagikan di grup WhatsApp — jalur masuk utama situs ini.
-  title: "Marketplace Mahasiswa | Kampus Kita",
+  title: "Marketplace Mahasiswa",
   description:
     "Marketplace untuk mahasiswa lintas kampus di Indonesia: barang, buku, fashion, makanan, kos, dan jasa. Sepakati transaksi dan titik temu secara langsung.",
   keywords: ["marketplace mahasiswa", "jual beli mahasiswa", "Kampus Kita", "barang bekas mahasiswa", "jasa mahasiswa", "COD kampus"],
   alternates: { canonical: "/jual-beli" },
   openGraph: {
-    title: "Marketplace Mahasiswa | Kampus Kita",
+    title: "Marketplace Mahasiswa",
     description:
       "Marketplace untuk mahasiswa lintas kampus di Indonesia. Temukan barang dan jasa, lalu sepakati transaksi secara langsung.",
     url: "/jual-beli",
@@ -31,7 +31,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Marketplace Mahasiswa | Kampus Kita",
+    title: "Marketplace Mahasiswa",
     description:
       "Marketplace untuk mahasiswa lintas kampus di Indonesia: barang, buku, kos, dan jasa.",
   },

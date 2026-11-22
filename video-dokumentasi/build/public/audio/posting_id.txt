@@ -1,0 +1,1 @@
+Flow pasang iklan lima tahap: Client input validasi, API gateway autentikasi, moderasi AI dual layer deterministik dan Gemini, persistensi database dengan logika bisnis, dan distribusi async ke WhatsApp, Instagram, Push, dan Subscriber.

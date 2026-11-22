@@ -1,4 +1,3 @@
-import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getSellerSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
@@ -68,7 +67,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Akun Google sudah terhubung ke profil ini." }, { status: 409 });
     }
 
-    const otp = String(randomInt(100_000, 1_000_000));
+    const otp = String(Math.floor(Math.random() * 900000) + 100000);
     const { error: saveError } = await supa.from("seller_phone_link_otps").upsert(
       {
         phone_wa: phone,

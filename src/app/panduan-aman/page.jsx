@@ -7,6 +7,21 @@ export const metadata = {
   description:
     "Panduan transaksi aman untuk mahasiswa: cara memilih titik temu, memeriksa barang, dan melaporkan kendala.",
   alternates: { canonical: "/panduan-aman" },
+  openGraph: {
+    title: "Panduan Transaksi Aman | Kampus Kita",
+    description:
+      "Panduan transaksi aman untuk mahasiswa: cara memilih titik temu, memeriksa barang, dan melaporkan kendala.",
+    url: "/panduan-aman",
+    siteName: "Kampus Kita",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Panduan Transaksi Aman | Kampus Kita",
+    description:
+      "Panduan transaksi aman untuk mahasiswa: cara memilih titik temu, memeriksa barang, dan melaporkan kendala.",
+  },
 };
 
 const SAFE_COD_SPOTS = [

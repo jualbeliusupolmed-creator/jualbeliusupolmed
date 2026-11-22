@@ -183,14 +183,28 @@ export async function GET(req) {
         )
       : rawData || [];
 
+    // Deduplikasi: database masih berisi iklan ganda (satu penjual mengiklankan
+    // barang yang sama berulang). Hapus duplikat berdasarkan seller_wa + judul
+    // sebelum diurutkan/dipaginasi, agar total dan halaman tetap konsisten.
+    const seenBySellerTitle = new Set();
+    const dedupedSpecs = filteredBySpecs.filter((d) => {
+      const seller = String(d.seller_wa || "").toLowerCase();
+      const title = String(d.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!seller || !title) return true;
+      const key = `${seller}:${title}`;
+      if (seenBySellerTitle.has(key)) return false;
+      seenBySellerTitle.add(key);
+      return true;
+    });
+
     // Angkat sponsored aktif ke paling atas (dalam JS supaya pagination tetap benar untuk page 1)
     const now = Date.now();
     const orderedData = page === 1
       ? [
-          ...filteredBySpecs.filter((d) => d.sponsored_until && new Date(d.sponsored_until).getTime() > now),
-          ...filteredBySpecs.filter((d) => !d.sponsored_until || new Date(d.sponsored_until).getTime() <= now),
+          ...dedupedSpecs.filter((d) => d.sponsored_until && new Date(d.sponsored_until).getTime() > now),
+          ...dedupedSpecs.filter((d) => !d.sponsored_until || new Date(d.sponsored_until).getTime() <= now),
         ]
-      : filteredBySpecs;
+      : dedupedSpecs;
     const data = specFilters.length > 0
       ? orderedData.slice(from, to + 1)
       : orderedData;
@@ -217,10 +231,10 @@ export async function GET(req) {
     return NextResponse.json(
       {
         listings: data || [],
-        total: specFilters.length > 0 ? filteredBySpecs.length : (count || 0),
+        total: dedupedSpecs.length,
         page,
         limit,
-        hasMore: from + limit < (specFilters.length > 0 ? filteredBySpecs.length : (count || 0)),
+        hasMore: from + limit < dedupedSpecs.length,
       },
       {
         headers: {

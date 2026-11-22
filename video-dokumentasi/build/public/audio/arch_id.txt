@@ -1,0 +1,1 @@
+Arsitektur high-level: Client browser ke Edge Vercel, lalu App Layer Next.js, Data Layer Supabase, Intelligence Gemini AI, Messaging Baileys, Social Instagram, dan Observability.

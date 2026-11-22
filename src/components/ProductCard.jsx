@@ -122,11 +122,16 @@ function ProductCard({ listing, tanpaPenjual = false }) {
             >
               {listing.title}
             </h3>
-            {listing.description && (
-              <p className="line-clamp-1 text-[10px] leading-3 text-slate-500 dark:text-slate-400 sm:text-[11px]">
-                {listing.description}
-              </p>
-            )}
+            {(() => {
+              const cleanDesc = (listing.description || "")
+                .replace(/(Brand|Model|RAM \/ Storage|Kelengkapan|Garansi|Minus|Alasan jual):/gi, "")
+                .trim();
+              return cleanDesc ? (
+                <p className="line-clamp-1 text-[10px] leading-3 text-slate-500 dark:text-slate-400 sm:text-[11px]">
+                  {cleanDesc}
+                </p>
+              ) : null;
+            })()}
           </div>
 
           <div className="flex min-w-0 items-center justify-between gap-1.5">

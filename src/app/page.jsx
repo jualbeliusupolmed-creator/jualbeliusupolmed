@@ -78,8 +78,21 @@ async function getInitialData(sessionIdentity) {
       fetchOpenPoBatches({ provinceId }).catch(() => []),
     ]);
 
+    // Deduplikasi: database masih berisi iklan ganda (satu penjual mengiklankan
+    // barang yang sama berulang). Hapus dulu sebelum dikirim ke client.
+    const dedupedSellerTitle = new Set();
+    const dedupedListings = (listingsResult?.data || []).filter((l) => {
+      const seller = String(l.seller_wa || "").toLowerCase();
+      const title = String(l.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!seller || !title) return true;
+      const key = `${seller}:${title}`;
+      if (dedupedSellerTitle.has(key)) return false;
+      dedupedSellerTitle.add(key);
+      return true;
+    });
+
     return {
-      listings: listingsResult?.data || [],
+      listings: dedupedListings,
       madingPosts: madingResult?.data || [],
       poBatches: poBatches || [],
     };

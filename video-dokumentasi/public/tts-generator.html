@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate TTS Audio for Video</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    .scene { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .scene h3 { margin-top: 0; color: #16a34a; }
+    textarea { width: 100%; min-height: 80px; font-family: monospace; font-size: 0.875rem; }
+    button { padding: 0.5rem 1rem; margin: 0.25rem; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .status { padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; }
+    .success { background: #dcfce7; color: #166534; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .info { background: #dbeafe; color: #1e40af; }
+    audio { width: 100%; margin-top: 0.5rem; }
+    .lang-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .lang-tab { padding: 0.5rem 1rem; background: #f1f5f9; border: none; border-radius: 4px; cursor: pointer; }
+    .lang-tab.active { background: #16a34a; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🎙️ TTS Audio Generator for KampusKita Video</h1>
+  <p>Click "Generate" for each scene to create audio using browser Speech Synthesis. Then click "Download" to save as WAV.</p>
+  <p><strong>Note:</strong> Browser TTS quality varies. For production, use ElevenLabs, OpenAI TTS, or Azure Speech.</p>
+
+  <div id="scenes"></div>
+
+  <script>
+    const SCENES = [
+      { id: "title", name: "Title Card", duration: 3.0, narration: { id: "Selamat datang di dokumentasi arsitektur KampusKita. Marketplace terpadu untuk mahasiswa USU dan POLMED.", en: "Welcome to the KampusKita architecture documentation. An integrated marketplace for USU and POLMED students." } },
+      { id: "arch", name: "Architecture", duration: 5.0, narration: { id: "Arsitektur high-level: Client browser ke Edge Vercel, lalu App Layer Next.js, Data Layer Supabase, Intelligence Gemini AI, Messaging Baileys, Social Instagram, dan Observability.", en: "High-level architecture: Client browser to Vercel Edge, then Next.js App Layer, Supabase Data Layer, Gemini AI Intelligence, Baileys Messaging, Instagram Social, and Observability." } },
+      { id: "bot", name: "Bot Architecture", duration: 5.0, narration: { id: "Bot WhatsApp menjalankan Baileys multi-device di VPS terpisah. PM2 mengelola proses, Nginx reverse proxy dengan SSL. Sinkronisasi real-time ke Supabase via Realtime dan REST API.", en: "WhatsApp Bot runs Baileys multi-device on a separate VPS. PM2 manages processes, Nginx reverse proxy with SSL. Real-time sync to Supabase via Realtime and REST API." } },
+      { id: "posting", name: "Posting Flow", duration: 5.0, narration: { id: "Flow pasang iklan lima tahap: Client input validasi, API gateway autentikasi, moderasi AI dual layer deterministik dan Gemini, persistensi database dengan logika bisnis, dan distribusi async ke WhatsApp, Instagram, Push, dan Subscriber.", en: "Five-step posting flow: Client input validation, API gateway authentication, dual-layer AI moderation deterministic and Gemini, database persistence with business logic, and async distribution to WhatsApp, Instagram, Push, and Subscribers." } },
+      { id: "security", name: "Security & RLS", duration: 5.0, narration: { id: "Enam lapis pertahanan: Edge HTTPS dan CSP, Autentikasi JWT HMAC, API validasi Zod honeypot, RLS Supabase owner-only, Infrastruktur bot VPS terisolasi, dan Observability audit logs.", en: "Six defense layers: Edge HTTPS and CSP, JWT HMAC Authentication, API Zod honeypot validation, Supabase RLS owner-only, Isolated bot VPS infrastructure, and Observability audit logs." } },
+      { id: "campus", name: "Multi-Campus", duration: 5.0, narration: { id: "Satu platform dua kampus: USU 35 ribu plus dan POLMED 15 ribu plus mahasiswa. Fitur marketplace terpadu, filter kampus otomatis, komunitas per kampus, distribusi target, kategori khusus, dan analitik per kampus.", en: "One platform two campuses: USU 35k plus and POLMED 15k plus students. Integrated marketplace features, automatic campus filter, per-campus communities, targeted distribution, special categories, and per-campus analytics." } },
+    ];
+
+    let currentLang = "id";
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+      renderScenes();
+    }
+
+    function renderScenes() {
+      const container = document.getElementById('scenes');
+      container.innerHTML = SCENES.map(scene => `
+        <div class="scene" id="scene-${scene.id}">
+          <div class="lang-tabs">
+            <button class="lang-tab ${currentLang === 'id' ? 'active' : ''}" data-lang="id" onclick="setLang('id')">🇮🇩 Indonesian</button>
+            <button class="lang-tab ${currentLang === 'en' ? 'active' : ''}" data-lang="en" onclick="setLang('en')">🇺🇸 English</button>
+          </div>
+          <h3>${scene.name} (${scene.duration}s)</h3>
+          <textarea id="text-${scene.id}">${scene.narration[currentLang]}</textarea>
+          <div>
+            <button onclick="generateTTS('${scene.id}')">🎵 Generate</button>
+            <button onclick="downloadAudio('${scene.id}')" id="dl-${scene.id}" disabled>⬇️ Download WAV</button>
+            <button onclick="testPlay('${scene.id}')" id="play-${scene.id}" disabled>▶️ Play</button>
+          </div>
+          <div id="status-${scene.id}"></div>
+          <audio id="audio-${scene.id}" controls style="display:none;"></audio>
+        </div>
+      `).join('');
+    }
+
+    async function generateTTS(sceneId) {
+      const text = document.getElementById(`text-${sceneId}`).value;
+      const statusEl = document.getElementById(`status-${sceneId}`);
+      const audioEl = document.getElementById(`audio-${sceneId}`);
+      const dlBtn = document.getElementById(`dl-${sceneId}`);
+      const playBtn = document.getElementById(`play-${sceneId}`);
+
+      statusEl.innerHTML = '<div class="status info">🔄 Generating audio...</div>';
+      dlBtn.disabled = true;
+      playBtn.disabled = true;
+      audioEl.style.display = 'none';
+
+      try {
+        if (!audioContext || audioContext.state === 'closed') {
+          audioContext.resume?.();
+        }
+
+        const stream = audioContext.createMediaStreamDestination();
+        mediaRecorder = new MediaRecorder(stream.stream);
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+          const url = URL.createObjectURL(blob);
+          audioEl.src = url;
+          audioEl.style.display = 'block';
+          dlBtn.disabled = false;
+          playBtn.disabled = false;
+          statusEl.innerHTML = '<div class="status success">✅ Audio generated! Click Play to preview or Download to save.</div>';
+        };
+
+        mediaRecorder.start();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = currentLang === 'id' ? 'id-ID' : 'en-US';
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        const source = audioContext.createMediaElementSource(new Audio());
+        source.connect(stream);
+
+        utterance.onend = () => {
+          setTimeout(() => mediaRecorder.stop(), 500);
+        };
+
+        utterance.onerror = (e) => {
+          mediaRecorder.stop();
+          statusEl.innerHTML = `<div class="status error">❌ TTS Error: ${e.error}</div>`;
+        };
+
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+
+      } catch (err) {
+        statusEl.innerHTML = `<div class="status error">❌ Error: ${err.message}</div>`;
+      }
+    }
+
+    function downloadAudio(sceneId) {
+      const audioEl = document.getElementById(`audio-${sceneId}`);
+      if (!audioEl.src) return;
+      
+      const a = document.createElement('a');
+      a.href = audioEl.src;
+      a.download = `${sceneId}_${currentLang}.wav`;
+      a.click();
+    }
+
+    function testPlay(sceneId) {
+      const audioEl = document.getElementById(`audio-${sceneId}`);
+      if (audioEl.paused) {
+        audioEl.play();
+      } else {
+        audioEl.pause();
+      }
+    }
+
+    renderScenes();
+  </script>
+</body>
+</html>

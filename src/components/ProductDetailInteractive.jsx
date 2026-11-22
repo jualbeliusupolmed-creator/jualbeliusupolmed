@@ -59,9 +59,15 @@ export default function ProductDetailInteractive({
     ? `NIM ${listing.seller_profiles.student_nim.slice(0, 4)}****`
     : "";
 
-  const sellerRating = listing.seller_profiles?.avg_rating || "4.9";
-  const sellerDeals = listing.seller_profiles?.total_deals || 42;
-  const sellerResponse = listing.seller_profiles?.response_time || "< 10 Menit";
+  // Hanya tampilkan data kepercayaan yang benar-benar ada. Angka karangan
+  // (mis. 4.9/5 dari 42 COD) akan dianggap klaim menyesatkan oleh pembeli.
+  const sellerRating = listing.seller_profiles?.avg_rating
+    ? Number(listing.seller_profiles.avg_rating).toFixed(1)
+    : null;
+  const sellerDeals = Number(listing.seller_profiles?.total_deals) > 0
+    ? Number(listing.seller_profiles.total_deals)
+    : null;
+  const sellerResponse = listing.seller_profiles?.response_time || null;
 
   // Rute aman WhatsApp via server tanpa membocorkan nomor penjual ke HTML
   const waUrl = `/chat-wa/${listing.id}?cod=${encodeURIComponent(selectedCodPoint.title || "")}`;
@@ -429,9 +435,11 @@ export default function ProductDetailInteractive({
                 <Icon.Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
-                    {sellerRating} / 5.0
+                    {sellerRating ? `${sellerRating} / 5.0` : "Belum ada rating"}
                   </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">{sellerDeals} COD Sukses</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">
+                    {sellerDeals ? `${sellerDeals} COD Sukses` : "Data transaksi tidak tersedia"}
+                  </span>
                 </div>
               </div>
 
@@ -439,7 +447,7 @@ export default function ProductDetailInteractive({
                 <Icon.Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
-                    {sellerResponse}
+                    {sellerResponse || "Belum diatur"}
                   </span>
                   <span className="text-[10px] text-slate-400 mt-0.5">Balas Cepat</span>
                 </div>

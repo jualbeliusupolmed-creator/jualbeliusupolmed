@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Etalase Open PO Kampus — Kuliner, Jastip & Merchandise Mahasiswa | Kampus Kita",
+  title: "Etalase Open PO Kampus — Kuliner, Jastip & Merchandise Mahasiswa",
   description:
     "Etalase Open Pre-Order (PO) mahasiswa lintas kampus. Pesan makanan, minuman, merchandise, dan jastip langsung dari sesama mahasiswa dengan titik pickup yang disepakati.",
   alternates: { canonical: "/open-po" },
   openGraph: {
-    title: "Etalase Open PO Kampus — Kuliner, Jastip & Merchandise | Kampus Kita",
+    title: "Etalase Open PO Kampus — Kuliner, Jastip & Merchandise",
     description: "Pesan batch kuliner dan jastip mahasiswa. Kuota transparan dan titik pickup disepakati bersama.",
     url: "/open-po",
     siteName: "Kampus Kita",
@@ -20,7 +20,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Etalase Open PO Mahasiswa | Kampus Kita",
+    title: "Etalase Open PO Mahasiswa",
     description: "Pesan batch kuliner dan jastip mahasiswa lintas kampus. Kuota transparan dan titik pickup disepakati bersama.",
   },
 };

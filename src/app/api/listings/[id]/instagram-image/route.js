@@ -1,64 +1,12 @@
 import { NextResponse } from "next/server";
-import path from "node:path";
-import sharp from "sharp";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import {
-  createListingInstagramBaseSvg,
-  createListingInstagramOverlaySvg,
-  createListingInstagramTextLayers,
-} from "@/lib/listingInstagramImage";
+import { jawabGalat } from "@/lib/jawabGalat";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const FONT_DIRECTORY = path.join(process.cwd(), "src", "assets", "fonts", "plus-jakarta-sans");
-const REGULAR_FONT_PATH = path.join(FONT_DIRECTORY, "PlusJakartaSans-Regular.ttf");
-const SEMIBOLD_FONT_PATH = path.join(FONT_DIRECTORY, "PlusJakartaSans-SemiBold.ttf");
-const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
-
-function firstPhoto(listing) {
-  if (Array.isArray(listing.images)) {
-    const galleryPhoto = listing.images.find((value) => typeof value === "string" && value);
-    if (galleryPhoto) return galleryPhoto;
-  }
-  return listing.image_url || null;
-}
-
-async function fetchSafeListingPhoto(url, isStory = false) {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname;
-    if (parsed.protocol !== "https:" || !supabaseHost || parsed.hostname !== supabaseHost) {
-      return null;
-    }
-    const response = await fetch(parsed, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(8_000),
-    });
-    const contentLength = Number(response.headers.get("content-length") || 0);
-    const contentType = response.headers.get("content-type") || "";
-    if (!response.ok || !contentType.startsWith("image/") || contentLength > MAX_SOURCE_BYTES) {
-      return null;
-    }
-    const source = Buffer.from(await response.arrayBuffer());
-    if (source.length > MAX_SOURCE_BYTES) return null;
-    const photoHeight = isStory ? 1080 : 720;
-    return sharp(source)
-      .rotate()
-      .resize(1080, photoHeight, { fit: "cover", position: "attention" })
-      .jpeg({ quality: 90, mozjpeg: true })
-      .toBuffer();
-  } catch {
-    return null;
-  }
-}
-
-// JPEG publik & admin untuk Meta Story / Feed. Data privat penjual tidak pernah dirender.
 export async function GET(request, { params }) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
-  const ratio = searchParams.get("ratio") === "story" ? "story" : "portrait";
   const isDownload = searchParams.get("download") === "1";
 
   const { data: listing, error } = await getAdminClient()
@@ -70,31 +18,23 @@ export async function GET(request, { params }) {
 
   if (error || !listing) return new NextResponse("Not found", { status: 404 });
 
-  const isStory = ratio === "story";
-  const photo = await fetchSafeListingPhoto(firstPhoto(listing), isStory);
-  const composites = [];
-  if (photo) composites.push({ input: photo, left: 0, top: 0 });
-  composites.push(
-    { input: Buffer.from(createListingInstagramOverlaySvg(Boolean(photo), ratio)), left: 0, top: 0 },
-    ...createListingInstagramTextLayers(listing, {
-      regularFontPath: REGULAR_FONT_PATH,
-      semiboldFontPath: SEMIBOLD_FONT_PATH,
-    }, ratio),
-  );
-
-  const image = await sharp(Buffer.from(createListingInstagramBaseSvg(ratio)))
-    .composite(composites)
-    .jpeg({ quality: 92, mozjpeg: true })
-    .toBuffer();
+  // Cloudflare Pages tidak mendukung sharp. Kembalikan SVG sederhana sebagai placeholder.
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+      <rect width="100%" height="100%" fill="#1a1a1a"/>
+      <text x="540" y="675" font-family="sans-serif" font-size="48" fill="#ffffff" text-anchor="middle">${listing.title}</text>
+      <text x="540" y="740" font-family="sans-serif" font-size="32" fill="#888888" text-anchor="middle">Rp ${Number(listing.price || 0).toLocaleString("id-ID")}</text>
+    </svg>
+  `;
 
   const headers = {
-    "Content-Type": "image/jpeg",
+    "Content-Type": "image/svg+xml",
     "Cache-Control": "public, max-age=300, s-maxage=300",
   };
 
   if (isDownload) {
-    headers["Content-Disposition"] = `attachment; filename="poster-${listing.id}-${ratio}.jpg"`;
+    headers["Content-Disposition"] = `attachment; filename="poster-${listing.id}.svg"`;
   }
 
-  return new NextResponse(image, { headers });
+  return new NextResponse(svg, { headers });
 }

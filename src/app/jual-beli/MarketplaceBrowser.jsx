@@ -12,10 +12,10 @@ import { fetchCampusesCached } from "@/lib/cachedKampus";
 
 const QUICK_CATEGORIES = [
   { id: "all", label: "Semua", filterVal: "all" },
-  { id: "elektronik", label: "💻 Elektronik", filterVal: "laptop" },
+  { id: "elektronik", label: "💻 Elektronik & Laptop", filterVal: "elektronik" },
   { id: "buku", label: "📚 Buku & Modul", filterVal: "buku" },
-  { id: "lab", label: "🥼 Jas Lab & Alat", filterVal: "lab" },
-  { id: "fashion", label: "👔 Kemeja & Formal", filterVal: "fashion" },
+  { id: "lab", label: "🥼 Alat Lab & Praktikum", filterVal: "lab" },
+  { id: "fashion", label: "👔 Fashion Preloved", filterVal: "fashion" },
   { id: "transportasi", label: "🚲 Transportasi", filterVal: "transportasi" },
   { id: "kos", label: "🛏️ Kos & Furniture", filterVal: "kos" },
 ];
@@ -114,7 +114,23 @@ export default function MarketplaceBrowser({
 
   // Client-side quick filter & sort over current listings
   const filteredListings = useMemo(() => {
-    let result = [...listings];
+    // Deduplikasi: satu penjual tidak boleh mengiklankan barang yang sama
+    // (normalized title) berulang — database masih berisi duplikat lama.
+    const seenById = new Set();
+    const seenBySellerTitle = new Set();
+    let result = [...listings].filter((item) => {
+      const id = String(item.id);
+      if (seenById.has(id)) return false;
+      seenById.add(id);
+      const seller = String(item.seller_wa || item.seller_name || "").toLowerCase();
+      const title = String(item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (seller && title) {
+        const key = `${seller}:${title}`;
+        if (seenBySellerTitle.has(key)) return false;
+        seenBySellerTitle.add(key);
+      }
+      return true;
+    });
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -255,13 +271,11 @@ export default function MarketplaceBrowser({
             {[...tickerItems, ...tickerItems].map((item, idx) => (
               <Link
                 key={idx}
-                href="/dicari"
+                href={`/dicari?id=${item.id}`}
                 className="inline-flex items-center gap-1.5 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
                 <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", item.tagColor)}></span>
                 <strong className="font-bold text-slate-900 dark:text-white text-xs">{item.title}</strong>
-                <span className="text-slate-400 text-[10px] font-semibold">{item.meta}</span>
-                <span className="text-slate-600 dark:text-slate-300 text-[11px]">{item.desc}</span>
               </Link>
             ))}
           </div>
@@ -288,7 +302,7 @@ export default function MarketplaceBrowser({
                 Marketplace Preloved
               </h1>
               <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.2 rounded-full shrink-0">
-                Verified COD
+                COD Aman
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -362,11 +376,11 @@ export default function MarketplaceBrowser({
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 pr-6 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kategori</option>
-                  <option value="laptop">Elektronik &amp; Laptop</option>
-                  <option value="buku">Buku &amp; Diktat TPB</option>
-                  <option value="fashion">Fashion Preloved</option>
+                  <option value="elektronik">Elektronik &amp; Laptop</option>
+                  <option value="buku">Buku &amp; Modul</option>
                   <option value="lab">Alat Lab &amp; Praktikum</option>
-                  <option value="kos">Perlengkapan Kos</option>
+                  <option value="fashion">Fashion Preloved</option>
+                  <option value="kos">Kos &amp; Furniture</option>
                   <option value="transportasi">Transportasi</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[15px] text-slate-400 pointer-events-none">

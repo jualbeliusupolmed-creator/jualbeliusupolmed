@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSellerSessionAsync } from "@/lib/auth";
-import sharp from "sharp";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { uploadMedia } from "@/lib/mediaStorage";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // Allow longer for sharp processing
+export const maxDuration = 60;
 
 // Allowed MIME types and their magic bytes (hex prefixes)
 const ALLOWED_TYPES = {
@@ -102,34 +101,19 @@ export async function POST(req) {
       );
     }
 
-    // Convert to WebP using sharp with auto-resize to max 1600px for speed & quality
-    let processedBuffer;
-    try {
-      processedBuffer = await sharp(Buffer.from(arrayBuffer))
-        .rotate()
-        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 80, effort: 3 })
-        .toBuffer();
-    } catch (sharpErr) {
-      console.error("[api/upload] Sharp processing failed:", sharpErr);
-      return NextResponse.json(
-        { error: "Gagal memproses gambar. Coba foto dengan format JPG/PNG." },
-        { status: 400 }
-      );
-    }
+    // Upload buffer as-is (Cloudflare Pages does not support sharp image processing)
+    const detectedExtension = detectedMime === "image/webp" ? "webp" : (detectedMime === "image/jpeg" ? "jpg" : detectedMime === "image/png" ? "png" : "gif");
+    const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.${detectedExtension}`;
 
-    const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-    
     // Upload with retry logic for transient failures
     let uploadResult;
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        uploadResult = await uploadMedia(processedBuffer, path, "image/webp");
+        uploadResult = await uploadMedia(Buffer.from(arrayBuffer), path, detectedMime);
         break;
       } catch (uploadErr) {
         console.error(`[api/upload] Upload attempt ${attempt} failed:`, uploadErr.message);
         if (attempt === 2) throw uploadErr;
-        // Wait briefly before retry
         await new Promise(r => setTimeout(r, 500));
       }
     }

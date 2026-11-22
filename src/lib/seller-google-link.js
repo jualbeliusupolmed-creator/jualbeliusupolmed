@@ -1,4 +1,5 @@
-import crypto from "node:crypto";
+import { createHmac } from "@/lib/cryptoCompat";
+import { customAlphabet } from "nanoid";
 
 export const SELLER_GOOGLE_LINK_COOKIE = "seller_google_link";
 export const SELLER_GOOGLE_OTP_PROOF_COOKIE = "seller_google_otp_proof";
@@ -22,11 +23,10 @@ export function createSellerGoogleLinkToken(wa) {
     JSON.stringify({
       wa,
       exp: Date.now() + SELLER_GOOGLE_LINK_TTL * 1000,
-      nonce: crypto.randomBytes(16).toString("base64url"),
+      nonce: customAlphabet("0123456789abcdef", 16)(),
     })
   ).toString("base64url");
-  const signature = crypto
-    .createHmac("sha256", signingKey())
+  const signature = createHmac("sha256", signingKey())
     .update(payload)
     .digest("base64url");
   return `${payload}.${signature}`;
@@ -37,7 +37,7 @@ export function verifySellerGoogleLinkToken(token, activeWa) {
   const [payload, signature, ...rest] = token.split(".");
   if (!payload || !signature || rest.length) return false;
 
-  const expected = crypto.createHmac("sha256", signingKey()).update(payload).digest();
+  const expected = createHmac("sha256", signingKey()).update(payload).digest();
   let actual;
   try {
     actual = Buffer.from(signature, "base64url");

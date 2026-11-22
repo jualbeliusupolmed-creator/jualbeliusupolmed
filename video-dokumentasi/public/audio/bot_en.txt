@@ -1,0 +1,1 @@
+WhatsApp Bot runs Baileys multi-device on a separate VPS. PM2 manages processes, Nginx reverse proxy with SSL. Real-time sync to Supabase via Realtime and REST API.

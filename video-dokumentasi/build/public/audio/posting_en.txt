@@ -1,0 +1,1 @@
+Five-step posting flow: Client input validation, API gateway authentication, dual-layer AI moderation deterministic and Gemini, database persistence with business logic, and async distribution to WhatsApp, Instagram, Push, and Subscribers.

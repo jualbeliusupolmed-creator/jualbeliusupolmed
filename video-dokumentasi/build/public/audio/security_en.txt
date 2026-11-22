@@ -1,0 +1,1 @@
+Six defense layers: Edge HTTPS and CSP, JWT HMAC Authentication, API Zod honeypot validation, Supabase RLS owner-only, Isolated bot VPS infrastructure, and Observability audit logs.

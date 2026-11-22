@@ -1,0 +1,1 @@
+Bot WhatsApp menjalankan Baileys multi-device di VPS terpisah. PM2 mengelola proses, Nginx reverse proxy dengan SSL. Sinkronisasi real-time ke Supabase via Realtime dan REST API.

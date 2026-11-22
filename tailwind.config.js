@@ -22,7 +22,7 @@ module.exports = {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
           dark: "#065f46",
-          light: "#10b981",
+          light: "#059669",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -40,7 +40,7 @@ module.exports = {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
           dark: "#03411f",
-          light: "#0d8348",
+          light: "#059669",
         },
         // Dua warna kampus dinamai apa adanya supaya niatnya terbaca di kelas
         // utility: text-usu jelas maksudnya, text-emerald-700 tidak.

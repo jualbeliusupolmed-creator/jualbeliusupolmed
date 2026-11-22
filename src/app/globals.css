@@ -4,7 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet resmi Kampus Kita: Forest Emerald #047857 & Amber #F59E0B */
+/* Palet resmi Kampus Kita: Forest Emerald #047857 & Amber #F59E0B
+   Tone referensi (INSEAD AI Venture Lab): putih kekuningan halus #FCFCFA,
+   hijau tua #047857, hijau aksen #059669, teks #111827, muted #6B7280, pill #EEFEF9 */
 :root {
   --usu: #047857;
   --usu-light: #059669;
@@ -13,24 +15,24 @@
   --polmed-light: #059669;
   --polmed-dark: #065f46;
 
-  --primary: #047857; /* Forest Emerald */
+  --primary: #047857; /* Forest Emerald — tombol utama referensi */
   --primary-hover: #065f46;
   --primary-light: #ecfdf5;
   --primary-foreground: #fefefe;
-  --accent: #047857;
+  --accent: #059669; /* hijau aksen seperti teks "Sprint 2027" */
   --accent-secondary: #f59e0b;
   --accent-foreground: #fefefe;
   --wa: #25d366;
-  --page: #f8fafc;
-  --surface: #fcfdfc;
-  --surface-muted: #f8fafc;
-  --line: rgba(15, 23, 42, 0.1);
-  --line-strong: rgba(15, 23, 42, 0.16);
-  --text: #0f172a;
-  --text-muted: #64748b;
+  --page: #fcfcfa; /* putih kekuningan halus, bukan slate-50 */
+  --surface: #ffffff;
+  --surface-muted: #fcfcfa;
+  --line: rgba(17, 24, 39, 0.10);
+  --line-strong: rgba(17, 24, 39, 0.16);
+  --text: #111827; /* hampir hitam */
+  --text-muted: #6b7280; /* abu-abu */
   --radius-card: 1rem;
   --radius-control: 0.75rem;
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 1px 3px rgba(17, 24, 39, 0.06), 0 8px 24px rgba(17, 24, 39, 0.04);
 
   /* Dark mode token definitions (lifted for token audit) */
   --dark-primary: #10b981;
@@ -140,6 +142,8 @@ body {
   @apply bg-slate-50 text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200;
   font-family: var(--font-jakarta), "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.01em;
+  background-color: var(--page) !important;
+  color: var(--text) !important;
 }
 
 /* Micro-interaction feedback: :active state */

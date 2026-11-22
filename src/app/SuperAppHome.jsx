@@ -850,7 +850,37 @@ export default function SuperAppHome({
         return true;
       })
     : [];
-  const scopedById = new Map([...scopedListings, ...curatedForScope].map((item) => [String(item.id), item]));
+  // Deduplikasi: satu ID tidak boleh muncul dua kali, dan satu penjual
+  // tidak boleh mengiklankan barang yang sama (normalized title) berulang.
+  const seenById = new Set();
+  const seenBySellerTitle = new Set();
+  const dedupedScoped = scopedListings.filter((item) => {
+    const id = String(item.id);
+    if (seenById.has(id)) return false;
+    seenById.add(id);
+    const seller = String(item.seller_wa || "").toLowerCase();
+    const title = String(item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (seller && title) {
+      const key = `${seller}:${title}`;
+      if (seenBySellerTitle.has(key)) return false;
+      seenBySellerTitle.add(key);
+    }
+    return true;
+  });
+  const dedupedCurated = curatedForScope.filter((item) => {
+    const id = String(item.id);
+    if (seenById.has(id)) return false;
+    seenById.add(id);
+    const seller = String(item.seller_wa || "").toLowerCase();
+    const title = String(item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (seller && title) {
+      const key = `${seller}:${title}`;
+      if (seenBySellerTitle.has(key)) return false;
+      seenBySellerTitle.add(key);
+    }
+    return true;
+  });
+  const scopedById = new Map([...dedupedScoped, ...dedupedCurated].map((item) => [String(item.id), item]));
   const naturallySortedListings = [...scopedById.values()].sort((a, b) => {
       if (listingSort === "termurah") {
         const pA = typeof a.price === "number" ? a.price : parseFloat(String(a.price).replace(/[^0-9]/g, "")) || 0;
@@ -863,7 +893,7 @@ export default function SuperAppHome({
     fypScope === "province" && listingCampus === "Semua" ? curatedForScope.map((item) => item.id) : []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
+    <div className="min-h-screen bg-[var(--page)] dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
       {/* ── ONBOARDING OVERLAY (WAJIB PILIH KAMPUS & DAERAH ACUAN) ── */}
       {showOnboarding && (
         <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 animate-fade-in motion-reduce:animate-none">
@@ -1137,7 +1167,7 @@ export default function SuperAppHome({
                     Pre-Order <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Kampus Sedang Buka</span>
                   </h2>
                   <span className="text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
-                    {activeBatches.length} Batch Aktif
+                    {activeBatches.length > 0 ? `${activeBatches.length} Batch Aktif` : "Tidak ada PO Aktif"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

@@ -10,6 +10,7 @@
     "build": "npm run sync:meta-docs && next build",
     "postbuild": "next-sitemap",
     "start": "next start",
+    "deploy": "wrangler pages deploy .next",
     "lint": "eslint src __tests__ scripts next.config.mjs next-sitemap.config.js postcss.config.js tailwind.config.js vitest.config.mjs vitest.setup.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

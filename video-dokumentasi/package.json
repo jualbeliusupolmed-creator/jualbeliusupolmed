@@ -1,0 +1,37 @@
+{
+  "name": "video-dokumentasi",
+  "version": "1.0.0",
+  "description": "Video dokumentasi arsitektur Jual Beli USU Polmed",
+  "main": "index.js",
+  "scripts": {
+    "studio": "remotion studio",
+    "build": "remotion bundle",
+    "render": "remotion render VideoId out/video.mp4",
+    "render:gif": "remotion render VideoId out/video.gif --image-format=gif",
+    "render:png": "remotion render VideoId out/frame_ --image-format=png",
+    "still": "remotion still VideoId out/thumbnail.png --frame=0",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "keywords": [
+    "remotion",
+    "video",
+    "architecture",
+    "documentation"
+  ],
+  "type": "module",
+  "dependencies": {
+    "@remotion/bundler": "^4.0.543",
+    "@remotion/cli": "^4.0.543",
+    "@remotion/eslint-config": "^4.0.543",
+    "@remotion/player": "^4.0.543",
+    "@remotion/renderer": "^4.0.543",
+    "@remotion/zod-types": "^4.0.543",
+    "motion": "^14.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.543"
+  },
+  "devDependencies": {
+    "typescript-eslint": "^8.72.2"
+  }
+}

@@ -1,0 +1,1 @@
+High-level architecture: Client browser to Vercel Edge, then Next.js App Layer, Supabase Data Layer, Gemini AI Intelligence, Baileys Messaging, Instagram Social, and Observability.
