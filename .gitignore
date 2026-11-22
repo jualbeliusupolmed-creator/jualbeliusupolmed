@@ -109,3 +109,6 @@ terakhir.md
 Screenshot */
 *.tmp.png
 .vscode/
+video-dokumentasi/node_modules/
+.DS_Store
+video-dokumentasi/node_modules/
