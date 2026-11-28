@@ -28,4 +28,6 @@ crons = [
 
 [vars]
 NEXTJS_ENV = "production"
+NEXT_PRIVATE_MINIMAL_MODE = "1"
+IMAGE_PROCESSOR_RUNTIME = "workerd"
 NEXT_PUBLIC_BASE_URL = "https://www.kampuskita.my.id"

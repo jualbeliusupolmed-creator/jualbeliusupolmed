@@ -1893,3 +1893,11 @@ deployment atau verifikasi layanan produksi.
     3. **Outbound (`src/lib/fonnte.js` `sendWa`):** Routing berjenjang **Bot Kampus → fallback Bot Provinsi → fallback Bot Nasional (`BAILEYS_API_URL`)**.
     4. **UI Admin:** Halaman manajemen bot wilayah di panel admin agar admin provinsi/kampus bisa menautkan QR dan memantau status bot masing-masing.
   - **Catatan Kapasitas:** ~150–250 MB RAM per instance Baileys; gunakan antrean `antiban` di tiap bot dan nomor WA terpisah per wilayah.
+
+### 28 November 2026 — Pemrosesan Gambar WhatsApp Kompatibel Workers
+
+- Sharp tidak dapat berjalan di Workerd. Percobaan memaksa binding Sharp WASM juga gagal karena binding tersebut memakai `process.binding()`; patch loader eksperimental sudah dihapus.
+- Route `/api/wa/baileys` kini memakai `@cf-wasm/photon` untuk konversi WebP di unggahan foto grup, menfess, foto tambahan listing, dan unggahan listing ber-watermark. `IMAGE_PROCESSOR_RUNTIME=workerd` memilih entry Worker dari Wrangler; runtime Node lokal memakai entry Node. Paket dieksternalisasi dari webpack Next agar OpenNext dapat membundel entry Workerd.
+- Watermark tetap ada dengan teks semi-transparan; orientasinya horizontal, berbeda dari watermark Sharp sebelumnya yang diputar 30 derajat.
+- Verifikasi lokal: `npm test` — 98 berkas / 489 tes lulus; `npm run lint` lulus; `npm run cloudflare:build` lulus; Wrangler dry-run dev — 956 aset, 34,972.64 KiB (6,858.27 KiB gzip). OpenNext preview menghasilkan HTTP 200 untuk `/` dan `/faq`; webhook tanpa token mengembalikan 503 sesuai perilaku fail-closed. Worker smoke test lokal menghasilkan WebP valid berukuran 240×120.
+- `wrangler.dev.toml` tetap terisolasi dengan KV dev tersendiri dan placeholder Supabase. Dev Worker belum dideploy pada saat catatan ini dibuat; fitur yang memerlukan Supabase tidak akan berfungsi pada target tersebut.

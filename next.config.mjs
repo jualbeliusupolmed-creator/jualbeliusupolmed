@@ -17,6 +17,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["sonner", "lucide-react", "clsx", "tailwind-merge", "@supabase/supabase-js"],
   },
+  serverExternalPackages: ["@cf-wasm/photon"],
 };
 
 if (process.env.NODE_ENV === "development" && process.env.KAMPUSKITA_VINEXT !== "1") {

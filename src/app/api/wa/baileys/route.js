@@ -12,7 +12,7 @@ import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import { migrateLidToPhone } from "@/lib/lidMigrate";
 import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/lib/receiptHash";
 import { addKeywordSubscription, removeKeywordSubscription, listKeywordSubscriptions, notifyKeywordSubscribers } from "@/lib/keywordSubs";
-import sharp from "sharp";
+import { convertImageToWebp, processImageWithWatermark } from "@/lib/waImageProcessing";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { autoPublishMadingInstagram } from "@/lib/madingInstagram";
@@ -122,33 +122,6 @@ function parsePriceId(text) {
   if (/rb|ribu|k/.test(unit)) n *= 1000;
   else if (n > 0 && n < 1000) n *= 1000; // "90" → 90.000
   return n;
-}
-
-async function processImageWithWatermark(fBuf) {
-  try {
-    const metadata = await sharp(fBuf).metadata();
-    const width = metadata.width || 800;
-    const height = metadata.height || 800;
-    
-    const svgOverlay = `
-      <svg width="${width}" height="${height}">
-        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" 
-              font-size="${Math.max(width * 0.05, 20)}px" font-family="Arial, sans-serif" 
-              fill="rgba(255,255,255,0.7)" stroke="rgba(0,0,0,0.5)" stroke-width="2" font-weight="bold" 
-              transform="rotate(-30, ${width/2}, ${height/2})">
-          JUAL BELI USU
-        </text>
-      </svg>
-    `;
-
-    return await sharp(fBuf)
-      .composite([{ input: Buffer.from(svgOverlay), blend: 'over' }])
-      .webp({ quality: 80 })
-      .toBuffer();
-  } catch (err) {
-    console.error("[watermark] error:", err);
-    return await sharp(fBuf).webp({ quality: 80 }).toBuffer();
-  }
 }
 
 async function notifyMatchingWanted(supa, listing) {
@@ -299,7 +272,7 @@ export async function POST(req) {
           try {
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
-            const webpBuf = await sharp(buffer).webp({ quality: 80 }).toBuffer();
+            const webpBuf = await convertImageToWebp(buffer);
             const fileName = `group/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
             await supa.storage.from("listings").upload(fileName, webpBuf, { contentType: "image/webp", upsert: false });
             const { data: { publicUrl } } = supa.storage.from("listings").getPublicUrl(fileName);
@@ -2856,7 +2829,7 @@ export async function POST(req) {
         if (file) {
           try {
             const buf = Buffer.from(await file.arrayBuffer());
-            const webpBuf = await sharp(buf).webp({ quality: 80 }).toBuffer();
+            const webpBuf = await convertImageToWebp(buf);
             const fName = `mading/wa-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
             const upRes = await uploadMedia(webpBuf, fName, "image/webp");
             uploadedImageUrl = upRes.url;
@@ -3153,7 +3126,7 @@ export async function POST(req) {
         const fotoUrls = [];
         for (const f of files.filter(f => (f.type || "").startsWith("image/"))) {
           try {
-            const fBuf = await sharp(Buffer.from(await f.arrayBuffer())).webp({ quality: 80 }).toBuffer();
+            const fBuf = await convertImageToWebp(Buffer.from(await f.arrayBuffer()));
             const fName = `wa-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
             await supa.storage.from("listings").upload(fName, fBuf, { contentType: "image/webp" });
             const { data: { publicUrl: fUrl } } = supa.storage.from("listings").getPublicUrl(fName);

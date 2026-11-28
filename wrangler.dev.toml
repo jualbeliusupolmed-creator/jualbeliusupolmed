@@ -21,6 +21,8 @@ id = "6af2da67d7424d52be2d0c31f57cf457"
 
 [vars]
 NEXTJS_ENV = "production"
+NEXT_PRIVATE_MINIMAL_MODE = "1"
+IMAGE_PROCESSOR_RUNTIME = "workerd"
 NEXT_PUBLIC_BASE_URL = "https://kampuskita-redesign-dev.invalid"
 NEXT_PUBLIC_SITE_URL = "https://kampuskita-redesign-dev.invalid"
 NEXT_PUBLIC_SUPABASE_URL = "https://kampuskita-dev.invalid"
