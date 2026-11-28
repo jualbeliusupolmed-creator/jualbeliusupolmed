@@ -39,6 +39,12 @@ export default function ProductGallery({ images = [], title }) {
     [emblaApi]
   );
 
+  const handleZoomButtonClick = useCallback((event) => {
+    if (event.target === event.currentTarget) {
+      event.currentTarget.querySelector("img[data-zoom]")?.click();
+    }
+  }, []);
+
   if (imgs.length === 0) {
     return (
       <div
@@ -53,23 +59,30 @@ export default function ProductGallery({ images = [], title }) {
 
   if (imgs.length === 1) {
     return (
-      <div className="relative overflow-hidden bg-black/[0.03] dark:bg-black/40 sm:rounded-[24px] aspect-square">
-        <Image
-          src={imgs[0]}
-          alt={title}
-          fill
-          priority
-          unoptimized
-          sizes="(max-width: 1024px) 100vw, 550px"
-          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-zoom-in"
-          data-zoom
-          data-zoom-alt={title}
-        />
-        <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
-          </svg>
-        </span>
+      <div className="group relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-black/40 sm:rounded-[24px]">
+        <button
+          type="button"
+          onClick={handleZoomButtonClick}
+          aria-label={`Perbesar foto ${title || "produk"}`}
+          className="absolute inset-0 cursor-zoom-in border-0 p-0 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-emerald-600"
+        >
+          <Image
+            src={imgs[0]}
+            alt={title}
+            fill
+            priority
+            unoptimized
+            sizes="(max-width: 1024px) 100vw, 550px"
+            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+            data-zoom
+            data-zoom-alt={title}
+          />
+          <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+            </svg>
+          </span>
+        </button>
       </div>
     );
   }
@@ -81,41 +94,49 @@ export default function ProductGallery({ images = [], title }) {
         <div className="flex h-full touch-pan-y">
           {imgs.map((src, i) => (
             <div className="relative min-w-0 flex-[0_0_100%] h-full" key={i}>
-              <Image
-                src={src}
-                alt={imgs.length > 1 ? `${title} — foto ${i + 1} dari ${imgs.length}` : title}
-                fill
-                unoptimized
-                priority={i === 0}
-                sizes="(max-width: 1024px) 100vw, 550px"
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-zoom-in"
-                data-zoom
-                data-zoom-alt={imgs.length > 1 ? `${title} — foto ${i + 1} dari ${imgs.length}` : title}
-              />
-              {/* Hint ikon zoom di sudut — hilang saat foto di-hover */}
-              <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
-                </svg>
-              </span>
+              <button
+                type="button"
+                onClick={handleZoomButtonClick}
+                aria-label={`Perbesar foto ${i + 1} dari ${imgs.length}`}
+                className="absolute inset-0 cursor-zoom-in border-0 p-0 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-emerald-600"
+              >
+                <Image
+                  src={src}
+                  alt={imgs.length > 1 ? `${title}, foto ${i + 1} dari ${imgs.length}` : title}
+                  fill
+                  unoptimized
+                  priority={i === 0}
+                  sizes="(max-width: 1024px) 100vw, 550px"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                  data-zoom
+                  data-zoom-alt={imgs.length > 1 ? `${title}, foto ${i + 1} dari ${imgs.length}` : title}
+                />
+                <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+                  </svg>
+                </span>
+              </button>
             </div>
           ))}
         </div>
         {imgs.length > 1 && (
           <>
             <button
+              type="button"
               onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-colors duration-150 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
-              aria-label="Previous image"
+              className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 opacity-100 shadow-md transition-colors duration-150 hover:bg-white focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-900"
+              aria-label="Foto sebelumnya"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
+              type="button"
               onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-colors duration-150 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
-              aria-label="Next image"
+              className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-800 opacity-100 shadow-md transition-colors duration-150 hover:bg-white focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 dark:bg-slate-900/90 dark:text-white dark:hover:bg-slate-900"
+              aria-label="Foto berikutnya"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -144,6 +165,7 @@ export default function ProductGallery({ images = [], title }) {
         <div className="mt-3 flex gap-2 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {imgs.map((src, i) => (
             <button
+              type="button"
               key={i}
               onClick={() => scrollTo(i)}
               aria-label={`Lihat foto ${i + 1}`}

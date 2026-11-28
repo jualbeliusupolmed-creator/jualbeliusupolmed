@@ -2,7 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getInstagramAccountCredentials } from "@/lib/instagramAccountCredentials";
 import { processInstagramQueue, siteOriginFromRequest } from "@/lib/instagramQueue";
 import { layoutMadingInstagramPost } from "@/lib/madingInstagramImage";
-import { waitUntil } from "@vercel/functions";
+import { registerBackgroundTask } from "@/lib/backgroundTasks";
 
 export { siteOriginFromRequest };
 
@@ -138,11 +138,7 @@ export async function autoPublishMadingInstagram({ origin, postId, timeoutMs = 1
     });
 
     // Pertahankan proses background di Vercel Lambda setelah HTTP response terkirim
-    if (typeof waitUntil === "function") {
-      try {
-        waitUntil(publishPromise);
-      } catch (_) {}
-    }
+    await registerBackgroundTask(publishPromise);
 
     if (timeoutMs <= 0) return [];
     if (!timeoutMs) return await publishPromise;

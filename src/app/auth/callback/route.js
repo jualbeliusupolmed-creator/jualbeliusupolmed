@@ -53,6 +53,8 @@ function googleLinkJson(body, status = 200) {
 async function isAuthorizedAdminInvite(user) {
   if (!user?.id || !user.email_confirmed_at || (user.banned_until && new Date(user.banned_until) > new Date())) return false;
   const userId = user.id.toLowerCase();
+  const { getSuperadminIds } = await import("@/lib/admin-auth-policy");
+  if (getSuperadminIds().has(userId)) return true;
   const superadminId = String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
   if (superadminId && userId === superadminId) return true;
   const { data, error } = await getAdminClient().from("admin_memberships")
@@ -224,8 +226,10 @@ async function handleAdminGoogleCallback(request) {
 
     const userId = user.id.toLowerCase();
     const superadminId = String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
+    const { getSuperadminIds } = await import("@/lib/admin-auth-policy");
+    const isSuperadmin = getSuperadminIds().has(userId) || (superadminId && userId === superadminId);
     let hasActiveMembership = false;
-    if (!superadminId || userId !== superadminId) {
+    if (!isSuperadmin) {
       const { data: membership, error: membershipError } = await getAdminClient()
         .from("admin_memberships")
         .select("user_id")
@@ -238,8 +242,7 @@ async function handleAdminGoogleCallback(request) {
       hasActiveMembership = !!membership;
     }
 
-    const role = resolveAdminLoginRole(userId, superadminId, hasActiveMembership);
-    if (!role) {
+    const role = resolveAdminLoginRole(userId, superadminId, hasActiveMembership);    if (!role) {
       return finishAdminGoogleCallback(request, "/admin?auth_error=not_authorized", pendingCookies);
     }
 

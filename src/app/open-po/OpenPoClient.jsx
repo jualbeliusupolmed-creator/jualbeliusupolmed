@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { rupiah } from "@/lib/fees";
 import { cn } from "@/lib/utils";
 import { getOpenPoBatchMetrics } from "@/lib/openPoDisplay";
@@ -43,6 +43,32 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
   const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState(null);
   const [favorites, setFavorites] = useState({});
+  const reservationTriggerRef = useRef(null);
+
+  function openReservation(batch, event) {
+    reservationTriggerRef.current = event.currentTarget;
+    setError("");
+    setSelected(batch);
+  }
+
+  const closeReservation = useCallback(() => {
+    setSelected(null);
+    reservationTriggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!selected) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeReservation();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selected, closeReservation]);
 
   useEffect(() => {
     try {
@@ -155,7 +181,11 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-4 -mx-4 px-4">
+        <div
+          role="group"
+          aria-label="Kategori Open PO"
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-4 -mx-4 px-4"
+        >
           {CATEGORIES.map((cat) => {
             const active = category === cat.id;
             return (
@@ -163,6 +193,7 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
                 key={cat.id}
                 type="button"
                 onClick={() => setCategory(cat.id)}
+                aria-label={cat.label}
                 className={cn(
                   "px-3.5 py-1.5 rounded-full text-[12px] whitespace-nowrap flex items-center gap-1.5 transition active:scale-95",
                   active
@@ -188,8 +219,18 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
           {filtered.length === 0 ? (
             <div className="bg-white dark:bg-[#112218] rounded-2xl p-8 text-center border border-[#134e35]/10">
               <span className="material-symbols-outlined text-[36px] text-[#707972]">inventory_2</span>
-              <p className="mt-2 text-sm font-bold text-[#101f15] dark:text-white">Belum ada Open PO aktif</p>
-              <p className="text-xs text-[#404943] dark:text-[#99d3b2] mt-1">Coba kata kunci atau kategori lain, atau buka PO baru.</p>
+              <p className="mt-2 text-sm font-bold text-[#101f15] dark:text-white">
+                {initialError
+                  ? "Open PO belum dapat dimuat"
+                  : initialBatches.length === 0
+                    ? "Belum ada batch Open PO aktif"
+                    : "Belum ada batch yang cocok"}
+              </p>
+              <p className="text-xs text-[#404943] dark:text-[#99d3b2] mt-1">
+                {initialError
+                  ? "Coba muat ulang halaman beberapa saat lagi."
+                  : "Coba kata kunci atau kategori lain, atau buka PO baru."}
+              </p>
             </div>
           ) : (
             filtered.map((batch) => {
@@ -200,7 +241,6 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
               return (
                 <article
                   key={batch.id}
-                  onClick={() => setSelected(batch)}
                   className="bg-white dark:bg-[#112218] rounded-2xl p-3 border border-[#134e35]/10 shadow-sm flex gap-3 relative transition hover:shadow-md cursor-pointer"
                 >
                   <div className="relative w-[104px] h-[104px] shrink-0 rounded-xl overflow-hidden bg-[#e6f8e8]">
@@ -243,15 +283,31 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
                     <div className="mt-1">
                       <div className="flex items-center justify-between text-[11px] mb-1">
                         <span className="font-bold text-[#134e35] dark:text-white">
-                          <span className="text-[#506600] dark:text-[#bef264]">{ordered}</span>/{quota} slot
+                          {ordered} dari {quota} slot dipesan
                         </span>
                         <span className="text-[#404943] dark:text-[#99d3b2] text-[10.5px] flex items-center gap-1">
                           <span className="material-symbols-outlined text-[13px] text-[#ba1a1a]">schedule</span>
                           {countdownLabel(closesAt)}
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#e0f3e3] rounded-full overflow-hidden">
+                      <div
+                        role="progressbar"
+                        aria-label={`${ordered} dari ${quota} slot sudah dipesan`}
+                        aria-valuemin={0}
+                        aria-valuemax={quota > 0 ? quota : 1}
+                        aria-valuenow={Math.min(ordered, quota > 0 ? quota : 1)}
+                        className="w-full h-1.5 bg-[#e0f3e3] rounded-full overflow-hidden"
+                      >
                         <div className="h-full bg-[#134e35] dark:bg-[#bef264] rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={(event) => openReservation(batch, event)}
+                          className="rounded-full bg-[#134e35] px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#003622] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#134e35]"
+                        >
+                          Pesan slot
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -441,7 +497,13 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
             {filtered.length === 0 ? (
               <div className="bg-white dark:bg-[#112218] rounded-2xl p-12 text-center shadow-sm">
                 <span className="material-symbols-outlined text-[42px] text-[#707972]">inventory_2</span>
-                <p className="mt-2 text-base font-bold text-[#101f15] dark:text-white">Belum ada Open PO yang cocok</p>
+                <p className="mt-2 text-base font-bold text-[#101f15] dark:text-white">
+                  {initialError
+                    ? "Open PO belum dapat dimuat"
+                    : initialBatches.length === 0
+                      ? "Belum ada Open PO aktif"
+                      : "Belum ada Open PO yang cocok"}
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
@@ -499,7 +561,14 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
                         </div>
 
                         <div className="flex flex-col gap-1.5 mt-1">
-                          <div className="w-full bg-[#e0f3e3] rounded-full h-2 overflow-hidden">
+                          <div
+                            role="progressbar"
+                            aria-label={`${ordered} dari ${quota} slot sudah dipesan pada tampilan desktop`}
+                            aria-valuemin={0}
+                            aria-valuemax={quota > 0 ? quota : 1}
+                            aria-valuenow={Math.min(ordered, quota > 0 ? quota : 1)}
+                            className="w-full bg-[#e0f3e3] rounded-full h-2 overflow-hidden"
+                          >
                             <div className="bg-[#134e35] dark:bg-[#bef264] h-full rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                           </div>
                           <div className="flex items-center justify-between text-[10px] text-[#404943] dark:text-[#99d3b2]">
@@ -523,10 +592,11 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
                         </div>
                         <button
                           type="button"
-                          onClick={() => setSelected(batch)}
+                          onClick={(event) => openReservation(batch, event)}
+                          aria-label={`Pesan slot untuk ${title}`}
                           className="w-full py-2.5 rounded-xl bg-[#134e35] hover:bg-[#003622] text-white text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5"
                         >
-                          <span>Ikuti PO</span>
+                          <span>Pesan slot</span>
                           <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                         </button>
                       </div>
@@ -542,13 +612,18 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
       {/* Modal Reservasi Open PO */}
       {selected && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#112218] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="open-po-reservation-title"
+            className="bg-white dark:bg-[#112218] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#ceeb7a] text-[#161f00]">
                   Ikuti Open PO
                 </span>
-                <h3 className="text-lg font-extrabold text-[#003622] dark:text-white mt-1.5">
+                <h3 id="open-po-reservation-title" className="text-lg font-extrabold text-[#003622] dark:text-white mt-1.5">
                   {selected.title || selected.name}
                 </h3>
                 <p className="text-xs text-[#404943] dark:text-[#99d3b2]">
@@ -557,7 +632,8 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
               </div>
               <button
                 type="button"
-                onClick={() => setSelected(null)}
+                onClick={closeReservation}
+                aria-label="Tutup reservasi"
                 className="w-8 h-8 rounded-full bg-[#e6f8e8] flex items-center justify-center text-[#003622]"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>

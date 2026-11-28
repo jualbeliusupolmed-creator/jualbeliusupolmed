@@ -68,6 +68,13 @@ export default function ProductDetailInteractive({
     ? Number(listing.seller_profiles.total_deals)
     : null;
   const sellerResponse = listing.seller_profiles?.response_time || null;
+  const viewCount =
+    listing.views !== null
+    && listing.views !== undefined
+    && listing.views !== ""
+    && Number.isFinite(Number(listing.views))
+      ? Number(listing.views)
+      : null;
 
   // Rute aman WhatsApp via server tanpa membocorkan nomor penjual ke HTML
   const waUrl = `/chat-wa/${listing.id}?cod=${encodeURIComponent(selectedCodPoint.title || "")}`;
@@ -81,6 +88,13 @@ export default function ProductDetailInteractive({
             {gallery}
           </div>
         )}
+
+        <section className="rounded-3xl border border-[#e2f0e6] bg-white p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] dark:border-white/10 dark:bg-[#112218]">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Tentang barang</h3>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {listing.description || "Penjual belum menambahkan deskripsi."}
+          </p>
+        </section>
 
         {/* TAB NAVIGATION */}
         <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] border border-[#e2f0e6] dark:border-white/10 flex flex-col gap-4">
@@ -172,13 +186,6 @@ export default function ProductDetailInteractive({
                 ))}
               </div>
 
-              {/* Deskripsi dasar */}
-              <div className="pt-2">
-                <span className="text-xs font-bold text-slate-500 block mb-1">Deskripsi Tambahan:</span>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                  {listing.description || "Tidak ada deskripsi tambahan dari penjual."}
-                </p>
-              </div>
             </div>
           )}
 
@@ -195,9 +202,7 @@ export default function ProductDetailInteractive({
                   Alasan Dijual &amp; Riwayat
                 </span>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {listing.description?.includes("Alasan") || listing.description?.includes("dijual")
-                    ? listing.description
-                    : "Barang pemakaian mahasiswa kuliah aktif (sudah lulus mata kuliah / praktikum terkait atau ingin upgrade). Kondisi terawat siap pakai."}
+                  Penjual belum menambahkan catatan pemakaian atau alasan dijual.
                 </p>
               </div>
 
@@ -297,10 +302,12 @@ export default function ProductDetailInteractive({
               <span className="px-3 py-1 rounded-full bg-[#e6f8e8] dark:bg-[#134e35]/40 text-[#134e35] dark:text-[#bef264] text-xs font-bold">
                 {listing.category}
               </span>
-              <div className="flex items-center gap-1.5 text-xs text-[#707972]">
-                <Icon.Eye className="w-3.5 h-3.5" />
-                <span>{listing.views || 1}x dilihat</span>
-              </div>
+              {viewCount !== null && (
+                <div className="flex items-center gap-1.5 text-xs text-[#707972]">
+                  <Icon.Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{viewCount.toLocaleString("id-ID")} kali dilihat</span>
+                </div>
+              )}
             </div>
 
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#101f15] dark:text-white leading-snug">
@@ -430,7 +437,7 @@ export default function ProductDetailInteractive({
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            <div className={`grid gap-2 pt-1 ${sellerResponse ? "grid-cols-2" : "grid-cols-1"}`}>
               <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 lg:gap-1.5 lg:p-1.5">
                 <Icon.Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col">
@@ -443,15 +450,17 @@ export default function ProductDetailInteractive({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 lg:gap-1.5 lg:p-1.5">
-                <Icon.Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
-                    {sellerResponse || "Belum diatur"}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">Balas Cepat</span>
+              {sellerResponse && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 lg:gap-1.5 lg:p-1.5">
+                  <Icon.Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
+                      {sellerResponse}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">Waktu respons</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

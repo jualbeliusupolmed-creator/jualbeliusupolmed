@@ -1,6 +1,7 @@
 import { getAdminSession } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, getActiveCampuses, getCampusProvinceId } from "@/lib/settings";
+import { getSuperadminIds } from "@/lib/admin-auth-policy";
 
 const SUPERADMIN_ID = () => String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
 const isMissingRoleAssignments = (error) => ["42P01", "PGRST205"].includes(error?.code);
@@ -26,9 +27,13 @@ export async function getAdminActor() {
       ? { scope_type: "province", scope_id: assignment.province_id }
       : { scope_type: "campus", scope_id: assignment.university_id });
 
-    const isSuperadminEmail = String(authUser.email || "").toLowerCase() === "jualbeliusupolmed@gmail.com";
+    const SUPERADMIN_EMAILS = [
+      "jualbeliusupolmed@gmail.com",
+      "kampuskitaapp@gmail.com",
+    ];
+    const isSuperadminEmail = SUPERADMIN_EMAILS.includes(String(authUser.email || "").toLowerCase());
     const hasSuperadminRole = assignments.some((assignment) => assignment.role_code === "superadmin");
-    const isEnvSuperadmin = Boolean(SUPERADMIN_ID()) && userId === SUPERADMIN_ID();
+    const isEnvSuperadmin = getSuperadminIds().has(userId) || (Boolean(SUPERADMIN_ID()) && userId === SUPERADMIN_ID());
     const isSuperadmin = isSuperadminEmail || hasSuperadminRole || isEnvSuperadmin;
 
     if (isSuperadmin) {

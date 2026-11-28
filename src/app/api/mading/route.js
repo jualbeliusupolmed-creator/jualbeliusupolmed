@@ -53,16 +53,14 @@ export async function GET(request) {
     const supa = getAdminClient();
 
     // Opportunistic worker: Flush antrean Instagram tiap beberapa menit jika ada traffic
-    if (type === "all" && page === 1 && Date.now() - lastBackgroundSweep > 90_000 && typeof waitUntil === "function") {
+    if (type === "all" && page === 1 && Date.now() - lastBackgroundSweep > 90_000) {
       lastBackgroundSweep = Date.now();
-      try {
-        waitUntil(
-          publishQueuedMadingInstagram({
-            origin: siteOriginFromRequest(request),
-            limit: 2,
-          }).catch(() => {})
-        );
-      } catch (_) {}
+      await registerBackgroundTask(
+        publishQueuedMadingInstagram({
+          origin: siteOriginFromRequest(request),
+          limit: 2,
+        }).catch(() => {})
+      );
     }
 
     const makeQuery = (columns) => {

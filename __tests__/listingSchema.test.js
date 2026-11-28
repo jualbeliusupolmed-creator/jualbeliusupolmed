@@ -53,4 +53,18 @@ describe("listingSchema - Price & Field Validation", () => {
     expect(parsed.success).toBe(true);
     expect(parsed.data.title).toBe("Buku Pengantar Akuntansi FEB USU");
   });
+
+  it("accepts the existing poster listing type while rejecting unknown types", () => {
+    const validData = {
+      seller_name: "Rizky Pratama",
+      title: "Poster acara kampus",
+      price: "25.000",
+      stock: 1,
+      category: "Jasa",
+      type: "poster",
+    };
+
+    expect(listingInputSchema.safeParse(validData).success).toBe(true);
+    expect(listingInputSchema.safeParse({ ...validData, type: "unsupported" }).success).toBe(false);
+  });
 });

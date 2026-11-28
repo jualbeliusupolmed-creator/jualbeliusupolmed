@@ -2,7 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { processInstagramQueue } from "@/lib/instagramQueue";
 import { buildSlug } from "@/lib/slug";
 import { formatInstagramPrice } from "@/lib/listingInstagramImage";
-import { waitUntil } from "@vercel/functions";
+import { registerBackgroundTask } from "@/lib/backgroundTasks";
 
 function catalogCredentials() {
   const accessToken = String(process.env.META_KATALOG_IG_ACCESS_TOKEN || "").trim();
@@ -103,11 +103,7 @@ export async function autoPublishListingInstagram({ origin, listingId, timeoutMs
     });
 
     // Pertahankan proses background di Vercel Lambda setelah HTTP response terkirim
-    if (typeof waitUntil === "function") {
-      try {
-        waitUntil(publishPromise);
-      } catch (_) {}
-    }
+    await registerBackgroundTask(publishPromise);
 
     if (timeoutMs <= 0) return [];
     if (!timeoutMs) return await publishPromise;

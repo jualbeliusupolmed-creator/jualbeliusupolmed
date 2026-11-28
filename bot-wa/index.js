@@ -516,9 +516,52 @@ function socketAlive() { return !!(waSocket && waSocket.ws?.isOpen); }
 function botSiap() { return socketAlive() && !!connectedPhone; }
 
 
+// Saluran cadangan di luar WhatsApp (Telegram / Webhook) agar pemilik tetap tahu
+// saat Bot1 dan Bot2 sama-sama putus/terkunci. Opsional: aktif hanya jika env diset.
+const ALERT_WEBHOOK_URL = (process.env.ALERT_WEBHOOK_URL || '').trim();
+const TELEGRAM_BOT_TOKEN = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+const TELEGRAM_CHAT_ID = (process.env.TELEGRAM_CHAT_ID || '').trim();
+const _lastExternalAlert = new Map();
+
+async function kirimAlertEksternal(text) {
+    if (!text) return;
+    if (!ALERT_WEBHOOK_URL && !(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID)) return;
+
+    // Dedup 5 menit untuk teks yang sama agar tidak spam saat reconnect loop
+    const key = String(text).slice(0, 120);
+    const now = Date.now();
+    if (now - (_lastExternalAlert.get(key) || 0) < 5 * 60 * 1000) return;
+    _lastExternalAlert.set(key, now);
+    if (_lastExternalAlert.size > 50) _lastExternalAlert.clear();
+
+    const tugas = [];
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+        tugas.push(
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: `[KampusKita Bot]\n${text}` }),
+                signal: AbortSignal.timeout(5000),
+            }).catch(() => {})
+        );
+    }
+    if (ALERT_WEBHOOK_URL) {
+        tugas.push(
+            fetch(ALERT_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: `[KampusKita Bot] ${text}`, text: `[KampusKita Bot] ${text}` }),
+                signal: AbortSignal.timeout(5000),
+            }).catch(() => {})
+        );
+    }
+    await Promise.allSettled(tugas);
+}
+
 // Laporan ke pemilik lewat WhatsApp. Tanpa OWNER_JID, dikirim ke nomor bot sendiri
 // (chat "pesan ke diri sendiri") — tetap sampai dan tidak mengganggu pelanggan.
 function notifyOwner(text) {
+    kirimAlertEksternal(text).catch(() => {});
     const nomor = nomorAlarm();
     const target = nomor ? toJid(nomor) : (connectedPhone ? `${connectedPhone}@s.whatsapp.net` : '');
     if (!target) return;
@@ -1881,29 +1924,55 @@ function laporAuth(sumber, state) {
 
 async function startBotInner(myGen) {
     let state, saveCreds;
-    // Utamakan filesystem (AUTH_DIR) jika sudah memiliki kredensial tertaut
-    // agar sesi login aktif di VPS tidak terganggu dan tidak meminta scan QR ulang.
+    // Hybrid persistence: utamakan disk (AUTH_DIR) + mirror ke Supabase agar sesi
+    // tidak hilang saat restart maupun saat salah satu storage bermasalah.
     const fileAuthState = await useFileAuthState(AUTH_DIR);
-    if (credsTertaut(fileAuthState.state?.creds)) {
-        state = fileAuthState.state;
-        saveCreds = fileAuthState.saveCreds;
-        clearAuthState = fileAuthState.clear;
-        flushAuthState = fileAuthState.flush;
-        laporAuth(`filesystem (${AUTH_DIR})`, state);
-    } else if (supabase) {
-        const authState = await useSupabaseAuthState(supabase, WA_SESSION_ID);
-        state = authState.state;
-        saveCreds = authState.saveCreds;
-        clearAuthState = authState.clear;
-        flushAuthState = authState.flush;
-        laporAuth(`Supabase (session_id=${WA_SESSION_ID})`, state);
-    } else {
-        state = fileAuthState.state;
-        saveCreds = fileAuthState.saveCreds;
-        clearAuthState = fileAuthState.clear;
-        flushAuthState = fileAuthState.flush;
-        laporAuth(`filesystem (${AUTH_DIR})`, state);
+    const supaAuthState = supabase
+        ? await useSupabaseAuthState(supabase, WA_SESSION_ID).catch((err) => {
+            console.warn(`[auth] Gagal inisialisasi Supabase auth state (fallback ke disk): ${err.message}`);
+            return null;
+        })
+        : null;
+
+    const fileHasCreds = credsTertaut(fileAuthState.state?.creds);
+    const supaHasCreds = credsTertaut(supaAuthState?.state?.creds);
+
+    if (!fileHasCreds && supaHasCreds) {
+        // Seed creds ke disk agar restart berikutnya tidak bergantung pada Supabase saja
+        fileAuthState.state.creds = supaAuthState.state.creds;
+        await fileAuthState.saveCreds().catch(() => {});
     }
+
+    const primary = (!fileHasCreds && supaHasCreds) ? supaAuthState : fileAuthState;
+    state = primary.state;
+
+    saveCreds = async () => {
+        await primary.saveCreds();
+        if (primary === fileAuthState && supaAuthState) {
+            supaAuthState.state.creds = fileAuthState.state.creds;
+            await supaAuthState.saveCreds().catch((e) => {
+                console.warn(`[auth] Mirror creds ke Supabase gagal: ${e.message}`);
+            });
+        } else if (primary === supaAuthState) {
+            fileAuthState.state.creds = supaAuthState.state.creds;
+            await fileAuthState.saveCreds().catch((e) => {
+                console.warn(`[auth] Mirror creds ke disk gagal: ${e.message}`);
+            });
+        }
+    };
+    clearAuthState = async () => {
+        await fileAuthState.clear().catch(() => {});
+        if (supaAuthState) await supaAuthState.clear().catch(() => {});
+    };
+    flushAuthState = async () => {
+        await fileAuthState.flush().catch(() => {});
+        if (supaAuthState) await supaAuthState.flush().catch(() => {});
+    };
+
+    const sumberAuth = primary === supaAuthState
+        ? `Supabase+Disk (session_id=${WA_SESSION_ID})`
+        : `Disk${supaAuthState ? '+Supabase' : ''} (${AUTH_DIR})`;
+    laporAuth(sumberAuth, state);
     // Dipakai handler 'close' untuk membedakan "jaringan putus" dari "belum
     // pernah ditautkan". Lihat credsTertaut() soal kenapa bukan creds.registered.
     sesiTerdaftar = credsTertaut(state?.creds);

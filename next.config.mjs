@@ -1,14 +1,7 @@
-let nextOnPages;
-try {
-  const pkg = await import("@cloudflare/next-on-pages");
-  nextOnPages = pkg?.nextOnPages || pkg?.default?.nextOnPages;
-} catch {
-  nextOnPages = null;
-}
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -26,4 +19,8 @@ const nextConfig = {
   },
 };
 
-export default typeof nextOnPages === "function" ? nextOnPages(nextConfig) : nextConfig;
+if (process.env.NODE_ENV === "development" && process.env.KAMPUSKITA_VINEXT !== "1") {
+  initOpenNextCloudflareForDev();
+}
+
+export default nextConfig;

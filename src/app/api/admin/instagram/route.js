@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { publishQueuedListingInstagram } from "@/lib/listingInstagram";
 import { publishQueuedMadingInstagram } from "@/lib/madingInstagram";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
-import { waitUntil } from "@vercel/functions";
+import { registerBackgroundTask } from "@/lib/backgroundTasks";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -66,16 +66,14 @@ export async function GET(req) {
     );
 
     // Otomatis picu pemrosesan antrean di background jika ada item yang menunggu
-    if (stats.queued > 0 && typeof waitUntil === "function") {
+    if (stats.queued > 0) {
       const origin = siteOriginFromRequest(req);
-      try {
-        waitUntil(
-          Promise.allSettled([
-            publishQueuedMadingInstagram({ origin, limit: 5 }),
-            publishQueuedListingInstagram({ origin, limit: 5 }),
-          ])
-        );
-      } catch (_) {}
+      await registerBackgroundTask(
+        Promise.allSettled([
+          publishQueuedMadingInstagram({ origin, limit: 5 }),
+          publishQueuedListingInstagram({ origin, limit: 5 }),
+        ])
+      );
     }
 
     return NextResponse.json({ ok: true, stats, items });

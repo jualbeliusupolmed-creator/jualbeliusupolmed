@@ -121,7 +121,7 @@ export const listingInputSchema = z.object({
     .transform((val) => Math.max(1, parseInt(String(val), 10) || 1))
     .pipe(z.number().int().min(1, "Stok minimal 1 item.")),
   category: z.string().default(VALID_CATEGORIES[0] || "Elektronik"),
-  type: z.enum(["barang", "sewa", "jasa", "gratis"]).default("barang"),
+  type: z.enum(["barang", "sewa", "jasa", "gratis", "poster"]).default("barang"),
   campus: z.string().default("Semua"),
   area: z.string().default(""),
   condition: z.enum(["new", "used"]).default("used"),

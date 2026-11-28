@@ -17,6 +17,7 @@ import { checkProhibitedListing } from "@/lib/profanity";
 import { moderateListing } from "@/lib/moderationRules";
 import { listingInputSchema, normalizePriceInput, sanitizeListingTitle, validateElectronicsSpecs } from "@/lib/listingSchema";
 import { loadMarketplaceRegion } from "@/lib/marketplaceRegion";
+import { findRecentDuplicateListing } from "@/lib/listingDedupe";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -426,6 +427,7 @@ export async function POST(req) {
       type: ["poster", "jasa", "sewa"].includes(type) ? type : "barang",
       rental_period: type === "sewa" ? (rental_period || "harian") : null,
       image_url: image_url || null,
+      images: Array.isArray(images) ? images : [],
       status: initialStatus,
       moderation_reason: modReason,
       risk_score: moderation.risk_score || 0.0,
@@ -437,17 +439,68 @@ export async function POST(req) {
       expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
     };
 
+    // Idempotency / anti-duplikat: jika penjual baru saja membuat iklan dengan judul & harga
+    // yang sama dalam 30 menit terakhir (mis. double-click, retry jaringan, atau refresh),
+    // kembalikan iklan yang sudah ada alih-alih membuat baris duplikat baru.
+    const recentDuplicate = await findRecentDuplicateListing(supa, {
+      sellerWa: effectiveWa,
+      title: cleanedTitle,
+      price: finalPrice,
+      windowMinutes: 30,
+    });
+
+    if (recentDuplicate) {
+      if (recentDuplicate.status === "pending" && requiresPayment) {
+        const { data: existingPayment } = await supa
+          .from("payments")
+          .select("midtrans_order_id, amount")
+          .eq("listing_id", recentDuplicate.id)
+          .eq("type", "iklan")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+          .catch(() => ({ data: null }));
+        if (existingPayment) {
+          return NextResponse.json({
+            listing: recentDuplicate,
+            paymentUrl: "/qris.png",
+            orderId: existingPayment.midtrans_order_id,
+            amount: existingPayment.amount,
+            isFreeMode: false,
+            deduplicated: true,
+          });
+        }
+      }
+      return NextResponse.json({
+        listing: recentDuplicate,
+        paymentUrl: null,
+        isPro,
+        isJasaFree,
+        isDistributor,
+        punyaToko,
+        isFreeMode: recentDuplicate.status === "active",
+        deduplicated: true,
+      });
+    }
+
     let { data: listing, error } = await supa
       .from("listings")
       .insert(insertPayload)
       .select()
       .single();
 
-    // Fallback otomatis jika kolom moderasi belum ada di skema database produksi (PGRST204)
+    // Fallback otomatis jika kolom opsional (moderasi / images) belum ada di skema database produksi (PGRST204)
     if (error && (error.code === "PGRST204" || String(error.message || "").includes("column"))) {
       console.warn("[POST /api/listings] Kolom belum ada di skema database, fallback insert tanpa field opsional:", error.message);
-      delete insertPayload.moderation_reason;
-      delete insertPayload.risk_score;
+      const errMsg = String(error.message || "");
+      if (errMsg.includes("moderation_reason") || !errMsg.includes("images")) {
+        delete insertPayload.moderation_reason;
+        delete insertPayload.risk_score;
+      }
+      if (errMsg.includes("images")) {
+        delete insertPayload.images;
+      }
       const retry = await supa
         .from("listings")
         .insert(insertPayload)
@@ -458,11 +511,6 @@ export async function POST(req) {
     }
 
     if (error) throw new Error(error.message);
-
-    // Simpan galeri (kolom `images`) — non-fatal jika migration belum dijalankan.
-    if (Array.isArray(images) && images.length) {
-      await supa.from("listings").update({ images }).eq("id", listing.id).catch(() => {});
-    }
 
     if (requiresPayment) {
       const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;

@@ -11,6 +11,7 @@ export default function MediaUploader({
   max = 5,
   error,
   setError,
+  inputLabel = "Tambah foto",
 }) {
   const [compressing, setCompressing] = useState(false);
 
@@ -87,18 +88,19 @@ export default function MediaUploader({
             <button
               type="button"
               onClick={() => remove(i)}
-              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
-              aria-label="Hapus foto"
+              disabled={compressing}
+              className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/90 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label={`Hapus foto ${i + 1}`}
             >
               <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
-            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/40 px-1.5 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/70 px-1.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
               <button
                 type="button"
                 onClick={() => move(i, -1)}
-                disabled={i === 0}
-                className="text-white disabled:opacity-30 p-0.5 hover:text-emerald-300 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
-                aria-label="Geser ke kiri"
+                disabled={i === 0 || compressing}
+                className="inline-flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-emerald-300 focus-visible:outline-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={`Geser foto ${i + 1} ke kiri`}
               >
                 <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 18l-6-6 6-6" />
@@ -107,9 +109,9 @@ export default function MediaUploader({
               <button
                 type="button"
                 onClick={() => move(i, 1)}
-                disabled={i === media.length - 1}
-                className="text-white disabled:opacity-30 p-0.5 hover:text-emerald-300 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
-                aria-label="Geser ke kanan"
+                disabled={i === media.length - 1 || compressing}
+                className="inline-flex h-11 w-11 items-center justify-center text-white transition-colors hover:text-emerald-300 focus-visible:outline-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={`Geser foto ${i + 1} ke kanan`}
               >
                 <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 18l6-6-6-6" />
@@ -124,12 +126,12 @@ export default function MediaUploader({
             compressing ? "bg-emerald-50/50 border-emerald-300 cursor-wait" : "hover:border-emerald-600"
           }`}>
             {compressing ? (
-              <div className="flex flex-col items-center gap-1">
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              <div role="status" aria-live="polite" className="flex flex-col items-center gap-1">
+                <span aria-hidden="true" className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
                 <span className="text-[10px] text-emerald-700 font-semibold">Mengompres…</span>
               </div>
             ) : (
-              <span className="text-xs text-gray-500 font-semibold">+ Tambah</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 font-semibold">+ Tambah</span>
             )}
             <input
               type="file"
@@ -137,13 +139,14 @@ export default function MediaUploader({
               multiple
               disabled={compressing}
               onChange={onPick}
-              className="hidden"
+              aria-label={inputLabel}
+              className="sr-only"
             />
           </label>
         )}
       </div>
-      {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
-      <p className="mt-1.5 text-xs text-gray-500">
+      {error && <p role="alert" className="mt-2 text-xs text-rose-700 dark:text-rose-300">{error}</p>}
+      <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-300">
         Maksimal {max} foto (foto pertama jadi sampul). Otomatis dioptimalkan ke format WebP.
       </p>
     </div>

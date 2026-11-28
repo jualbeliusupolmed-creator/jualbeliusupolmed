@@ -5,6 +5,8 @@
 
 # next.js
 /.next/
+/.open-next/
+/.wrangler/
 /out/
 /coverage/
 
@@ -24,6 +26,8 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
 
 # vercel
 .vercel
@@ -112,3 +116,6 @@ Screenshot */
 video-dokumentasi/node_modules/
 .DS_Store
 video-dokumentasi/node_modules/
+/dist/
+.vinext/
+.cloudflare/

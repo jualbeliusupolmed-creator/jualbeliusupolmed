@@ -7,12 +7,15 @@ perbaikan build dan kompatibilitas crypto.
 
 ## Status repository dan batas operasional
 
-- Pekerjaan dimulai dari `main`, yang saat pemeriksaan awal tertinggal dua
-  commit dari `origin/main`, dengan perubahan tracked dan untracked yang sudah
-  ada. Snapshot/checkpoint awal disimpan di luar repository pada
+- Saat pemeriksaan awal, `main` lokal tertinggal dua commit dari `origin/main`
+  dan memiliki perubahan tracked/untracked. Snapshot/checkpoint awal disimpan
+  di luar repository pada
   `~/.copilot/session-state/7e51c896-01e3-416a-bfb3-aa92497ab596/checkpoint-2026-11-28/`.
-- LINUSKU dipulihkan dengan port selektif dari upstream; tidak ada merge,
-  rebase, reset, clean, staging, commit, push, atau deployment.
+- Perubahan disimpan pada branch
+  `feat/kampuskita-redesign-restoration-20261128` dengan commit fitur
+  `98d9b4de`. `origin/main` kemudian diintegrasikan ke branch fitur; 21 konflik
+  diselesaikan tanpa mengubah branch `main`. Integrasi belum dipush dan belum
+  dibuat PR.
 - Dua migration LINUSKU ditambahkan sebagai file sumber saja:
   `supabase/migrations/20261124125504_linusku_driver_access_requests.sql` dan
   `supabase/migrations/20261124133735_restrict_linusku_setting_rpc.sql`.
@@ -76,21 +79,26 @@ File implementasi utama:
 - `cryptoCompat` dan token admin/Google-link memakai Web Crypto async untuk
   kompatibilitas Workers tanpa `nodejs_compat`. Uji interoperabilitas
   memastikan AES-GCM dan HMAC tetap kompatibel dengan format Node crypto lama.
-- `npm run lint` — lulus sebelum perbaikan dua blocker terakhir; ESLint terarah
-  untuk kedua file blocker — lulus.
-- `npm test -- --run` — **408 tes lulus, 0 gagal**.
+- `npm run lint` — lulus setelah integrasi upstream dan perbaikan regresi.
+- `npm test -- --run` — **496 tes lulus, 0 gagal** di 102 file tes.
 - Tes terarah token admin, Google-link, dan route start — **13 lulus**.
 - `npx tsc --noEmit` — lulus; Next.js juga menyelesaikan pemeriksaan tipe pada
   build final.
 - `npm run build` — **lulus**: kompilasi sukses, pemeriksaan tipe selesai,
   64/64 halaman statis terbangun.
+- `npm run cloudflare:build` — **lulus**; OpenNext menghasilkan build Worker.
 - Build memakai placeholder dan endpoint Supabase loopback; `.env.local` dan
   `.env.production.local` dipulihkan setelah build. Tidak ada data produksi,
   migrasi, deploy, atau request tulis yang digunakan.
 - Karena backend sengaja tidak tersedia pada build terisolasi, beberapa
   `getSettings` mencatat fallback/cache saat Next melakukan prerender. Build
   tetap sukses; ini bukan validasi koneksi backend produksi.
-- `git diff --check` dan `npm run check:meta-docs` — lulus.
+- Tes marketplace setelah memperbaiki hitungan tayangan/riwayat produk dan
+  state aksesibel Open PO — **6 lulus**.
+- `git diff --check` — lulus sebelum build; perlu dijalankan lagi setelah
+  perubahan dokumentasi/verifikasi terakhir.
+- Worker dev tetap menjalankan snapshot `origin/main` commit `9703ae00`;
+  build branch fitur ini tidak melakukan deployment.
 - Tidak ada screenshot visual baru. Perubahan lanjutan pada UI hanya import
   helper class; dokumen legal hanya menerima koreksi sintaks. Tes dan build
   mencakup halaman LINUSKU, Open PO, Mading, WTB, marketplace, dashboard, dan
