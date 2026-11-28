@@ -68,41 +68,47 @@ const faqJsonLd = {
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: skripJsonLd(faqJsonLd) }}
-      />
-      <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Pertanyaan Umum (FAQ)</h1>
-        <p className="mt-2 text-sm text-gray-500">Temukan jawaban untuk pertanyaan yang paling sering diajukan</p>
-      </div>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14">
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: skripJsonLd(faqJsonLd) }}
+        />
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#e6f8e8] dark:bg-[#134e35]/40 px-3 py-1 text-xs font-bold text-[#134e35] dark:text-[#ceeb7a] mb-3">
+            <span className="material-symbols-outlined text-[15px]">help</span>
+            <span>Pusat Bantuan</span>
+          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#101f15] dark:text-[#ecfeee] sm:text-4xl">Pertanyaan Umum (FAQ)</h1>
+          <p className="mt-2 text-sm text-[#404943] dark:text-[#9db8a2]">Temukan jawaban untuk pertanyaan yang paling sering diajukan</p>
+        </div>
 
-      <div className="mt-8 space-y-4">
-        {faqs.map((faq, index) => (
-          <details key={index} className="group border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg">
-            <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-900 dark:text-slate-100">
-              {faq.q}
-              <span className="ml-4 flex-shrink-0 transition-transform duration-200 motion-reduce:transition-none group-open:-rotate-180">
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </span>
-            </summary>
-            <div className="px-4 pb-4 text-sm text-gray-600 dark:text-slate-400">
-              <p>{faq.a}</p>
-            </div>
-          </details>
-        ))}
-      </div>
+        <div className="mt-8 space-y-3">
+          {faqs.map((faq, index) => (
+            <details key={index} className="group border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] rounded-3xl shadow-[0_4px_20px_-4px_rgba(19,78,53,0.05)] overflow-hidden">
+              <summary className="flex cursor-pointer items-center justify-between p-5 font-bold text-sm sm:text-base text-[#101f15] dark:text-[#ecfeee] list-none">
+                <span>{faq.q}</span>
+                <span className="ml-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e6f8e8] dark:bg-white/5 text-[#003622] dark:text-[#ceeb7a] transition-transform duration-200 motion-reduce:transition-none group-open:-rotate-180">
+                  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-relaxed text-[#404943] dark:text-[#9db8a2]">
+                <p>{faq.a}</p>
+              </div>
+            </details>
+          ))}
+        </div>
 
-      <div className="mt-10 flex flex-wrap justify-center gap-3 text-center">
-        <Link href="/jual" className="btn-primary px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
-          Jual Barang Sekarang
-        </Link>
-        <Link href="/" className="btn-outline px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
-          Kembali ke Beranda
-        </Link>
+        <div className="mt-10 flex flex-wrap justify-center gap-3 text-center">
+          <Link href="/jual" className="rounded-full bg-[#003622] hover:bg-[#134e35] text-white font-bold text-sm px-6 py-3 transition-colors shadow-xs">
+            Jual Barang Sekarang
+          </Link>
+          <Link href="/" className="rounded-full border border-[#e2f0e6] dark:border-white/15 bg-white dark:bg-[#112218] text-[#003622] dark:text-[#ecfeee] hover:bg-[#e6f8e8] font-bold text-sm px-6 py-3 transition-colors">
+            Kembali ke Beranda
+          </Link>
+        </div>
       </div>
     </div>
   );

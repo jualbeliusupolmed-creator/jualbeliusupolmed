@@ -1,1373 +1,546 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Icon } from "@/components/Icons";
-import { toast } from "sonner";
-import PullToRefresh from "@/components/PullToRefresh";
-import TagProdukPicker from "@/components/TagProdukPicker";
-import ProductPeekSheet from "@/components/ProductPeekSheet";
-import { rupiah } from "@/lib/fees";
-import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
-import MenfessReplySection from "@/components/mading/MenfessReplySection";
 import { cn } from "@/lib/utils";
-import { compressImage } from "@/lib/image";
+import { appendUniqueMadingPosts } from "@/lib/madingPagination";
 
-export default function MadingClient({ initialPosts = [] }) {
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'organisasi' | 'blog'
+const CATEGORIES = ["Semua", "Kampus", "Prestasi", "Kegiatan", "Organisasi", "Pengumuman", "Tips & Edukasi"];
 
-  const [selectedFaculty, setSelectedFaculty] = useState("Semua");
-  const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
-  const [posts, setPosts] = useState(initialPosts);
-  const [loading, setLoading] = useState(initialPosts.length === 0);
+function formatDate(d) {
+  if (!d) return "Baru saja";
+  try {
+    return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "Baru saja";
+  }
+}
+
+function getPostHref(post) {
+  if (post._kind === "blog" && post.slug) return `/blog/${post.slug}`;
+  return `/mading/${post.id}`;
+}
+
+function getPostBadge(post) {
+  if (post._kind === "blog") return "Berita";
+  if (post.type === "info") return "Pengumuman";
+  if (post.type === "event") return "Kegiatan";
+  return "Menfess";
+}
+
+export default function MadingClient({
+  initialPosts = [],
+  initialHasMoreMading = false,
+  initialHasMoreBlogs = false,
+  initialError = "",
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  const [sortBy, setSortBy] = useState("newest");
+  const [visibleCount, setVisibleCount] = useState(12);
+  const [allPosts, setAllPosts] = useState(initialPosts);
+  const [madingPage, setMadingPage] = useState(1);
+  const [blogPage, setBlogPage] = useState(1);
+  const [hasMoreMading, setHasMoreMading] = useState(initialHasMoreMading);
+  const [hasMoreBlogs, setHasMoreBlogs] = useState(initialHasMoreBlogs);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  // Produk yang ditandai penulis di form, dan produk yang sedang diintip
-  // pembaca dari dalam feed.
-  const [tagProduk, setTagProduk] = useState(null);
-  const [intipProduk, setIntipProduk] = useState(null);
-  // Post yang sedang dibuka modal unduh gambar-nya.
-  const [unduhPost, setUnduhPost] = useState(null);
-  const [campuses, setCampuses] = useState([]);
-  const [provinces, setProvinces] = useState([]);
-  const [scopeMode, setScopeMode] = useState("daerah"); // 'daerah' | 'nasional'
-  const [selectedProvince, setSelectedProvince] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("preferred_province") || "sumatera-utara";
-    }
-    return "sumatera-utara";
-  });
+  const [loadMoreError, setLoadMoreError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/kampus", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
-        if (Array.isArray(data?.provinces)) setProvinces(data.provinces);
-      })
-      .catch(() => {});
-
-    const onCampusSync = (e) => {
-      if (e.detail?.province) {
-        setSelectedProvince(e.detail.province);
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    let list = allPosts.filter((p) => {
+      if (q) {
+        const text = `${p.title || ""} ${p.content || ""} ${p.sender_name || ""} ${p.author_name || ""} ${p.faculty || ""}`.toLowerCase();
+        if (!text.includes(q)) return false;
       }
-      if (e.detail?.campus) {
-        setSelectedFaculty(e.detail.campus);
+      if (selectedCategory !== "Semua") {
+        const badge = getPostBadge(p).toLowerCase();
+        const cat = selectedCategory.toLowerCase();
+        const hay = `${p.title || ""} ${p.content || ""} ${badge}`.toLowerCase();
+        if (!hay.includes(cat)) return false;
       }
-    };
-    window.addEventListener("campus:change", onCampusSync);
-    return () => window.removeEventListener("campus:change", onCampusSync);
-  }, []);
+      return true;
+    });
 
-  const availableCampuses = useMemo(() => {
-    if (scopeMode === "nasional") {
-      return campuses;
+    if (sortBy === "popular") {
+      list = [...list].sort((a, b) => Number(b.views_count || b.views || 0) - Number(a.views_count || a.views || 0));
     }
-    const filtered = campuses.filter(
-      (c) => (c.provinceId || "sumatera-utara") === selectedProvince
-    );
-    return filtered.length > 0 ? filtered : campuses;
-  }, [campuses, scopeMode, selectedProvince]);
+    return list;
+  }, [allPosts, searchQuery, selectedCategory, sortBy]);
 
-  // Dibuka dari tombol "Buat" atau "Promosikan di Menfess": /mading?tulis=1&tag=<id>
-  useEffect(() => {
+  const featuredPost = filtered[0] || null;
+  const latestPosts = filtered.slice(1, 1 + visibleCount);
+  const popularPosts = useMemo(
+    () =>
+      [...allPosts]
+        .sort((a, b) => Number(b.views_count || b.views || 0) - Number(a.views_count || a.views || 0))
+        .slice(0, 4),
+    [allPosts]
+  );
+  const hasMoreData = hasMoreMading || hasMoreBlogs;
+  const canRevealMore = filtered.length > visibleCount + 1;
+
+  async function loadNextPage() {
+    if (loadingMore || !hasMoreData) return;
+    setLoadingMore(true);
+    setLoadMoreError("");
     try {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab");
-      const tagId = params.get("tag");
-
-      if (["info", "menfess", "blog", "organisasi"].includes(tab)) setActiveTab(tab);
-      if (params.get("buat") === "1" || params.get("tulis") === "1") setShowModal(true);
-
-      if (tagId) {
-        setShowModal(true);
-        fetch(`/api/listings/browse?q=${encodeURIComponent(tagId)}`)
-          .then((r) => r.json())
-          .then((d) => {
-            if (d?.listings?.length > 0) {
-              const matched = d.listings.find((l) => l.id === tagId) || d.listings[0];
-              setTagProduk(matched);
-            }
-          })
-          .catch(() => {});
+      const requests = [];
+      if (hasMoreMading) {
+        const nextPage = madingPage + 1;
+        requests.push(
+          fetch(`/api/mading?page=${nextPage}&limit=20`, { cache: "no-store" })
+            .then(async (response) => {
+              const result = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(result.error || "Postingan Mading berikutnya belum dapat dimuat.");
+              if (!Array.isArray(result.posts)) throw new Error("Respons Mading tidak valid.");
+              return { kind: "mading", result, nextPage };
+            })
+        );
       }
-    } catch {
-      // Query parameters are a progressive enhancement only.
-    }
-  }, []);
-
-  const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
-  const [commentsMap, setCommentsMap] = useState({});
-  const [newCommentText, setNewCommentText] = useState("");
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [submittingComment, setSubmittingComment] = useState(false);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    type: "menfess",
-    sender_name: "Anonim",
-    faculty: "Bebas",
-    title: "",
-    content: "",
-    is_anon: true,
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [uploadStage, setUploadStage] = useState("");
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
-  const [zoomImage, setZoomImage] = useState(null);
-
-  // Get or create unique user ID for liking
-  const [userId, setUserId] = useState("");
-  const viewedPostIds = useRef(new Set());
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      let uid = localStorage.getItem("mading_user_id");
-      if (!uid) {
-        uid = "usr_" + Math.random().toString(36).substring(2, 12);
-        localStorage.setItem("mading_user_id", uid);
-      }
-      setUserId(uid);
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setZoomImage(null);
-        setShowModal(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const trackEngagement = useCallback(async (postId, action) => {
-    if (!userId || !postId) return;
-    try {
-      const res = await fetch(`/api/mading/${postId}/engagement`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, clientId: userId }),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setPosts((current) => current.map((post) => (
-        post.id === postId
-          ? { ...post, views_count: data.viewsCount, shares_count: data.sharesCount }
-          : post
-      )));
-    } catch {
-      // Statistik tidak boleh mengganggu pengalaman membaca feed.
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (!userId || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const postId = entry.target.dataset.madingPostId;
-        if (!entry.isIntersecting || !postId || viewedPostIds.current.has(postId)) return;
-        viewedPostIds.current.add(postId);
-        trackEngagement(postId, "view");
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.1 });
-    document.querySelectorAll("[data-mading-post-id]").forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, [posts, userId, trackEngagement]);
-
-  const PAGE_LIMIT = 15;
-
-  const fetchPosts = useCallback(async (page = 1, append = false) => {
-    if (page === 1) setLoading(true);
-    else setLoadingMore(true);
-    try {
-      const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("limit", String(PAGE_LIMIT));
-      if (activeTab !== "all" && activeTab !== "blog") params.set("type", activeTab);
-      if (selectedFaculty !== "Semua") {
-        params.set("faculty", selectedFaculty);
-      } else if (scopeMode === "daerah" && selectedProvince) {
-        params.set("province", selectedProvince);
-      } else if (scopeMode === "nasional") {
-        params.set("province", "nasional");
+      if (hasMoreBlogs) {
+        const nextPage = blogPage + 1;
+        requests.push(
+          fetch(`/api/blog?page=${nextPage}&limit=5`, { cache: "no-store" })
+            .then(async (response) => {
+              const result = await response.json().catch(() => ({}));
+              if (!response.ok || result.success !== true) {
+                throw new Error(result.error || "Artikel berikutnya belum dapat dimuat.");
+              }
+              if (!Array.isArray(result.blogs)) throw new Error("Respons artikel tidak valid.");
+              return { kind: "blog", result, nextPage };
+            })
+        );
       }
 
-      if (activeTab === "blog") {
-        const res = await fetch(`/api/blog`);
-        const data = await res.json();
-        setPosts((data.blogs || []).map((b) => ({ ...b, _kind: "blog" })));
-        setHasMore(false);
-      } else if (activeTab === "all") {
-        const [resMading, resBlog] = await Promise.all([
-          fetch(`/api/mading?${params.toString()}`),
-          page === 1 ? fetch(`/api/blog`) : Promise.resolve(null),
-        ]);
-        const dataMading = await resMading.json();
-        const dataBlog = resBlog ? await resBlog.json() : { blogs: [] };
-
-        const madingPosts = (dataMading.posts || []).map((p) => ({ ...p, _kind: "mading" }));
-        const blogPosts = page === 1
-          ? (dataBlog.blogs || []).map((b) => ({ ...b, _kind: "blog" }))
-          : [];
-
-        const combined = [...madingPosts, ...blogPosts]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        if (append) {
-          setPosts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            return [...prev, ...combined.filter((p) => !existingIds.has(p.id))];
-          });
+      const pages = await Promise.all(requests);
+      const newPosts = [];
+      for (const page of pages) {
+        if (page.kind === "mading") {
+          newPosts.push(...page.result.posts.map((post) => ({ ...post, _kind: "mading" })));
+          setMadingPage(page.nextPage);
+          setHasMoreMading(Number(page.result.totalPages) > page.nextPage);
         } else {
-          setPosts(combined);
+          newPosts.push(
+            ...page.result.blogs.map((blog) => ({
+              ...blog,
+              content: blog.content || blog.excerpt || blog.content_markdown || "",
+              author_name: blog.author_name || blog.author || "Tim Redaksi",
+              _kind: "blog",
+            }))
+          );
+          setBlogPage(page.nextPage);
+          setHasMoreBlogs(Number(page.result.totalPages) > page.nextPage);
         }
-        setHasMore(dataMading.page < dataMading.totalPages);
-      } else {
-        const res = await fetch(`/api/mading?${params.toString()}`);
-        const data = await res.json();
-        const newPosts = (data.posts || []).map((p) => ({ ...p, _kind: "mading" }));
-        if (append) {
-          setPosts((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            return [...prev, ...newPosts.filter((p) => !existingIds.has(p.id))];
-          });
-        } else {
-          setPosts(newPosts);
-        }
-        setHasMore(data.page < data.totalPages);
       }
-    } catch {
-      toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat feed.");
+
+      setAllPosts((current) => appendUniqueMadingPosts(current, newPosts));
+    } catch (cause) {
+      setLoadMoreError(cause instanceof Error ? cause.message : "Konten berikutnya belum dapat dimuat.");
     } finally {
-      setLoading(false);
       setLoadingMore(false);
     }
-  }, [activeTab, selectedFaculty, scopeMode, selectedProvince]);
+  }
 
-  useEffect(() => {
-    setCurrentPage(1);
-    setHasMore(true);
-    fetchPosts(1, false);
-  }, [fetchPosts]);
-
-  const handleLoadMore = useCallback(() => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    fetchPosts(nextPage, true);
-  }, [currentPage, fetchPosts]);
-
-  // Handle Report
-  const handleReport = async (postId) => {
-    if (!userId) return;
-    if (!confirm("Laporkan postingan ini sebagai tidak pantas?")) return;
-    try {
-      const res = await fetch(`/api/mading/${postId}/report`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_identifier: userId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(data.pesan || "Laporan diterima.");
-        if (data.disembunyikan) {
-          setPosts((prev) => prev.filter((p) => p.id !== postId));
-        }
-      } else {
-        toast.error(data.error || "Gagal mengirim laporan");
-      }
-    } catch {
-      toast.error("Gagal mengirim laporan");
-    }
-  };
-
-  // Handle Like
-  const handleLike = async (postId) => {
-    if (!userId) return;
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const isLiked = p._isLiked;
-          return {
-            ...p,
-            _isLiked: !isLiked,
-            likes_count: isLiked ? Math.max(0, p.likes_count - 1) : p.likes_count + 1,
-          };
-        }
-        return p;
-      })
-    );
-
-    try {
-      const res = await fetch(`/api/mading/${postId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_identifier: userId }),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        fetchPosts();
-      }
-    } catch {
-      fetchPosts();
-    }
-  };
-
-  // Handle Load Comments
-  const toggleComments = async (postId) => {
-    if (activeCommentsPostId === postId) {
-      setActiveCommentsPostId(null);
-      setReplyingTo(null);
+  function showMore() {
+    if (canRevealMore) {
+      setVisibleCount((count) => count + 10);
       return;
     }
-
-    setActiveCommentsPostId(postId);
-    if (!commentsMap[postId]) {
-      try {
-        const res = await fetch(`/api/mading/${postId}/comments`);
-        const data = await res.json();
-        setCommentsMap((prev) => ({ ...prev, [postId]: data.comments || [] }));
-      } catch {
-        toast.error("Gagal memuat komentar.");
-      }
-    }
-  };
-
-  const handleSendComment = async (postId) => {
-    if (!newCommentText.trim()) return;
-    setSubmittingComment(true);
-
-    try {
-      const res = await fetch(`/api/mading/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender_name: "Mahasiswa",
-          faculty: "Bebas",
-          content: newCommentText.trim(),
-          parent_id: replyingTo?.postId === postId ? replyingTo.commentId : null,
-        }),
-      });
-      const data = await res.json();
-
-      if (data.success && data.comment) {
-        setCommentsMap((prev) => ({
-          ...prev,
-          [postId]: [...(prev[postId] || []), data.comment],
-        }));
-        setNewCommentText("");
-        setReplyingTo(null);
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p))
-        );
-        toast.success("Komentar terkirim!");
-      } else {
-        toast.error(data.error || "Gagal mengirim komentar.");
-      }
-    } catch {
-      toast.error("Terjadi gangguan saat mengirim komentar.");
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
-  // Handle Share to WhatsApp & Social Media
-  const handleShare = async (post) => {
-    trackEngagement(post.id, "share");
-    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading/${post.id}` : "";
-    const cleanSnippet = (post.content || "").trim().slice(0, 120);
-    const titleText = post.title ? `*${post.title}*\n` : "";
-    const shareText = ` *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n Baca selengkapnya & beri tanggapan:\n${shareUrl}`;
-
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: post.title || "Mading & Menfess Kampus",
-          text: shareText,
-          url: shareUrl,
-        });
-        setPosts((prev) =>
-          prev.map((p) => (p.id === post.id ? { ...p, shares_count: (p.shares_count || 0) + 1 } : p))
-        );
-        toast.success("Berhasil dibagikan!");
-        return;
-      } catch (e) {
-        if (e.name === "AbortError") return;
-      }
-    }
-
-    // Fallback: Copy to clipboard & open WhatsApp
-    try {
-      await navigator.clipboard.writeText(shareText);
-      toast.success("Tautan & ringkasan disalin! Membuka WhatsApp…");
-    } catch {}
-
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-    window.open(waUrl, "_blank");
-
-    setPosts((prev) =>
-      prev.map((p) => (p.id === post.id ? { ...p, shares_count: (p.shares_count || 0) + 1 } : p))
-    );
-  };
-
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    if (!formData.content.trim()) {
-      toast.error("Isi postingan tidak boleh kosong!");
-      return;
-    }
-
-    setSubmitting(true);
-    setUploadStage(imageFile ? "uploading_photo" : "publishing");
-    try {
-      let imageUrl = null;
-      if (imageFile) {
-        setUploadStage("uploading_photo");
-        const uploadForm = new FormData();
-        uploadForm.append("file", imageFile);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadForm });
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok || !uploadData.url) {
-          throw new Error(uploadData.error || "Gagal mengunggah foto.");
-        }
-        imageUrl = uploadData.url;
-      }
-
-      setUploadStage("publishing");
-      const res = await fetch("/api/mading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: formData.type,
-          sender_name: formData.is_anon ? "Anonim" : formData.sender_name || "Mahasiswa",
-          faculty: formData.faculty,
-          title: formData.type === "info" ? formData.title : null,
-          content: formData.content,
-          image_url: imageUrl,
-          listing_id: tagProduk?.id || null,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        toast.error(data.error || "Masuk dulu ya untuk memposting ke Menfess & Info.");
-        window.location.href = "/profil";
-        return;
-      }
-      if (data.success) {
-        toast.success("Postingan berhasil diterbitkan!");
-        setShowModal(false);
-        setFormData({
-          type: "menfess",
-          sender_name: "Anonim",
-          faculty: "Bebas",
-          title: "",
-          content: "",
-          is_anon: true,
-        });
-        setImageFile(null);
-        setImagePreview("");
-        setTagProduk(null);
-        fetchPosts(1, false);
-      } else {
-        toast.error(data.error || "Gagal menerbitkan postingan.");
-      }
-    } catch (err) {
-      toast.error(err?.message && err.message !== "Failed to fetch" ? err.message : "Terjadi gangguan jaringan. Coba beberapa saat lagi.");
-    } finally {
-      setSubmitting(false);
-      setUploadStage("");
-    }
-  };
-
-  // Relative Time Formatter
-  const timeAgo = (dateStr) => {
-    if (!dateStr) return "Baru saja";
-    const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
-    if (diff < 60) return "Baru saja";
-    if (diff < 3600) return `${Math.floor(diff / 60)} mnt lalu`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
-    return `${Math.floor(diff / 86400)} hari lalu`;
-  };
+    void loadNextPage();
+  }
 
   return (
-    <PullToRefresh onRefresh={fetchPosts}>
-      <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-[calc(6.5rem+env(safe-area-inset-bottom))] font-sans selection:bg-primary/20">
-        
-        {/* STICKY HEADER */}
-        <div className="sticky top-0 z-20 bg-white/85 dark:bg-[#121215]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08]">
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[#1d1d1f] dark:text-white flex items-center gap-2">
-                <span>Mading</span>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300">
-                  Kampus
-                </span>
+    <div className="min-h-screen bg-[#f4faf5] lg:bg-[#ecfeee] dark:bg-[#0a1710] text-[#101f15] dark:text-[#ecfeee]">
+      {initialError && (
+        <p role="alert" className="mx-auto max-w-7xl px-4 sm:px-6 pt-3 text-xs text-rose-700">
+          {initialError}
+        </p>
+      )}
+      {!allPosts.length && !initialError && (
+        <p className="mx-auto max-w-7xl px-4 sm:px-6 pt-3 text-xs text-[#707972]">
+          Belum ada konten Mading atau artikel yang dipublikasikan.
+        </p>
+      )}
+      {/* ==================== MOBILE VIEW (< lg) — 100% STITCH berita_kampus_kita_mobile ==================== */}
+      <div className="lg:hidden max-w-md mx-auto pb-28">
+        {/* Page Header Title & Campus Illustration */}
+        <section className="px-5 pt-4 pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="max-w-[65%]">
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-tight">
+                Berita <span className="text-[#134e35] dark:text-[#bef264]">Kampus Kita</span>
               </h1>
-              <p className="text-[11px] sm:text-xs text-[#6e6e73] dark:text-slate-400 mt-0.5">
-                Menfess, curhat, kabar, dan cerita mahasiswa
+              <p className="text-xs text-gray-500 dark:text-[#99d3b2] mt-1.5 leading-relaxed">
+                Informasi, kegiatan, prestasi, dan kabar terbaru seputar kampus.
               </p>
             </div>
-
-            {activeTab !== "blog" && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-1.5 bg-primary hover:bg-primary/95 text-white px-3.5 py-2 rounded-2xl text-xs font-bold shadow-sm shadow-primary/25 active:scale-95 transition-all shrink-0"
-              >
-                <Icon.PlusCircle className="w-4 h-4" />
-                <span>Tulis</span>
-              </button>
-            )}
+            <Link
+              href="/dashboard?tab=blog"
+              className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full bg-[#134e35] text-[#bef264] text-xs font-bold shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit_square</span>
+              <span>Tulis</span>
+            </Link>
           </div>
 
-          {/* MAIN TABS */}
-          <div className="max-w-2xl mx-auto px-4 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5 pt-0.5">
-            {[
-              { id: "all", label: "Semua", icon: <Icon.Sparkles className="w-3.5 h-3.5 shrink-0" /> },
-              { id: "menfess", label: "Menfess", icon: <Icon.Mail className="w-3.5 h-3.5 shrink-0" /> },
-              { id: "info", label: "Info Kampus", icon: <Icon.Megaphone className="w-3.5 h-3.5 shrink-0" /> },
-              { id: "organisasi", label: "Organisasi", icon: <Icon.Landmark className="w-3.5 h-3.5 shrink-0" /> },
-              { id: "blog", label: "Blog", icon: <Icon.Edit2 className="w-3.5 h-3.5 shrink-0" /> },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 active:scale-95 ${
-                  activeTab === tab.id
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100/80 hover:bg-slate-200/80 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
-                }`}
+          <div className="mt-3 relative">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
+              search
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari berita, menfess, atau topik..."
+              className="w-full rounded-2xl bg-white dark:bg-[#112218] pl-10 pr-4 py-2.5 text-xs border border-[#134e35]/10 outline-none focus:ring-2 focus:ring-[#134e35]"
+            />
+          </div>
+        </section>
+
+        {/* Horizontal Category Chips */}
+        <section className="mt-2">
+          <div className="flex items-center space-x-2 overflow-x-auto px-5 py-2 no-scrollbar">
+            {CATEGORIES.map((cat) => {
+              const active = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-xs flex-shrink-0 active:scale-95 transition-all",
+                    active
+                      ? "font-semibold bg-[#134e35] text-white shadow-sm"
+                      : "font-medium text-gray-700 dark:text-[#99d3b2] bg-white dark:bg-[#112218] border border-gray-200 dark:border-white/10"
+                  )}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Hero Featured News Card */}
+        {featuredPost && (
+          <section className="px-5 mt-3">
+            <Link href={getPostHref(featuredPost)} className="block relative h-56 rounded-2xl overflow-hidden shadow-soft group">
+              {featuredPost.image_url ? (
+                <img
+                  src={featuredPost.image_url}
+                  alt={featuredPost.title || "Berita Kampus"}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#134e35] to-[#003622]" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+              <div className="absolute top-3.5 left-3.5">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#bef264] text-[#134e35]">
+                  {getPostBadge(featuredPost)}
+                </span>
+              </div>
+              <div className="absolute bottom-3.5 left-3.5 right-3.5 text-white">
+                <h2 className="text-base font-bold leading-snug line-clamp-2">
+                  {featuredPost.title || featuredPost.content?.slice(0, 80)}
+                </h2>
+                <div className="flex items-center space-x-4 mt-2 text-[11px] text-gray-200">
+                  <span>{formatDate(featuredPost.created_at)}</span>
+                  <span>{featuredPost.views_count || featuredPost.views || 0} dibaca</span>
+                </div>
+              </div>
+            </Link>
+          </section>
+        )}
+
+        {/* Berita Terbaru List */}
+        <section className="px-5 mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Berita Terbaru</h2>
+            <button
+              type="button"
+              onClick={() => setSortBy((s) => (s === "newest" ? "popular" : "newest"))}
+              className="flex items-center space-x-1 text-xs text-gray-500 font-medium hover:text-[#134e35]"
+            >
+              <span>
+                Urutkan: <strong className="text-gray-800 dark:text-white font-semibold">{sortBy === "newest" ? "Terbaru" : "Populer"}</strong>
+              </span>
+              <span className="material-symbols-outlined text-[16px]">expand_more</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {latestPosts.map((post) => (
+              <Link
+                key={`${post._kind}-${post.id}`}
+                href={getPostHref(post)}
+                className="p-2.5 bg-white dark:bg-[#112218] rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm flex space-x-3 items-center group"
               >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
+                <div className="relative w-28 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-[#e6f8e8]">
+                  {post.image_url ? (
+                    <img src={post.image_url} alt={post.title || "Berita"} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#134e35]">
+                      <span className="material-symbols-outlined text-[24px]">article</span>
+                    </div>
+                  )}
+                  <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#bef264] text-[#134e35] text-[9px] font-bold">
+                    {getPostBadge(post)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-[13px] font-bold text-gray-900 dark:text-white line-clamp-2 leading-snug">
+                    {post.title || post.content?.slice(0, 70)}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-1.5 text-[10.5px] text-gray-500 dark:text-[#99d3b2]">
+                    <span>{formatDate(post.created_at)}</span>
+                    <span>• {post.views_count || post.views || 0}</span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
 
-
-        </div>
-
-        <div className="max-w-2xl mx-auto px-4 py-4 space-y-3.5">
-          {/* CAMPUS & QUICK CATEGORY FILTER PILLS (Hide on Blog tab) */}
-          {activeTab !== "blog" && (
-            <div className="space-y-2.5">
-              {/* Lingkup: Nasional vs Per Daerah */}
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 p-1.5 border border-slate-200/60 dark:border-white/5">
-                <div className="inline-flex items-center gap-1 bg-white/80 dark:bg-slate-900/80 p-0.5 rounded-xl border border-slate-200/50 dark:border-white/5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScopeMode("nasional");
-                      setSelectedFaculty("Semua");
-                    }}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95",
-                      scopeMode === "nasional"
-                        ? "bg-emerald-800 text-white shadow-xs dark:bg-emerald-700"
-                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                    )}
-                  >
-                    <span>🌐</span>
-                    <span>Nasional</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScopeMode("daerah");
-                      setSelectedFaculty("Semua");
-                    }}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95",
-                      scopeMode === "daerah"
-                        ? "bg-emerald-800 text-white shadow-xs dark:bg-emerald-700"
-                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                    )}
-                  >
-                    <span>📍</span>
-                    <span>Per Daerah</span>
-                  </button>
-                </div>
-
-                {scopeMode === "daerah" ? (
-                  <div className="flex items-center gap-1.5 pr-1">
-                    <label htmlFor="mading-prov-select" className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                      Daerah:
-                    </label>
-                    <select
-                      id="mading-prov-select"
-                      aria-label="Pilih daerah provinsi"
-                      value={selectedProvince}
-                      onChange={(e) => {
-                        const newProv = e.target.value;
-                        setSelectedProvince(newProv);
-                        setSelectedFaculty("Semua");
-                        try { localStorage.setItem("preferred_province", newProv); } catch {}
-                      }}
-                      className="text-xs font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 rounded-xl px-2.5 py-1 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs"
-                    >
-                      {provinces.length > 0 ? (
-                        provinces.map((prov) => (
-                          <option key={prov.id} value={prov.id}>
-                            {prov.name}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="sumatera-utara">Sumatera Utara</option>
-                      )}
-                    </select>
-                  </div>
-                ) : (
-                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 pr-2">
-                    Menfess dari seluruh kampus se-Indonesia
-                  </span>
-                )}
-              </div>
-
-              {/* Campus Selector & Sub-Filters */}
-              <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
-                {/* Campus Selector */}
-                <div className="flex items-center gap-1 shrink-0">
-                  {["Semua", ...availableCampuses.map((campus) => campus.shortName), "Bebas"].map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setSelectedFaculty(f)}
-                      className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
-                        selectedFaculty === f
-                          ? "bg-primary text-white shadow-xs"
-                          : "bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-slate-400 border border-black/[0.06] dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Sub-Filters */}
-                <div className="flex items-center gap-1 shrink-0">
-                  {[
-                    { id: "all", label: "Semua" },
-                    { id: "popular", label: "Populer" },
-                    { id: "photo", label: "Foto" },
-                  ].map((st) => (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setFilterType(st.id)}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all active:scale-95 ${
-                        filterType === st.id
-                          ? "bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 border border-primary/20"
-                          : "text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-white/70 dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.04]"
-                      }`}
-                    >
-                      {st.id === "popular" ? <Icon.Flame className="h-3.5 w-3.5" /> : null}
-                      {st.id === "photo" ? <Icon.Camera className="h-3.5 w-3.5" /> : null}
-                      {st.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {(canRevealMore || hasMoreData) && (
+            <div className="mt-4 space-y-2">
+              {loadMoreError && <p role="alert" className="text-center text-xs text-rose-700">{loadMoreError}</p>}
+              <button
+                type="button"
+                onClick={showMore}
+                disabled={loadingMore}
+                className="w-full py-2.5 rounded-full bg-white border border-gray-200 text-xs font-bold text-[#134e35] flex items-center justify-center gap-1 disabled:opacity-60"
+              >
+                <span>{loadingMore ? "Memuat..." : "Lihat Berita Lainnya"}</span>
+                {!loadingMore && <span className="material-symbols-outlined text-[15px]">arrow_forward</span>}
+              </button>
             </div>
           )}
+        </section>
 
-          {/* Banner Etika & Komunitas Kampus */}
-          <div className="mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-white to-teal-50 dark:from-emerald-950/20 dark:via-slate-900/40 dark:to-teal-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-xs shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-emerald-900 dark:text-emerald-300 mb-1">
-              <span>🛡️ Aturan Komunitas Menfess</span>
+        {/* Berita Populer */}
+        <section className="px-5 mt-6">
+          <div className="bg-[#e6f8e8] dark:bg-[#183022] rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-orange-500 text-[18px]">local_fire_department</span>
+              <h3 className="text-sm font-bold text-[#134e35] dark:text-white">Berita Populer</h3>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11.5px]">
-              Dilarang menyebut seseorang lewat inisial, prodi, dan angkatan yang menyasar individu, menyebarkan nomor kontak/NIM, atau merundung. Menfess yang melanggar privasi akan otomatis ditolak dan IP diblokir.
-            </p>
-          </div>
-
-          {/* FEED LIST */}
-          {loading ? (
-            <div className="space-y-3 py-2">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="bg-white dark:bg-[#151518] p-5 rounded-3xl border border-black/[0.06] dark:border-white/[0.08] animate-pulse space-y-3 shadow-xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-1.5 flex-1">
-                      <div className="h-3 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
-                      <div className="h-2 w-16 bg-slate-100 dark:bg-slate-800/60 rounded" />
-                    </div>
+            <div className="space-y-2.5">
+              {popularPosts.slice(0, 3).map((post, i) => (
+                <Link
+                  key={`pop-${post.id}`}
+                  href={getPostHref(post)}
+                  className="bg-white dark:bg-[#112218] rounded-xl p-2.5 flex items-center gap-3 shadow-xs"
+                >
+                  <span className="w-6 h-6 rounded-full bg-[#bef264] text-[#134e35] text-xs font-extrabold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[#101f15] dark:text-white truncate">
+                      {post.title || post.content?.slice(0, 60)}
+                    </p>
+                    <p className="text-[10px] text-slate-500">{post.views_count || post.views || 0} dibaca</p>
                   </div>
-                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded" />
-                  <div className="h-4 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
-                </div>
+                </Link>
               ))}
             </div>
-          ) : posts.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-white dark:bg-[#151518] rounded-3xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="w-7 h-7 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </div>
-              <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-base">Belum Ada Menfess di Sini</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
-                Jadilah orang pertama yang mengirim menfess atau cerita kampus!
+          </div>
+        </section>
+      </div>
+
+      {/* ==================== DESKTOP VIEW (lg+) — 100% STITCH berita / portal_berita ==================== */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-6 py-6 pb-16 space-y-6">
+        {/* Header Card */}
+        <div className="bg-white dark:bg-[#112218] rounded-3xl p-6 shadow-stitch-card flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#e6f8e8] text-[#003622] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[26px]">newspaper</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-[#003622] dark:text-white tracking-tight">Berita Kampus</h1>
+              <p className="text-xs text-[#404943] dark:text-[#99d3b2]">
+                Informasi, kegiatan, dan cerita terbaru di lingkungan kampus.
               </p>
-              {activeTab !== "blog" && (
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="mt-4 inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-2xl text-xs font-bold hover:bg-primary/95 shadow-sm shadow-primary/20 active:scale-95 transition-all"
-                >
-                  <Icon.PlusCircle className="w-4 h-4" />
-                  <span>Tulis Sekarang</span>
-                </button>
-              )}
             </div>
-          ) : (
-            <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "space-y-3 sm:space-y-3.5"}>
-              {posts
-                .filter((item) => {
-                  if (item._kind === "blog") return true;
-                  if (filterType === "photo" && !item.image_url) return false;
-                  return true;
-                })
-                .sort((a, b) => {
-                  if (filterType === "popular") {
-                    const scoreA = (a.views_count || 0) + (a.likes_count || 0) * 3 + (a.comments_count || 0) * 2;
-                    const scoreB = (b.views_count || 0) + (b.likes_count || 0) * 3 + (b.comments_count || 0) * 2;
-                    return scoreB - scoreA;
-                  }
-                  return 0;
-                })
-                .map((item) => {
-                if (item._kind === "blog") {
-                  const excerpt = item.excerpt || item.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
-                  return (
-                    <Link
-                      key={`blog-${item.id}`}
-                      href={`/blog/${item.slug}`}
-                      className={`group flex overflow-hidden bg-white dark:bg-[#151518] border border-black/[0.06] dark:border-white/[0.08] shadow-xs rounded-3xl transition-all hover:border-black/[0.15] dark:hover:border-white/[0.18] ${activeTab === "blog" ? "flex-col" : "flex-col sm:flex-row"}`}
-                    >
-                      <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ${activeTab === "blog" ? "w-full h-40" : "w-full h-48 sm:w-48 sm:h-auto"}`}>
-                        {item.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-primary/40 dark:text-slate-700"><Icon.MessageCircle className="h-8 w-8" /></div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col p-4 sm:p-5">
-                        <p className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-emerald-400"><Icon.PencilSquare className="h-3.5 w-3.5" /> Artikel Blog</p>
-                        <h2 className="mt-1 line-clamp-2 text-sm sm:text-base font-extrabold leading-snug transition-colors group-hover:text-primary dark:text-white">
-                          {item.title}
-                        </h2>
-                        {excerpt && (
-                          <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{excerpt}</p>
-                        )}
-                        <div className="mt-auto pt-3 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-                          <span>{item.author}</span>
-                          <time dateTime={item.created_at}>
-                            {timeAgo(item.created_at)}
-                          </time>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                }
-                
-                const post = item;
-                const isLiked = post._isLiked;
-                return (
-                  <div
-                    key={`post-${post.id}`}
-                    data-mading-post-id={post.id}
-                    className="group relative bg-white dark:bg-[#151518] rounded-[24px] border border-slate-100 dark:border-white/[0.05] p-5 transition-all"
-                  >
-                    {/* Header: Sender & Badges */}
-                    <div className="flex items-start gap-3.5 mb-3">
-                      <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                      >
-                        {post.type === "info" ? <Icon.Megaphone className="h-5 w-5" /> : post.is_anon ? <Icon.User className="h-5 w-5" /> : post.sender_name?.charAt(0) || "A"}
-                      </div>
+          </div>
 
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="truncate text-[15px] font-bold text-slate-900 dark:text-white">
-                            {post.sender_name}
-                          </span>
-                          <span className="rounded-full bg-slate-100/80 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                            {post.faculty}
-                          </span>
-                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 ${
-                            post.type === "info"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
-                              : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
-                          }`}>
-                            {post.type === "info" ? <Icon.Megaphone className="h-3 w-3" /> : <Icon.Mail className="h-3 w-3" />}
-                            {post.type === "info" ? "Info Kampus" : "Menfess"}
-                          </span>
-                        </div>
-                        <Link
-                          href={`/mading/${post.id}`}
-                          className="inline-flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500 hover:text-primary transition-colors"
-                        >
-                          <span suppressHydrationWarning>{timeAgo(post.created_at)}</span> <span className="text-[10px]">↗</span>
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* Title (If info) */}
-                    {post.title && (
-                      <Link href={`/mading/${post.id}`}>
-                        <h3 className="mb-2 text-base font-bold leading-snug text-slate-900 dark:text-white hover:text-primary transition-colors">
-                          {post.title}
-                        </h3>
-                      </Link>
-                    )}
-
-                    {/* Content */}
-                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
-                      {post.content}
-                    </p>
-
-                    {/* Image Attachment (if any) */}
-                    {post.image_url && (
-                      <button
-                        type="button"
-                        onClick={() => setZoomImage({ url: post.image_url, sender: post.sender_name, title: post.title || post.content })}
-                        className="mt-3 relative block w-full rounded-2xl overflow-hidden cursor-zoom-in group border border-black/[0.06] dark:border-white/[0.08] bg-[#f5f5f7] dark:bg-slate-800/50 text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      >
-                        <img
-                          src={post.image_url}
-                          alt="Foto kiriman Menfess"
-                          className="max-h-[380px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-end justify-end p-2.5 pointer-events-none">
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                            <Icon.Search className="h-3 w-3" /> Perbesar foto
-                          </span>
-                        </div>
-                      </button>
-                    )}
-
-                    {/* Produk yang ditandai — diketuk membuka panel bawah,
-                        pembaca tidak kehilangan posisi gulirnya di feed. */}
-                    {post.listings && (
-                      <button
-                        type="button"
-                        onClick={() => setIntipProduk(post.listings)}
-                        className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.05] p-2.5 text-left transition-all active:scale-[0.99] hover:bg-primary/[0.09]"
-                      >
-                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-black/[0.06] dark:bg-white/[0.08]">
-                          {post.listings.image_url || post.listings.images?.[0] ? (
-                            <img
-                              src={post.listings.image_url || post.listings.images[0]}
-                              alt=""
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center"><Icon.Package className="h-5 w-5" /></div>
-                          )}
-                        </div>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs font-bold text-[#1d1d1f] dark:text-white">
-                            {post.listings.title}
-                          </span>
-                          <span className="block text-[11px] font-extrabold text-primary dark:text-emerald-400">
-                            {rupiah(post.listings.price)}
-                          </span>
-                        </span>
-                        <span className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white">
-                          Lihat
-                        </span>
-                      </button>
-                    )}
-
-                    {/* ACTION TOOLBAR */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-                      {/* Left: Interactive buttons */}
-                      <div className="flex items-center gap-4 sm:gap-5">
-                        {/* Like */}
-                        <button
-                          onClick={() => handleLike(post.id)}
-                          className={`flex items-center gap-1.5 transition-colors active:scale-95 ${
-                            isLiked
-                              ? "text-rose-500"
-                              : "hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
-                        >
-                          <Icon.Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500 scale-110" : ""} transition-transform`} />
-                          <span className="text-[13px]">{post.likes_count || 0}</span>
-                        </button>
-
-                        {/* Komentar / Thread */}
-                        <button
-                          onClick={() => toggleComments(post.id)}
-                          className={`flex items-center gap-1.5 transition-colors active:scale-95 ${
-                            activeCommentsPostId === post.id
-                              ? "text-blue-500"
-                              : "hover:text-slate-700 dark:hover:text-slate-300"
-                          }`}
-                        >
-                          <Icon.MessageCircle className="h-4 w-4" />
-                          <span className="text-[13px]">{post.comments_count || 0}</span>
-                        </button>
-
-                        {/* Unduh Gambar Menfess */}
-                        <button
-                          onClick={() => setUnduhPost(post)}
-                          title="Unduh gambar Instagram Menfess"
-                          className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
-                        >
-                          <Icon.Download className="h-4 w-4" />
-                          <span className="text-[13px] hidden sm:inline">Unduh</span>
-                        </button>
-
-                        {/* Bagikan */}
-                        <button
-                          onClick={() => handleShare(post)}
-                          title="Bagikan ke WhatsApp"
-                          className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
-                        >
-                          <Icon.Share className="h-4 w-4" />
-                          <span className="text-[13px] hidden sm:inline">Bagikan</span>
-                        </button>
-                      </div>
-
-                      {/* Right: Info & Report */}
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => handleReport(post.id)}
-                          title="Laporkan postingan ini"
-                          className="hover:text-amber-500 transition-colors"
-                        >
-                          <Icon.Flag className="h-4 w-4" />
-                        </button>
-
-                        <span className="flex items-center gap-1.5">
-                          <Icon.Eye className="h-4 w-4" />
-                          <span className="text-[13px]">{post.views_count || 0}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* COMMENTS THREAD ACCORDION */}
-                    {activeCommentsPostId === post.id && (
-                      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3 animate-in fade-in duration-200">
-                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                          {(commentsMap[post.id] || []).length === 0 ? (
-                            <p className="text-[11px] text-slate-400 italic text-center py-2">
-                              Belum ada komentar. Jadilah yang pertama membalas! 
-                            </p>
-                          ) : (
-                            commentsMap[post.id].filter((c) => !c.parent_id).map((c) => (
-                              <div key={c.id} className="space-y-1.5">
-                                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs">
-                                  <div className="mb-1 flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
-                                      {c.is_op && (
-                                        <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.2 text-[9px] font-black text-primary dark:bg-emerald-400/15 dark:text-emerald-300">
-                                          OP
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-[10px] text-slate-400">{timeAgo(c.created_at)}</span>
-                                  </div>
-                                  <p className="leading-relaxed text-slate-700 dark:text-slate-300">{c.content}</p>
-                                  <button
-                                    type="button"
-                                    onClick={() => setReplyingTo({ postId: post.id, commentId: c.id, sender: c.sender_name })}
-                                    className="mt-1 text-[10px] font-bold text-primary dark:text-emerald-400 hover:underline"
-                                  >
-                                    Balas
-                                  </button>
-                                </div>
-                                {commentsMap[post.id].filter((reply) => reply.parent_id === c.id).map((reply) => (
-                                  <div key={reply.id} className="ml-4 border-l-2 border-primary/20 pl-2.5">
-                                    <div className="rounded-2xl bg-primary/[0.04] dark:bg-primary/10 p-2.5 text-xs">
-                                      <div className="mb-1 flex items-center justify-between">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="font-bold text-slate-800 dark:text-slate-200">{reply.sender_name}</span>
-                                          {reply.is_op && <span className="text-[9px] font-black text-primary dark:text-emerald-300">OP</span>}
-                                        </div>
-                                        <span className="text-[10px] text-slate-400">{timeAgo(reply.created_at)}</span>
-                                      </div>
-                                      <p className="leading-relaxed text-slate-700 dark:text-slate-300">{reply.content}</p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ))
-                          )}
-                        </div>
-
-                        {/* Comment Input Box */}
-                        {replyingTo?.postId === post.id && (
-                          <div className="flex items-center justify-between rounded-xl bg-primary/10 px-3 py-1.5 text-[11px] font-bold text-primary">
-                            <span>Membalas @{replyingTo.sender}</span>
-                            <button type="button" onClick={() => setReplyingTo(null)} className="px-1" aria-label="Batal membalas"><Icon.X className="h-4 w-4" /></button>
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={newCommentText}
-                            onChange={(e) => setNewCommentText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSendComment(post.id);
-                            }}
-                            placeholder={replyingTo?.postId === post.id ? `Balas @${replyingTo.sender}…` : "Tulis tanggapan / komentar anonim…"}
-                            className="flex-1 bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-primary/30 rounded-2xl px-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none transition-all"
-                          />
-                          <button
-                            onClick={() => handleSendComment(post.id)}
-                            disabled={submittingComment || !newCommentText.trim()}
-                            className="bg-primary disabled:opacity-50 text-white px-4 py-2 rounded-2xl text-xs font-bold hover:bg-primary/95 transition-opacity shrink-0 active:scale-95 shadow-xs shadow-primary/20"
-                          >
-                            Kirim
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          <div className="flex items-center gap-3">
+            <div className="relative w-72">
+              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#707972] text-[18px]">
+                search
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari berita atau artikel..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#e6f8e8] dark:bg-[#183022] text-xs text-[#101f15] dark:text-white outline-none"
+              />
             </div>
-          )}
-
-          {/* LOAD MORE */}
-          {!loading && posts.length > 0 && activeTab !== "blog" && (
-            <div className="flex justify-center pt-2 pb-4">
-              {hasMore ? (
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151518] px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"
-                >
-                  {loadingMore ? (
-                    <>
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      Memuat...
-                    </>
-                  ) : (
-                    <>
-                      <Icon.ChevronDown className="h-3.5 w-3.5" />
-                      Muat lebih banyak
-                    </>
-                  )}
-                </button>
-              ) : (
-                <div className="py-4 text-center">
-                  <p className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
-                    <span>✨</span>
-                    <span>Semua menfess terbaru sudah ditampilkan — Kirim menfessmu sekarang!</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+            <Link
+              href="/dashboard?tab=blog"
+              className="px-5 py-2.5 rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit_square</span>
+              <span>Tulis Berita</span>
+            </Link>
+          </div>
         </div>
 
-        {/* MODAL BUAT POST BARU */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-t-[32px] sm:rounded-[24px] w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-2xl border-t sm:border border-black/[0.06] dark:border-white/[0.08] relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
-              
-              {/* Mobile Drag Handle */}
-              <div className="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 sm:hidden" />
-
+        {/* Category Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {CATEGORIES.map((cat) => {
+            const active = selectedCategory === cat;
+            return (
               <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent"
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-xs font-bold transition-colors whitespace-nowrap",
+                  active
+                    ? "bg-[#003622] text-white"
+                    : "bg-white dark:bg-[#112218] text-[#404943] dark:text-[#99d3b2] hover:bg-[#e6f8e8]"
+                )}
               >
-                    <Icon.X className="h-4 w-4" />
+                {cat}
               </button>
+            );
+          })}
+        </div>
 
-              <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white tracking-[-0.03em] mb-4">
-                Kirim Postingan Menfess &amp; Info
-              </h2>
-
-              <form onSubmit={handleCreatePost} className="space-y-4">
-                {/* Type Selection */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: "menfess" })}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                      formData.type === "menfess"
-                        ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Icon.Mail className="h-4 w-4" />
-                      Menfess (Curhat)
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: "info" })}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                      formData.type === "info"
-                        ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-sm"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Icon.Megaphone className="h-4 w-4" />
-                      Info Kampus
-                    </span>
-                  </button>
-                </div>
-
-                {/* Title (Only for Info) */}
-                {formData.type === "info" && (
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Judul Pengumuman / Event
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Contoh: Oprec Panitia Seminar Nasional 2026"
-                      className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+        {/* Main 12-Col Grid */}
+        <div className="grid grid-cols-12 gap-6 items-start">
+          {/* Featured Hero (Col 1-5) */}
+          <div className="col-span-5">
+            {featuredPost && (
+              <Link
+                href={getPostHref(featuredPost)}
+                className="block bg-white dark:bg-[#112218] rounded-3xl overflow-hidden shadow-stitch-card group"
+              >
+                <div className="relative h-64 bg-[#e6f8e8]">
+                  {featuredPost.image_url ? (
+                    <img
+                      src={featuredPost.image_url}
+                      alt={featuredPost.title || "Featured"}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                  </div>
-                )}
-
-                {/* Campus Picker */}
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Kategori Kampus
-                  </label>
-                  <select
-                    value={formData.faculty}
-                    onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
-                  >
-                    {["Bebas", ...availableCampuses.map((campus) => campus.shortName)].map((fac) => (
-                      <option key={fac} value={fac}>
-                        {fac}
-                      </option>
-                    ))}
-                  </select>
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#134e35] to-[#003622]" />
+                  )}
+                  <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-[#ceeb7a] text-[#161f00] text-xs font-bold">
+                    {getPostBadge(featuredPost)}
+                  </span>
                 </div>
-
-                {/* Content Textarea */}
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                      {formData.type === "menfess" ? "Isi Curhatan / Pesan" : "Detail Informasi"}
-                    </label>
-                    <span className="text-[10px] text-slate-400">
-                      {formData.content.length}/1000
-                    </span>
+                <div className="p-5 space-y-2">
+                  <h2 className="text-lg font-extrabold text-[#101f15] dark:text-white leading-snug group-hover:text-[#003622]">
+                    {featuredPost.title || featuredPost.content?.slice(0, 90)}
+                  </h2>
+                  <p className="text-xs text-[#404943] dark:text-[#99d3b2] line-clamp-3 leading-relaxed">
+                    {featuredPost.content}
+                  </p>
+                  <div className="pt-2 flex items-center gap-3 text-[11px] text-[#707972]">
+                    <span>{formatDate(featuredPost.created_at)}</span>
+                    <span>• {featuredPost.author_name || featuredPost.sender_name || "Tim Redaksi"}</span>
                   </div>
-                  <textarea
-                    rows={4}
-                    required
-                    maxLength={1000}
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder={
-                      formData.type === "menfess"
-                        ? "Ketik pesanmu di sini... (Sensor kata kotor aktif otomatis)"
-                        : "Jelaskan detail informasi kegiatan atau pengumuman kampus..."
-                    }
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed"
-                  />
                 </div>
+              </Link>
+            )}
+          </div>
 
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <label htmlFor="mading-image" className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                      Foto (opsional)
-                    </label>
-                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP · Otomatis dioptimalkan</span>
-                  </div>
-                  {imagePreview ? (
-                    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                      <img src={imagePreview} alt="Pratinjau foto Menfess" className="h-40 w-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => { setImageFile(null); setImagePreview(""); }}
-                        className="absolute right-2 top-2 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white"
-                      >
-                        Hapus
-                      </button>
+          {/* Middle List (Col 6-9) */}
+          <div className="col-span-4 space-y-3.5">
+            {latestPosts.slice(0, 4).map((post) => (
+              <Link
+                key={`desk-${post._kind}-${post.id}`}
+                href={getPostHref(post)}
+                className="bg-white dark:bg-[#112218] rounded-2xl p-3 shadow-stitch-card flex items-center gap-3.5 hover:shadow-md transition-all group"
+              >
+                <div className="w-24 h-20 rounded-xl overflow-hidden bg-[#e6f8e8] shrink-0">
+                  {post.image_url ? (
+                    <img src={post.image_url} alt={post.title || "Berita"} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[#134e35]">
+                      <span className="material-symbols-outlined text-[24px]">article</span>
                     </div>
-                  ) : (
-                    <label htmlFor="mading-image" className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-xs font-semibold text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400">
-                      <Icon.PlusCircle className="h-4 w-4" /> Tambahkan foto
-                    </label>
                   )}
-                  <input
-                    id="mading-image"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="sr-only"
-                    onChange={async (event) => {
-                      const file = event.target.files?.[0];
-                      if (!file) return;
-                      try {
-                        const compressed = await compressImage(file);
-                        setImageFile(compressed);
-                        setImagePreview(URL.createObjectURL(compressed));
-                      } catch {
-                        setImageFile(file);
-                        setImagePreview(URL.createObjectURL(file));
-                      }
-                    }}
-                  />
                 </div>
-
-                {/* Tag produk — jembatan ke sisi marketplace */}
-                <div>
-                  <label className="mb-1 block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                    Produk jualan (opsional)
-                  </label>
-                  <TagProdukPicker value={tagProduk} onChange={setTagProduk} />
-                </div>
-
-                {/* Anonimity Toggle */}
-                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Kirim Sebagai Anonim (Rahasiakan Nama)
+                <div className="min-w-0 flex-1 space-y-1">
+                  <span className="inline-block px-2 py-0.5 rounded-full bg-[#e6f8e8] text-[#003622] text-[10px] font-bold">
+                    {getPostBadge(post)}
                   </span>
-                  <input
-                    type="checkbox"
-                    checked={formData.is_anon}
-                    onChange={(e) => setFormData({ ...formData, is_anon: e.target.checked })}
-                    className="w-4 h-4 rounded text-primary focus:ring-primary"
-                  />
+                  <h3 className="text-xs font-bold text-[#101f15] dark:text-white line-clamp-2 group-hover:text-[#003622]">
+                    {post.title || post.content?.slice(0, 75)}
+                  </h3>
+                  <p className="text-[10px] text-[#707972]">{formatDate(post.created_at)}</p>
                 </div>
+              </Link>
+            ))}
+          </div>
 
-                {!formData.is_anon && (
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Nama / Alias Kamu
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.sender_name}
-                      onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
-                      placeholder="Nama lengkap / panggilan"
-                      className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
-                    />
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/30 hover:bg-primary/95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+          {/* Right Sidebar: Terbaru / Populer (Col 10-12) */}
+          <aside className="col-span-3 bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-stitch-card space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-[#101f15] dark:text-white">Terpopuler</h2>
+              <span className="text-xs font-bold text-[#506600]">Semua</span>
+            </div>
+            <div className="space-y-3.5">
+              {popularPosts.map((post, idx) => (
+                <Link
+                  key={`dpop-${post.id}`}
+                  href={getPostHref(post)}
+                  className="flex items-start gap-2.5 pb-3 border-b border-[#e6f8e8] last:border-0 last:pb-0 group"
                 >
-                  {submitting ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>
-                        {uploadStage === "uploading_photo"
-                          ? "Mengompresi & Mengunggah Foto..."
-                          : "Menerbitkan Postingan..."}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <Icon.Rocket className="h-4 w-4" />
-                      Terbitkan ke Menfess & Info
-                    </span>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* LIGHTBOX / FULL SCREEN PHOTO MODAL */}
-        {zoomImage && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
-            onClick={() => setZoomImage(null)}
-          >
-            <div
-              className="relative max-w-4xl max-h-[92vh] flex flex-col items-center w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Top Action Bar */}
-              <div className="w-full flex items-center justify-between text-white/90 mb-3 px-1">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="inline-flex max-w-[200px] items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold backdrop-blur-sm truncate xs:max-w-xs">
-                    <Icon.Camera className="h-3.5 w-3.5 shrink-0" />
-                    Kiriman {zoomImage.sender || "Anonim"}
+                  <span className="w-5 h-5 rounded-full bg-[#ceeb7a] text-[#161f00] text-[10px] font-extrabold flex items-center justify-center shrink-0 mt-0.5">
+                    {idx + 1}
                   </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={zoomImage.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-xs font-bold text-white transition-all flex items-center gap-1"
-                  >
-                    Buka Ukuran Penuh ↗
-                  </a>
-                  <button
-                    onClick={() => setZoomImage(null)}
-                    className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition-all text-xs w-8 h-8 flex items-center justify-center"
-                    aria-label="Tutup Foto"
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Photo View */}
-              <div className="overflow-hidden rounded-2xl shadow-2xl border border-white/10 max-h-[80vh] flex items-center justify-center bg-black/40">
-                <img
-                  src={zoomImage.url}
-                  alt="Foto kiriman diperbesar"
-                  className="max-h-[80vh] w-auto max-w-full object-contain rounded-2xl"
-                />
-              </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-[#101f15] dark:text-white line-clamp-2 group-hover:text-[#003622]">
+                      {post.title || post.content?.slice(0, 65)}
+                    </h4>
+                    <p className="text-[10px] text-[#707972] mt-1">{formatDate(post.created_at)}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
+          </aside>
+        </div>
+
+        {/* Full Archive Grid */}
+        {latestPosts.length > 4 && (
+          <div className="grid grid-cols-3 gap-5 pt-2">
+            {latestPosts.slice(4).map((post) => (
+              <Link
+                key={`arch-${post._kind}-${post.id}`}
+                href={getPostHref(post)}
+                className="bg-white dark:bg-[#112218] rounded-2xl p-4 shadow-stitch-card space-y-2 hover:shadow-md transition-all"
+              >
+                <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#e6f8e8] text-[#003622] text-[10px] font-bold">
+                  {getPostBadge(post)}
+                </span>
+                <h3 className="text-sm font-bold text-[#101f15] dark:text-white line-clamp-2">
+                  {post.title || post.content?.slice(0, 80)}
+                </h3>
+                <p className="text-xs text-[#404943] dark:text-[#99d3b2] line-clamp-2">{post.content}</p>
+                <p className="text-[10px] text-[#707972]">{formatDate(post.created_at)}</p>
+              </Link>
+            ))}
           </div>
         )}
-
-        {/* MODAL UNDUH MENFESS */}
-        {unduhPost && (
-          <UnduhMenfessModal
-            post={unduhPost}
-            onClose={() => setUnduhPost(null)}
-          />
+        {(canRevealMore || hasMoreData) && (
+          <div className="space-y-2 pt-2">
+            {loadMoreError && <p role="alert" className="text-center text-xs text-rose-700">{loadMoreError}</p>}
+            <button
+              type="button"
+              onClick={showMore}
+              disabled={loadingMore}
+              className="w-full px-5 py-3 rounded-full bg-white dark:bg-[#112218] border border-[#134e35]/15 text-[#003622] dark:text-white text-xs font-bold disabled:opacity-60"
+            >
+              {loadingMore ? "Memuat..." : "Muat berita lainnya"}
+            </button>
+          </div>
         )}
-
-        {/* PRATINJAU PRODUK DARI DALAM FEED */}
-        <ProductPeekSheet
-          listing={intipProduk}
-          isOpen={!!intipProduk}
-          onClose={() => setIntipProduk(null)}
-        />
-
-        {/* MOBILE FLOATING ACTION BUTTON */}
-        <button
-          onClick={() => setShowModal(true)}
-          className="fixed z-40 bottom-6 right-4 sm:hidden bg-emerald-700 text-white p-4 rounded-full shadow-lg shadow-emerald-700/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
-          aria-label="Buat Postingan Baru"
-        >
-          <Icon.Edit className="w-6 h-6" />
-        </button>
       </div>
-    </PullToRefresh>
+    </div>
   );
 }

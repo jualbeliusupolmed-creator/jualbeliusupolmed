@@ -57,7 +57,7 @@ export default function JasaClient() {
   const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
 
   const [cfg, setCfg] = useState(null);
-  
+
   // Prefill identitas: menunggu sesi, jadi efeknya terpisah dari pemuatan
   // config. Digabung, ia akan menarik ulang /api/config setiap kali sesi
   // selesai terbaca — satu permintaan tambahan tanpa alasan.
@@ -77,7 +77,7 @@ export default function JasaClient() {
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const cats = JASA_CATEGORIES;
@@ -152,262 +152,270 @@ export default function JasaClient() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14">
+      <div className="mx-auto max-w-4xl px-4 py-6">
 
-      {activeQrisUrl && (
-        <QRISModal 
-          qrisUrl={activeQrisUrl} 
-          fee={activeQrisFee} 
-          transactionId={activeQrisOrderId}
-          onClose={() => {
-            setActiveQrisUrl("");
-            const waParam = encodeURIComponent(form.seller_wa || "");
-            router.push(`/dashboard?pending=1&wa=${waParam}`);
-          }} 
-          onSuccess={() => {
-            setActiveQrisUrl("");
-            const waParam = encodeURIComponent(form.seller_wa || "");
-            router.push(`/dashboard?paid=1&wa=${waParam}`);
-          }}
-        />
-      )}
+        {activeQrisUrl && (
+          <QRISModal
+            qrisUrl={activeQrisUrl}
+            fee={activeQrisFee}
+            transactionId={activeQrisOrderId}
+            onClose={() => {
+              setActiveQrisUrl("");
+              const waParam = encodeURIComponent(form.seller_wa || "");
+              router.push(`/dashboard?pending=1&wa=${waParam}`);
+            }}
+            onSuccess={() => {
+              setActiveQrisUrl("");
+              const waParam = encodeURIComponent(form.seller_wa || "");
+              router.push(`/dashboard?paid=1&wa=${waParam}`);
+            }}
+          />
+        )}
 
-      <h1 className="text-2xl font-extrabold">Tawarkan Jasa</h1>
-      <p className="mt-1 text-gray-500">
-        Isi detail jasa yang kamu tawarkan.
-      </p>
-
-      <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          {/* Upload */}
-          <div className="card p-4">
-            <label className="label">Foto Barang</label>
-            <MediaUploader
-              media={media}
-              setMedia={setMedia}
-              max={5}
-              error={fileError}
-              setError={setFileError}
-            />
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#e6f8e8] dark:bg-[#134e35]/40 px-3 py-1 text-xs font-bold text-[#134e35] dark:text-[#ceeb7a] mb-2">
+            <span className="material-symbols-outlined text-[15px]">work</span>
+            <span>Jasa Mahasiswa</span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#101f15] dark:text-[#ecfeee]">Tawarkan Jasa</h1>
+          <p className="mt-1 text-sm text-[#404943] dark:text-[#9db8a2]">
+            Isi detail jasa yang kamu tawarkan kepada mahasiswa lintas kampus.
+          </p>
+        </div>
 
-          <div className="card grid gap-5 p-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="jasa-category" className="label">Kategori Jasa</label>
-              <select id="jasa-category" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
-                {cats.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+        <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            {/* Upload */}
+            <div className="card p-4">
+              <label className="label">Foto Barang</label>
+              <MediaUploader
+                media={media}
+                setMedia={setMedia}
+                max={5}
+                error={fileError}
+                setError={setFileError}
+              />
             </div>
-            <div>
-              <label htmlFor="jasa-work-system" className="label">Sistem Kerja</label>
-              <select
-                id="jasa-work-system"
-                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                value={areaOption}
-                onChange={handleAreaOptionChange}
-              >
-                <option value="">Pilih Sistem Kerja</option>
-                {WORK_SYSTEMS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-                <option value="Lainnya">Lainnya (Ketik Manual)</option>
-              </select>
-            </div>
-            {areaOption === "Lainnya" && (
-              <div className="floating-group mt-5">
-                <input 
-                  id="form-area"
-                  className="floating-input peer" 
-                  value={form.area} 
-                  onChange={set("area")} 
+
+            <div className="card grid gap-5 p-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="jasa-category" className="label">Kategori Jasa</label>
+                <select id="jasa-category" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
+                  {cats.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="jasa-work-system" className="label">Sistem Kerja</label>
+                <select
+                  id="jasa-work-system"
+                  className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
+                  value={areaOption}
+                  onChange={handleAreaOptionChange}
+                >
+                  <option value="">Pilih Sistem Kerja</option>
+                  {WORK_SYSTEMS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                  <option value="Lainnya">Lainnya (Ketik Manual)</option>
+                </select>
+              </div>
+              {areaOption === "Lainnya" && (
+                <div className="floating-group mt-5">
+                  <input
+                    id="form-area"
+                    className="floating-input peer"
+                    value={form.area}
+                    onChange={set("area")}
+                    placeholder=" "
+                    required
+                  />
+                  <label htmlFor="form-area" className="floating-label">Ketik Manual Sistem Kerja</label>
+                </div>
+              )}
+
+              {/* Floating Input Groups */}
+              <div className="sm:col-span-2 floating-group">
+                <input
+                  id="form-title"
+                  className="floating-input peer"
+                  value={form.title}
+                  onChange={set("title")}
                   placeholder=" "
                   required
                 />
-                <label htmlFor="form-area" className="floating-label">Ketik Manual Sistem Kerja</label>
+                <label htmlFor="form-title" className="floating-label">Nama / Judul Barang</label>
               </div>
-            )}
-            
-            {/* Floating Input Groups */}
-            <div className="sm:col-span-2 floating-group">
-              <input 
-                id="form-title"
-                className="floating-input peer" 
-                value={form.title} 
-                onChange={set("title")} 
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-title" className="floating-label">Nama / Judul Barang</label>
+
+              <div className="sm:col-span-2 floating-group">
+                <textarea
+                  id="form-description"
+                  className="floating-input peer min-h-24"
+                  value={form.description}
+                  onChange={set("description")}
+                  placeholder=" "
+                />
+                <label htmlFor="form-description" className="floating-label">Deskripsi Lengkap (kondisi, minus, dll)</label>
+              </div>
+
+              <div className="floating-group">
+                <input
+                  id="form-price"
+                  type="text"
+                  className="floating-input peer"
+                  value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, "");
+                    setForm((f) => ({ ...f, price: cleaned }));
+                  }}
+                  placeholder=" "
+                  required
+                />
+                <label htmlFor="form-price" className="floating-label">Mulai dari Harga (Rp)</label>
+              </div>
+
+              <div className="floating-group">
+                <input
+                  id="form-seller-name"
+                  className="floating-input peer"
+                  value={form.seller_name}
+                  onChange={set("seller_name")}
+                  placeholder=" "
+                  required
+                />
+                <label htmlFor="form-seller-name" className="floating-label">Nama Penjual</label>
+              </div>
+
+              <div className="floating-group">
+                <input
+                  id="form-seller-wa"
+                  className="floating-input peer"
+                  value={form.seller_wa}
+                  onChange={set("seller_wa")}
+                  placeholder=" "
+                  required
+                />
+                <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp</label>
+              </div>
             </div>
-            
-            <div className="sm:col-span-2 floating-group">
-              <textarea 
-                id="form-description"
-                className="floating-input peer min-h-24" 
-                value={form.description} 
-                onChange={set("description")} 
-                placeholder=" " 
-              />
-              <label htmlFor="form-description" className="floating-label">Deskripsi Lengkap (kondisi, minus, dll)</label>
-            </div>
-            
-            <div className="floating-group">
-              <input 
-                id="form-price"
-                type="text" 
-                className="floating-input peer" 
-                value={form.price ? Number(form.price).toLocaleString("id-ID") : ""} 
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/\D/g, "");
-                  setForm((f) => ({ ...f, price: cleaned }));
-                }} 
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-price" className="floating-label">Mulai dari Harga (Rp)</label>
-            </div>
-            
-            <div className="floating-group">
-              <input 
-                id="form-seller-name"
-                className="floating-input peer" 
-                value={form.seller_name} 
-                onChange={set("seller_name")} 
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-seller-name" className="floating-label">Nama Penjual</label>
-            </div>
-            
-            <div className="floating-group">
-              <input 
-                id="form-seller-wa"
-                className="floating-input peer" 
-                value={form.seller_wa} 
-                onChange={set("seller_wa")} 
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp</label>
-            </div>
+
+
           </div>
 
-
-        </div>
-
-        {/* Summary */}
-        <div className="space-y-4">
-          <div className="card p-4">
-            <h3 className="font-bold dark:text-white">Ringkasan</h3>
-            <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Tipe</dt>
-                <dd className="font-medium capitalize dark:text-white">{form.type}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
-                <dd className="font-medium capitalize dark:text-white">{paymentMethod}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
-                <dd className="font-medium dark:text-white">{rupiah(fee)}</dd>
-              </div>
-              <div className="my-2 border-t dark:border-slate-800" />
-              <div className="flex justify-between text-base">
-                <dt className="font-semibold dark:text-white">Total bayar</dt>
-                <dd className="font-extrabold text-primary dark:text-white">{rupiah(fee)}</dd>
-              </div>
-            </dl>
-            <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
-              Preview Barang
-            </button>
-            {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
-          </div>
-
-          <div className="card p-4 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
-            <p className="font-bold flex items-center gap-1.5">
-              <span></span> GRATIS 7 Hari (Khusus Postingan Pertama)
-            </p>
-            <p className="mt-1.5 leading-relaxed">
-              Jika ini adalah tawaran jasa pertamamu, penayangan 100% GRATIS untuk 7 hari pertama.
-              Untuk tawaran jasa kedua dan seterusnya, atau jika masa aktif habis, biayanya hanya <strong>Rp 10.000/bulan</strong>.
-            </p>
-          </div>
-        </div>
-      </form>
-
-
-
-      {/* Modal Preview */}
-      {showPreviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" onClick={() => setShowPreviewModal(false)}>
-          <div className="card w-full max-w-2xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:border-slate-800 motion-safe:animate-fade-in motion-reduce:animate-none max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
-                Preview Jasa
-              </h2>
-              <button 
-                type="button" 
-                onClick={() => setShowPreviewModal(false)}
-                aria-label="Tutup preview jasa"
-                className="text-slate-500 hover:bg-slate-100 p-2 rounded-full dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          {/* Summary */}
+          <div className="space-y-4">
+            <div className="card p-4">
+              <h3 className="font-bold dark:text-white">Ringkasan</h3>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-gray-500 dark:text-slate-400">Tipe</dt>
+                  <dd className="font-medium capitalize dark:text-white">{form.type}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
+                  <dd className="font-medium capitalize dark:text-white">{paymentMethod}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
+                  <dd className="font-medium dark:text-white">{rupiah(fee)}</dd>
+                </div>
+                <div className="my-2 border-t dark:border-slate-800" />
+                <div className="flex justify-between text-base">
+                  <dt className="font-semibold dark:text-white">Total bayar</dt>
+                  <dd className="font-extrabold text-primary dark:text-white">{rupiah(fee)}</dd>
+                </div>
+              </dl>
+              <button type="submit" disabled={busy || !!fileError} className="rounded-full bg-[#003622] hover:bg-[#134e35] text-white font-extrabold text-sm py-3 px-5 mt-4 w-full transition-colors disabled:opacity-50">
+                Preview Barang
               </button>
-            </div>
-            
-            <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden mb-6">
-              {media.length > 0 ? (
-                <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 relative">
-                  {/* For preview, we use objectURL of the first file if available */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={media[0].preview || media[0].url} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
-                  <span className="text-gray-400">Tidak ada foto</span>
-                </div>
-              )}
-              <div className="p-4">
-                <div className="flex justify-between items-start gap-4">
-                  <h3 className="font-bold text-lg dark:text-white line-clamp-2">{form.title}</h3>
-                  <div className="text-xl font-black text-primary flex-shrink-0">{rupiah(form.price)}</div>
-                </div>
-                <div className="mt-2 text-sm text-gray-500 line-clamp-3">
-                  {form.description || "Tidak ada deskripsi"}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="badge badge-primary">{form.category}</span>
-                  <span className="badge badge-outline">Provinsi sesuai profil</span>
-                </div>
-              </div>
+              {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={() => setShowPreviewModal(false)}
-                className="btn-outline flex-1"
-                disabled={busy}
-              >
-                Edit Kembali
-              </button>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={busy}
-                className="btn-primary flex-1"
-              >
-                {busy ? "Memproses…" : `Konfirmasi & Bayar ${rupiah(fee)}`}
-              </button>
+            <div className="rounded-3xl p-5 text-sm text-[#134e35] bg-[#e6f8e8] dark:bg-[#134e35]/30 dark:text-[#ceeb7a] border border-[#c8ecd0] dark:border-[#134e35]/50">
+              <p className="font-extrabold flex items-center gap-1.5">
+                <span>GRATIS 7 Hari (Khusus Postingan Pertama)</span>
+              </p>
+              <p className="mt-1.5 leading-relaxed text-[#404943] dark:text-[#9db8a2]">
+                Jika ini adalah tawaran jasa pertamamu, penayangan 100% GRATIS untuk 7 hari pertama.
+                Untuk tawaran jasa kedua dan seterusnya, atau jika masa aktif habis, biayanya hanya <strong>Rp 10.000/bulan</strong>.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        </form>
+
+
+
+        {/* Modal Preview */}
+        {showPreviewModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" onClick={() => setShowPreviewModal(false)}>
+            <div className="card w-full max-w-2xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:border-slate-800 motion-safe:animate-fade-in motion-reduce:animate-none max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+                  Preview Jasa
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewModal(false)}
+                  aria-label="Tutup preview jasa"
+                  className="text-slate-500 hover:bg-slate-100 p-2 rounded-full dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden mb-6">
+                {media.length > 0 ? (
+                  <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 relative">
+                    {/* For preview, we use objectURL of the first file if available */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={media[0].preview || media[0].url} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+                    <span className="text-gray-400">Tidak ada foto</span>
+                  </div>
+                )}
+                <div className="p-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <h3 className="font-bold text-lg dark:text-white line-clamp-2">{form.title}</h3>
+                    <div className="text-xl font-black text-primary flex-shrink-0">{rupiah(form.price)}</div>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500 line-clamp-3">
+                    {form.description || "Tidak ada deskripsi"}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="badge badge-primary">{form.category}</span>
+                    <span className="badge badge-outline">Provinsi sesuai profil</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewModal(false)}
+                  className="btn-outline flex-1"
+                  disabled={busy}
+                >
+                  Edit Kembali
+                </button>
+                <button
+                  type="button"
+                  onClick={submit}
+                  disabled={busy}
+                  className="btn-primary flex-1"
+                >
+                  {busy ? "Memproses…" : `Konfirmasi & Bayar ${rupiah(fee)}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

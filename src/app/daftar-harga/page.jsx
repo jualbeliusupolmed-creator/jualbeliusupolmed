@@ -160,11 +160,10 @@ export default async function DaftarHargaPage() {
           {advertisingServices.map((s, idx) => (
             <div
               key={idx}
-              className={`rounded-2xl border p-5 flex flex-col justify-between transition-colors duration-150 bg-white dark:bg-slate-900/80 ${
-                s.popular
-                  ? "border-emerald-500/80 dark:border-emerald-500/60 shadow-md ring-1 ring-emerald-500/30"
-                  : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
-              }`}
+              className={`rounded-2xl border p-5 flex flex-col justify-between transition-colors duration-150 bg-white dark:bg-slate-900/80 ${s.popular
+                ? "border-emerald-500/80 dark:border-emerald-500/60 shadow-md ring-1 ring-emerald-500/30"
+                : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+                }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">

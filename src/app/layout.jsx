@@ -96,11 +96,8 @@ export async function generateMetadata() {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  // Cubit-untuk-perbesar dibiarkan hidup: mengunci zoom bikin teks kecil
-  // mustahil dibaca sebagian orang, dan itu pelanggaran aksesibilitas.
   maximumScale: 5,
-  // Warna bilah peramban di Android/iOS: Forest Emerald #047857 resmi Kampus Kita
-  themeColor: "#047857",
+  themeColor: "#134e35",
 };
 
 export default async function RootLayout({ children }) {
@@ -146,7 +143,9 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
         <link rel="preconnect" href="https://autgrnrqeqdpqwkbolyh.supabase.co" crossOrigin="" />
         <link rel="dns-prefetch" href="https://autgrnrqeqdpqwkbolyh.supabase.co" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />

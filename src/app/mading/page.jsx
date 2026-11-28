@@ -31,13 +31,13 @@ async function getInitialMadingPosts() {
     const [resMading, resBlog] = await Promise.all([
       supa
         .from("mading_posts")
-        .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, created_at")
+        .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, created_at", { count: "exact" })
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(20),
       supa
         .from("blogs")
-        .select("id, title, slug, content, image_url, author_name, views, created_at")
+        .select("id, title, slug, content, image_url, author_name, views, created_at", { count: "exact" })
         .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(5),
@@ -46,17 +46,29 @@ async function getInitialMadingPosts() {
     const madingItems = (resMading.data || []).map((p) => ({ ...p, _kind: "mading" }));
     const blogItems = (resBlog.data || []).map((b) => ({ ...b, _kind: "blog" }));
 
-    return [...madingItems, ...blogItems].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
+    return {
+      posts: [...madingItems, ...blogItems].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      ),
+      hasMoreMading: (resMading.count || 0) > 20,
+      hasMoreBlogs: (resBlog.count || 0) > 5,
+      error: resMading.error || resBlog.error
+        ? "Sebagian konten belum dapat dimuat. Coba muat halaman kembali."
+        : "",
+    };
   } catch (err) {
-    console.error("getInitialMadingPosts error:", err?.message);
-    return [];
+    console.error("getInitialMadingPosts error:", err instanceof Error ? err.message : "unknown error");
+    return {
+      posts: [],
+      hasMoreMading: false,
+      hasMoreBlogs: false,
+      error: "Konten Mading belum dapat dimuat. Coba muat halaman kembali.",
+    };
   }
 }
 
 export default async function MadingPage() {
-  const initialPosts = await getInitialMadingPosts();
+  const { posts: initialPosts, hasMoreMading, hasMoreBlogs, error: initialError } = await getInitialMadingPosts();
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
   const itemListJsonLd = {
@@ -78,7 +90,12 @@ export default async function MadingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
-      <MadingClient initialPosts={initialPosts} />
+      <MadingClient
+        initialPosts={initialPosts}
+        initialHasMoreMading={hasMoreMading}
+        initialHasMoreBlogs={hasMoreBlogs}
+        initialError={initialError}
+      />
     </>
   );
 }

@@ -59,8 +59,8 @@ export async function GET(request) {
     }
   });
 
-  const items = (data || []).map((profile) => ({
-    storeToken: sealAdminUserToken(formatWa(profile.wa) || profile.wa),
+  const items = await Promise.all((data || []).map(async (profile) => ({
+    storeToken: await sealAdminUserToken(formatWa(profile.wa) || profile.wa),
     name: profile.name || "Pengguna",
     storeName: profile.store_name || profile.name || "Toko",
     slug: profile.slug || "",
@@ -72,7 +72,7 @@ export async function GET(request) {
     bio: profile.bio || "",
     campus: profile.campus || "",
     maskedPhone: maskPhone(profile.wa),
-  }));
+  })));
   const total = count || 0;
   return NextResponse.json({ items, total, nextOffset: total > offset + items.length ? offset + items.length : null, statusCounts });
 }
@@ -94,7 +94,7 @@ export async function PATCH(request) {
   }
 
   let wa;
-  try { wa = openAdminUserToken(body.storeToken); }
+  try { wa = await openAdminUserToken(body.storeToken); }
   catch { return NextResponse.json({ error: "Identitas toko tidak berlaku lagi. Muat ulang daftar." }, { status: 400 }); }
   wa = formatWa(wa) || wa;
 
@@ -131,7 +131,7 @@ export async function PATCH(request) {
   await supa.from("admin_audit_events").insert({
     actor_id: actor.userId,
     action: action === "approve" ? "store_approved" : "store_rejected",
-    target_id: hashAdminUserAuditTarget(wa),
+    target_id: await hashAdminUserAuditTarget(wa),
     metadata: { campus: profile.campus || "", reason: action === "reject" ? reason : "" },
   });
   return NextResponse.json({ ok: true });

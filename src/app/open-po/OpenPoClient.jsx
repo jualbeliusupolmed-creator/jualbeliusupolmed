@@ -2,20 +2,39 @@
 
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { ArrowRight, CalendarClock, Check, CircleAlert, LoaderCircle, MapPin, Package, Search, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { rupiah } from "@/lib/fees";
+import { cn } from "@/lib/utils";
+import { getOpenPoBatchMetrics } from "@/lib/openPoDisplay";
+import { toast } from "sonner";
 
-const CATEGORIES = ["Semua", "Makanan", "Minuman", "Merchandise", "Jastip", "Lainnya"];
+const CATEGORIES = [
+  { id: "Semua", label: "Semua", desktopLabel: "Semua Kategori", icon: "apps", emoji: "" },
+  { id: "Makanan", label: "Makanan", desktopLabel: "Makanan & Minuman", icon: "restaurant", emoji: "🍱" },
+  { id: "Minuman", label: "Minuman", desktopLabel: "Minuman", icon: "local_cafe", emoji: "🧋" },
+  { id: "Merchandise", label: "Merch", desktopLabel: "Merchandise", icon: "checkroom", emoji: "👕" },
+  { id: "Snack", label: "Snack", desktopLabel: "Snack & Kue", icon: "bakery_dining", emoji: "🍪" },
+  { id: "Jastip", label: "Jastip", desktopLabel: "Jastip", icon: "shopping_bag", emoji: "🛍️" },
+  { id: "Lainnya", label: "Lainnya", desktopLabel: "Lainnya", icon: "more_horiz", emoji: "📦" },
+];
 
-function dateLabel(value) {
-  if (!value) return "Waktu tutup belum ditentukan";
-  return new Date(value).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+function countdownLabel(value) {
+  if (!value) return "Tenggat belum tersedia";
+  const closeAt = new Date(value).getTime();
+  if (!Number.isFinite(closeAt)) return "Tenggat tidak valid";
+  const diffMs = closeAt - Date.now();
+  if (diffMs <= 0) return "Ditutup";
+  const hours = Math.floor(diffMs / 3600000);
+  if (hours < 24) return `Tutup ${Math.max(1, hours)} jam lagi`;
+  const days = Math.ceil(hours / 24);
+  return `Tutup ${days} hari lagi`;
 }
 
 export default function OpenPoClient({ initialBatches = [], isAuthenticated = false, initialError = "" }) {
   const [query, setQuery] = useState("");
-  const [campusFilter, setCampusFilter] = useState("Semua kampus");
+  const [campusFilter, setCampusFilter] = useState("Semua");
   const [category, setCategory] = useState("Semua");
+  const [statusTab, setStatusTab] = useState("all"); // all | active | closing
+  const [sortBy, setSortBy] = useState("newest");
   const [selected, setSelected] = useState(null);
   const [buyerName, setBuyerName] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -23,6 +42,7 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState(null);
+  const [favorites, setFavorites] = useState({});
 
   useEffect(() => {
     try {
@@ -31,29 +51,41 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
         const match = initialBatches.find(
           (b) => String(b.campus || "").toLowerCase() === saved.toLowerCase()
         );
-        if (match) {
-          setCampusFilter(match.campus);
-        }
+        if (match) setCampusFilter(match.campus);
       }
     } catch {}
-
-    const onCampus = (e) => {
-      if (e.detail?.campus && e.detail.campus !== "Semua") {
-        setCampusFilter(e.detail.campus);
-      }
-    };
-    window.addEventListener("campus:change", onCampus);
-    return () => window.removeEventListener("campus:change", onCampus);
   }, [initialBatches]);
 
-  const campuses = useMemo(() => ["Semua kampus", ...new Set(initialBatches.map((batch) => batch.campus).filter(Boolean))], [initialBatches]);
+  const campuses = useMemo(
+    () => ["Semua", ...new Set(initialBatches.map((b) => b.campus).filter(Boolean))],
+    [initialBatches]
+  );
+
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return initialBatches.filter((batch) => {
-      const text = `${batch.title} ${batch.name} ${batch.description} ${batch.pickup_point} ${batch.seller_name}`.toLowerCase();
-      return (!needle || text.includes(needle)) && (campusFilter === "Semua kampus" || batch.campus === campusFilter) && (category === "Semua" || batch.category === category);
+    let list = initialBatches.filter((batch) => {
+      const text = `${batch.title || ""} ${batch.name || ""} ${batch.description || ""} ${batch.pickup_point || ""} ${batch.seller_name || ""}`.toLowerCase();
+      if (needle && !text.includes(needle)) return false;
+      if (campusFilter !== "Semua" && batch.campus !== campusFilter) return false;
+      if (category !== "Semua") {
+        const cat = String(batch.category || "").toLowerCase();
+        if (!cat.includes(category.toLowerCase())) return false;
+      }
+      if (statusTab === "closing") {
+        const closeAt = new Date(batch.closes_at || "").getTime();
+        const diff = closeAt - Date.now();
+        if (!Number.isFinite(closeAt) || diff > 48 * 3600000 || diff <= 0) return false;
+      }
+      return true;
     });
-  }, [initialBatches, query, campusFilter, category]);
+
+    if (sortBy === "cheapest") {
+      list = [...list].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    } else if (sortBy === "quota") {
+      list = [...list].sort((a, b) => Number(b.quota || 0) - Number(a.quota || 0));
+    }
+    return list;
+  }, [initialBatches, query, campusFilter, category, statusTab, sortBy]);
 
   async function reserve(event) {
     event.preventDefault();
@@ -73,297 +105,531 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Reservasi gagal dibuat.");
       setSuccess({ order: result.order, sellerContact: result.sellerContact, productName: result.productName });
+      toast.success("Pesanan PO berhasil dicatat!");
       setSelected(null);
       setBuyerName("");
       setQuantity(1);
       setContactConsent(false);
-    } catch (cause) { setError(cause.message); }
-    finally { setSubmitting(false); }
+    } catch (cause) {
+      setError(cause.message);
+      toast.error(cause.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const nextPath = isAuthenticated ? "/dashboard/open-po" : "/dashboard/login?next=%2Fdashboard%2Fopen-po";
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 text-slate-900 dark:text-slate-100">
-      <div className="mx-auto max-w-6xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
-        {/* Compact Minimalist Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 dark:border-slate-800 pb-4">
-          <div>
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-1">
-              <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600">Beranda</Link>
-              <span>/</span>
-              <span className="text-slate-700 dark:text-slate-300 font-semibold">Open PO</span>
-            </nav>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              Open PO Kampus
-            </h1>
-            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              Kuliner, jastip, dan merchandise pre-order mahasiswa dengan sistem slot dan kuota transparan.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/keranjang?tab=po"
-              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 shadow-2xs"
-            >
-              <ShoppingBag className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-              <span>Pesanan saya</span>
-            </Link>
-            <Link
-              href={nextPath}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-emerald-800 px-4 text-xs font-semibold text-white hover:bg-emerald-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 shadow-xs"
-            >
-              <Users className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Dashboard PO</span>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-[#ecfeee] dark:bg-[#0a1710] text-[#101f15] dark:text-[#ecfeee]">
+      {/* ==================== MOBILE VIEW (< lg) — 100% STITCH open_po_1 ==================== */}
+      <div className="lg:hidden max-w-md mx-auto px-4 pt-3 pb-28">
+        <div className="mb-3.5">
+          <h1 className="text-[22px] font-extrabold text-[#134e35] dark:text-white tracking-tight leading-tight">
+            Open Pre-Order
+          </h1>
+          <p className="text-[13px] text-[#404943] dark:text-[#99d3b2] font-normal">
+            Preorder bareng teman kampus, kuota tercapai lebih hemat!
+          </p>
         </div>
 
-        {/* Minimalist Search & Filter Hub */}
-        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 sm:p-2.5 shadow-xs flex flex-col gap-2">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {/* Search Input */}
-            <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl px-3 py-2 focus-within:border-emerald-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-colors">
-              <Search className="h-4 w-4 text-slate-400 mr-2 shrink-0" aria-hidden="true" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                aria-label="Cari batch Open PO"
-                placeholder="Cari menu kuliner, jastip, merchandise, atau lokasi pickup..."
-                className="w-full bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  aria-label="Hapus pencarian"
-                  className="text-xs text-slate-400 hover:text-slate-600 px-1 focus-visible:outline-2 focus-visible:outline-emerald-600"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Campus Selector */}
-            <select
-              value={campusFilter}
-              onChange={(event) => setCampusFilter(event.target.value)}
-              aria-label="Filter Open PO berdasarkan kampus"
-              className="h-10 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/70 px-3 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-600 shrink-0"
-            >
-              {campuses.map((campus) => (
-                <option key={campus} value={campus}>{campus}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Category Chips Bar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 border-t border-slate-100 dark:border-slate-800 text-xs [scrollbar-width:none]">
-            {CATEGORIES.map((item) => {
-              const active = category === item;
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setCategory(item)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold shrink-0 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 ${
-                    active
-                      ? "bg-emerald-800 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  {item}
-                </button>
-              );
-            })}
-          </div>
+        {/* Search Bar */}
+        <div className="relative w-full mb-3">
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#404943] text-[20px]">
+            search
+          </span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Cari makanan, minuman, merch kampus..."
+            className="w-full bg-white dark:bg-[#112218] text-[#101f15] dark:text-white placeholder:text-[#404943]/70 text-[13px] rounded-2xl pl-10 pr-10 py-2.5 border border-[#134e35]/15 focus:outline-none focus:ring-2 focus:ring-[#134e35] shadow-xs transition"
+          />
+          <Link
+            href="/keranjang?tab=po"
+            aria-label="Pesanan PO Saya"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-xl bg-[#ecfeee] flex items-center justify-center text-[#134e35] hover:bg-[#bef264] transition"
+          >
+            <span className="material-symbols-outlined text-[17px]">shopping_bag</span>
+          </Link>
         </div>
 
-        {error ? <div role="alert" className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold leading-relaxed text-rose-800"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />{error}</div> : null}
-        {success ? <div role="status" className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-700 text-white"><Check className="h-4 w-4" aria-hidden="true" /></span><div><p className="text-sm font-extrabold text-emerald-950">Reservasi berhasil dibuat</p><p className="mt-1 text-xs leading-relaxed text-emerald-900/70">Pesanan {success.productName} tercatat. Lihat progresnya di Keranjang → Pesanan Open PO.</p></div></div><div className="flex flex-wrap gap-2">{success.sellerContact ? <a href={`https://wa.me/${success.sellerContact}`} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white active:translate-y-px transition-colors">Hubungi penjual</a> : null}<Link href="/keranjang?tab=po" className="inline-flex min-h-9 items-center justify-center rounded-full border border-emerald-200 px-4 text-xs font-extrabold text-emerald-900 active:translate-y-px transition-colors">Lihat progres pesanan</Link><Link href="/dashboard?tab=open-po" className="inline-flex min-h-9 items-center justify-center rounded-full border border-emerald-200 px-4 text-xs font-extrabold text-emerald-900 active:translate-y-px transition-colors">Dashboard PO</Link><button type="button" onClick={() => setSuccess(null)} className="rounded-full px-3 text-xs font-bold text-emerald-700 active:translate-y-px transition-colors">Tutup</button></div></div> : null}
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-4 -mx-4 px-4">
+          {CATEGORIES.map((cat) => {
+            const active = category === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setCategory(cat.id)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full text-[12px] whitespace-nowrap flex items-center gap-1.5 transition active:scale-95",
+                  active
+                    ? "font-semibold bg-[#134e35] text-white shadow-xs"
+                    : "font-medium bg-white dark:bg-[#112218] text-[#101f15] dark:text-[#ecfeee] border border-[#134e35]/15 hover:bg-[#e0f3e3]"
+                )}
+              >
+                {cat.emoji && <span>{cat.emoji}</span>}
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        {initialError ? (
-          <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 p-6 text-center">
-            <div>
-              <CircleAlert className="mx-auto h-7 w-7 text-amber-600" aria-hidden="true" />
-              <p className="mt-3 text-sm font-extrabold text-slate-800">Etalase PO belum siap</p>
-              <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-slate-500">Database Open PO baru belum tersedia. Jalankan migrasi proyek ini sebelum batch dapat dipublikasikan.</p>
-              <Link href={nextPath} className="mt-4 inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white active:translate-y-px transition-colors">Buka dashboard PO</Link>
-            </div>
+        {error && (
+          <div className="mb-4 rounded-2xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700 font-medium">
+            {error}
           </div>
-        ) : filtered.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 pt-1">
-            {filtered.map((batch, index) => {
-              const remaining = Math.max(0, batch.quota - batch.reserved);
+        )}
+
+        {/* Horizontal Pre-Order Cards List */}
+        <div className="flex flex-col gap-3 mb-5">
+          {filtered.length === 0 ? (
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-8 text-center border border-[#134e35]/10">
+              <span className="material-symbols-outlined text-[36px] text-[#707972]">inventory_2</span>
+              <p className="mt-2 text-sm font-bold text-[#101f15] dark:text-white">Belum ada Open PO aktif</p>
+              <p className="text-xs text-[#404943] dark:text-[#99d3b2] mt-1">Coba kata kunci atau kategori lain, atau buka PO baru.</p>
+            </div>
+          ) : (
+            filtered.map((batch) => {
+              const { quota, reserved: ordered, progress: pct, photo, closesAt } = getOpenPoBatchMetrics(batch);
+              const title = batch.title || batch.name || "Open PO Kampus";
+              const isFav = !!favorites[batch.id];
+
               return (
-                <article key={batch.id} className="group overflow-hidden rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xs transition-colors hover:border-emerald-700/50">
-                  <div className="relative h-44 bg-slate-100 dark:bg-slate-800">
-                    {batch.photo ? (
-                      <img
-                        src={batch.photo}
-                        alt={batch.title}
-                        loading={index === 0 ? "eager" : "lazy"}
-                        fetchPriority={index === 0 ? "high" : "auto"}
-                        className="h-full w-full object-cover"
-                      />
+                <article
+                  key={batch.id}
+                  onClick={() => setSelected(batch)}
+                  className="bg-white dark:bg-[#112218] rounded-2xl p-3 border border-[#134e35]/10 shadow-sm flex gap-3 relative transition hover:shadow-md cursor-pointer"
+                >
+                  <div className="relative w-[104px] h-[104px] shrink-0 rounded-xl overflow-hidden bg-[#e6f8e8]">
+                    {photo ? (
+                      <img src={photo} alt={title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="grid h-full place-items-center text-slate-400 dark:text-slate-600">
-                        <Package className="h-10 w-10" aria-hidden="true" />
+                      <div className="w-full h-full flex items-center justify-center text-[#134e35]">
+                        <span className="material-symbols-outlined text-[32px]">local_mall</span>
                       </div>
                     )}
-                    <span className="absolute left-3 top-3 rounded-full bg-white/95 dark:bg-slate-900/95 px-3 py-1 text-[10px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs">
-                      {batch.category}
-                    </span>
-                    <span className="absolute right-3 top-3 rounded-full bg-slate-900/80 px-3 py-1 text-[10px] font-bold text-white shadow-2xs">
-                      Sisa {remaining} slot
+                    <span className="absolute top-1.5 left-1.5 bg-[#bef264] text-[#134e35] text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs">
+                      {batch.category || "PO"}
                     </span>
                   </div>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h2 className="line-clamp-1 text-base font-bold tracking-tight text-slate-900 dark:text-white">{batch.title}</h2>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{batch.seller_name}{batch.faculty ? ` · ${batch.faculty}` : ""}</p>
+
+                  <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5">
+                    <div>
+                      <div className="flex items-start justify-between gap-1">
+                        <h3 className="font-bold text-[14px] text-[#101f15] dark:text-white truncate">{title}</h3>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFavorites((p) => ({ ...p, [batch.id]: !p[batch.id] }));
+                          }}
+                          aria-label="Favorit"
+                          className={cn("p-0.5 transition-colors", isFav ? "text-[#ba1a1a]" : "text-[#707972] hover:text-[#ba1a1a]")}
+                        >
+                          <span className="material-symbols-outlined text-[19px]">favorite</span>
+                        </button>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-extrabold text-emerald-800 dark:text-emerald-400">{rupiah(batch.price)}</p>
-                        <p className="text-[10px] text-slate-400">/ {batch.unit}</p>
+                      <p className="text-[11px] text-[#404943] dark:text-[#99d3b2] truncate mt-0.5">
+                        oleh {batch.seller_name || "Penjual"} • {batch.pickup_point || batch.campus || "Kampus"}
+                      </p>
+                      <div className="text-[15px] font-extrabold text-[#134e35] dark:text-[#bef264] mt-1">
+                        {rupiah(batch.price)}
                       </div>
                     </div>
-                    {batch.description ? (
-                      <p className="mt-2.5 line-clamp-2 min-h-9 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{batch.description}</p>
-                    ) : (
-                      <p className="mt-2.5 min-h-9 text-xs text-slate-400">Detail produk tersedia dari penjual.</p>
-                    )}
-                    <div className="mt-3 space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-[10px] font-semibold text-slate-500">
-                      <p className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                        <span>{batch.campus} · {batch.pickup_point}</span>
-                      </p>
-                      <p className="flex items-center gap-1.5">
-                        <CalendarClock className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                        <span>Tutup {dateLabel(batch.closes_at)}</span>
-                      </p>
+
+                    <div className="mt-1">
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="font-bold text-[#134e35] dark:text-white">
+                          <span className="text-[#506600] dark:text-[#bef264]">{ordered}</span>/{quota} slot
+                        </span>
+                        <span className="text-[#404943] dark:text-[#99d3b2] text-[10.5px] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px] text-[#ba1a1a]">schedule</span>
+                          {countdownLabel(closesAt)}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#e0f3e3] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#134e35] dark:bg-[#bef264] rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSelected(batch); setError(""); setSuccess(null); }}
-                      disabled={remaining < 1}
-                      className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full bg-emerald-800 px-4 text-xs font-bold text-white transition-colors hover:bg-emerald-900 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
-                    >
-                      <span>Pesan slot</span>
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
                   </div>
                 </article>
               );
-            })}
-          </div>
-        ) : (
-          <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-center">
-            <div>
-              <ShoppingBag className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" aria-hidden="true" />
-              <p className="mt-3 text-sm font-extrabold text-slate-700 dark:text-slate-200">Belum ada batch yang cocok</p>
-              <p className="mt-1 text-xs text-slate-400">
-                {campusFilter !== "Semua kampus" ? `Belum ada Open PO di kampus ${campusFilter}.` : "Coba ubah kata pencarian atau filter kategori."}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                {campusFilter !== "Semua kampus" && (
-                  <button
-                    type="button"
-                    onClick={() => setCampusFilter("Semua kampus")}
-                    className="inline-flex min-h-9 items-center rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 px-4 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
-                  >
-                    Tampilkan Semua Kampus
-                  </button>
-                )}
-                <Link
-                  href={nextPath}
-                  className="inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-4 text-xs font-bold text-white hover:bg-emerald-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
-                >
-                  Buat batch PO
-                </Link>
+            })
+          )}
+        </div>
+
+        {/* Banner Ajakan Buka PO Sendiri */}
+        <section className="relative bg-[#134e35] text-white rounded-2xl p-4 shadow-sm overflow-hidden mb-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 pr-1">
+              <div className="flex items-center gap-1.5 text-[#bef264] text-[10px] font-bold uppercase tracking-wider mb-1">
+                <span className="material-symbols-outlined text-[14px]">storefront</span>
+                PUNYA USAHA SENDIRI?
               </div>
+              <h2 className="text-[15px] font-extrabold leading-snug">Mau buka Preorder sendiri?</h2>
+              <p className="text-[11px] text-[#b4f0cd] mt-1 leading-relaxed">
+                Ajak teman satu kampus barengan, kuota kumpul lebih cepat &amp; hemat ongkir!
+              </p>
             </div>
+            <Link
+              href={nextPath}
+              className="shrink-0 px-3.5 py-2 rounded-full bg-[#bef264] text-[#134e35] text-xs font-extrabold shadow-sm active:scale-95 transition-transform"
+            >
+              + Buka PO
+            </Link>
           </div>
-        )}
+        </section>
       </div>
 
-      {selected ? (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/45 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}>
-          <form onSubmit={reserve} className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-5 shadow-lg sm:p-6 border border-slate-200/80 dark:border-slate-800">
+      {/* ==================== DESKTOP VIEW (lg+) — 100% STITCH open_po_2 ==================== */}
+      <div className="hidden lg:flex max-w-7xl mx-auto w-full px-6 py-6 pb-20 flex-col gap-6">
+        {/* Header Banner */}
+        <div className="w-full bg-white dark:bg-[#112218] rounded-2xl p-6 shadow-sm flex items-center justify-between gap-6 relative overflow-hidden">
+          <div className="flex items-center gap-5 z-10">
+            <div className="w-16 h-16 rounded-2xl bg-[#e0f3e3] flex items-center justify-center text-[#003622] flex-shrink-0 shadow-sm">
+              <span className="material-symbols-outlined text-[36px]">storefront</span>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-[24px] font-extrabold text-[#003622] dark:text-white tracking-tight">Open PO</h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-[#ceeb7a] text-[#161f00] text-[10px] font-bold uppercase">
+                  Pre-order Bareng
+                </span>
+              </div>
+              <p className="text-[13px] text-[#404943] dark:text-[#99d3b2] mt-1">
+                Temukan dan ikuti sistem preorder bareng di lingkungan kampus. Lebih hemat, transparan, dan terpercaya.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 z-10 justify-end">
+            <div className="flex items-center gap-3 px-4 py-2 bg-[#e6f8e8] dark:bg-[#183022] rounded-xl">
+              <div className="w-10 h-10 rounded-lg bg-[#ceeb7a] flex items-center justify-center text-[#161f00] shadow-sm">
+                <span className="material-symbols-outlined text-[24px]">inventory_2</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-[#404943] dark:text-[#99d3b2] font-bold">BATCH AKTIF</span>
+                <span className="text-[14px] text-[#003622] dark:text-white font-bold">
+                  {initialBatches.length} Pesanan Terbuka
+                </span>
+              </div>
+            </div>
+            <Link
+              href={nextPath}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#134e35] hover:bg-[#003622] text-white text-[13px] font-bold transition-all shadow-md hover:shadow-lg active:scale-95 flex-shrink-0"
+            >
+              <span className="material-symbols-outlined text-[20px]">add_circle</span>
+              <span>Buat Open PO</span>
+            </Link>
+          </div>
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-[#ceeb7a]/20 rounded-full blur-2xl pointer-events-none" />
+        </div>
+
+        {/* Main Grid Content */}
+        <div className="grid grid-cols-12 gap-8 items-start">
+          {/* Left Sidebar */}
+          <aside className="col-span-3 flex flex-col gap-4 sticky top-24">
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-5 shadow-sm flex flex-col gap-2">
+              <div className="flex items-center justify-between px-2 pb-2">
+                <h2 className="text-[16px] text-[#003622] dark:text-white font-bold">Kategori PO</h2>
+                <span className="material-symbols-outlined text-[#707972] text-[20px]">category</span>
+              </div>
+              <nav className="flex flex-col gap-1.5">
+                {CATEGORIES.map((cat) => {
+                  const active = category === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategory(cat.id)}
+                      className={cn(
+                        "flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-all",
+                        active
+                          ? "bg-[#e0f3e3] text-[#003622] text-[13px] font-bold"
+                          : "hover:bg-[#e6f8e8] text-[#404943] dark:text-[#99d3b2] text-[13px]"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={cn("material-symbols-outlined text-[20px]", active ? "text-[#003622]" : "text-[#707972]")}>
+                          {cat.icon}
+                        </span>
+                        <span>{cat.desktopLabel}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="bg-[#134e35] text-white rounded-2xl p-5 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-[#ceeb7a] text-[#161f00] flex items-center justify-center font-bold">
+                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              </div>
+              <span className="text-[14px] font-bold">Titik Pickup Terverifikasi</span>
+              <p className="text-[11px] text-[#85be9e]">
+                Semua batch Open PO menyepakati titik temu atau pickup jelas di lingkungan kampus.
+              </p>
+            </div>
+          </aside>
+
+          {/* Right Main Area */}
+          <div className="col-span-9 flex flex-col gap-6">
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-4 shadow-sm flex items-center gap-3">
+              <div className="relative flex-1">
+                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#707972] text-[20px]">
+                  search
+                </span>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder='Cari Open PO, misalnya "makanan", "merch USU", "buku"...'
+                  className="w-full pl-11 pr-4 py-2.5 bg-[#e6f8e8] dark:bg-[#183022] text-[#101f15] dark:text-white text-[13px] rounded-xl outline-none placeholder:text-[#707972]"
+                />
+              </div>
+              <select
+                value={campusFilter}
+                onChange={(e) => setCampusFilter(e.target.value)}
+                className="bg-[#e6f8e8] dark:bg-[#183022] text-[#101f15] dark:text-white text-[12px] py-2.5 px-3.5 rounded-xl outline-none cursor-pointer"
+              >
+                {campuses.map((c) => (
+                  <option key={c} value={c}>{c === "Semua" ? "Semua Kampus" : c}</option>
+                ))}
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-[#e6f8e8] dark:bg-[#183022] text-[#101f15] dark:text-white text-[12px] py-2.5 px-3.5 rounded-xl outline-none cursor-pointer"
+              >
+                <option value="newest">Urutkan: Terbaru</option>
+                <option value="quota">Kuota Terbanyak</option>
+                <option value="cheapest">Harga Terendah</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {[
+                { id: "all", label: "Semua PO" },
+                { id: "active", label: "Sedang Berjalan" },
+                { id: "closing", label: "Segera Ditutup" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setStatusTab(t.id)}
+                  className={cn(
+                    "px-5 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors shadow-sm",
+                    statusTab === t.id
+                      ? "bg-[#134e35] text-white"
+                      : "bg-white dark:bg-[#112218] text-[#404943] dark:text-[#99d3b2] hover:bg-[#e6f8e8]"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+              <Link
+                href="/keranjang?tab=po"
+                className="px-5 py-2 rounded-full bg-white dark:bg-[#112218] text-[#404943] dark:text-[#99d3b2] hover:bg-[#e6f8e8] text-[13px] font-bold whitespace-nowrap shadow-sm ml-auto"
+              >
+                Pesanan Saya
+              </Link>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="bg-white dark:bg-[#112218] rounded-2xl p-12 text-center shadow-sm">
+                <span className="material-symbols-outlined text-[42px] text-[#707972]">inventory_2</span>
+                <p className="mt-2 text-base font-bold text-[#101f15] dark:text-white">Belum ada Open PO yang cocok</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+                {filtered.map((batch) => {
+                  const { quota, reserved: ordered, remaining: sisa, progress: pct, photo, closesAt } = getOpenPoBatchMetrics(batch);
+                  const title = batch.title || batch.name || "Open PO Kampus";
+                  const isFav = !!favorites[batch.id];
+
+                  return (
+                    <div
+                      key={batch.id}
+                      className="bg-white dark:bg-[#112218] rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                    >
+                      <div className="flex flex-col gap-3">
+                        <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#e0f3e3]">
+                          {photo ? (
+                            <img
+                              src={photo}
+                              alt={title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[#134e35]">
+                              <span className="material-symbols-outlined text-[44px]">local_mall</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setFavorites((p) => ({ ...p, [batch.id]: !p[batch.id] }))}
+                            className={cn(
+                              "absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/85 backdrop-blur-md flex items-center justify-center transition-colors",
+                              isFav ? "text-[#ba1a1a]" : "text-[#404943] hover:text-[#ba1a1a]"
+                            )}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">favorite</span>
+                          </button>
+                          <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-md bg-[#ceeb7a] text-[#161f00] text-[10px] font-bold shadow-sm">
+                            Sisa {sisa} kuota
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-[#404943] dark:text-[#99d3b2] font-medium">
+                              {batch.category || "Open PO"} • {batch.seller_name || "Mahasiswa"}
+                            </span>
+                            <span className="material-symbols-outlined text-[#707972] text-[16px]">verified</span>
+                          </div>
+                          <h3 className="text-[14px] text-[#101f15] dark:text-white font-bold mt-0.5 line-clamp-1">
+                            {title}
+                          </h3>
+                          <span className="text-[20px] text-[#003622] dark:text-[#bef264] font-extrabold mt-1">
+                            {rupiah(batch.price)}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5 mt-1">
+                          <div className="w-full bg-[#e0f3e3] rounded-full h-2 overflow-hidden">
+                            <div className="bg-[#134e35] dark:bg-[#bef264] h-full rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-[#404943] dark:text-[#99d3b2]">
+                            <span>Progres pesanan</span>
+                            <span className="font-bold text-[#003622] dark:text-white">{ordered}/{quota} kuota</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[#ba1a1a] text-[10px] font-semibold">
+                          <span className="material-symbols-outlined text-[16px]">schedule</span>
+                          <span>{countdownLabel(closesAt)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 mt-4 pt-3 bg-[#e6f8e8]/60 dark:bg-[#183022] -mx-4 -mb-4 p-4 rounded-b-2xl">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] text-[#404943] dark:text-[#99d3b2] font-semibold truncate">
+                            {batch.pickup_point || "Titik Pickup Kampus"}
+                          </span>
+                          <span className="text-[10px] text-[#707972] shrink-0">{batch.campus || "Kampus"}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelected(batch)}
+                          className="w-full py-2.5 rounded-xl bg-[#134e35] hover:bg-[#003622] text-white text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <span>Ikuti PO</span>
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Reservasi Open PO */}
+      {selected && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#112218] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Reservasi Slot</p>
-                <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-white">{selected.title}</h2>
-                <p className="mt-1 text-xs text-slate-500">{rupiah(selected.price)} / {selected.unit}</p>
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#ceeb7a] text-[#161f00]">
+                  Ikuti Open PO
+                </span>
+                <h3 className="text-lg font-extrabold text-[#003622] dark:text-white mt-1.5">
+                  {selected.title || selected.name}
+                </h3>
+                <p className="text-xs text-[#404943] dark:text-[#99d3b2]">
+                  {rupiah(selected.price)} • Pickup: {selected.pickup_point || selected.campus || "Kampus"}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
-                aria-label="Tutup modal"
-                className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors"
+                className="w-8 h-8 rounded-full bg-[#e6f8e8] flex items-center justify-center text-[#003622]"
               >
-                ✕
+                <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
-            {!isAuthenticated ? (
-              <div className="mt-5 rounded-xl bg-amber-50 dark:bg-amber-950/40 p-3 text-xs leading-relaxed text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
-                Masuk dengan akun JB untuk memesan. Akun marketplace yang sama digunakan untuk semua aktivitas.
+
+            <form onSubmit={reserve} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-[#101f15] dark:text-white mb-1">Nama Pemesan</label>
+                <input
+                  type="text"
+                  required
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                  placeholder="Nama lengkap kamu"
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                />
               </div>
-            ) : (
-              <div className="mt-5 space-y-3">
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Nama pemesan
-                  <input
-                    required
-                    minLength={2}
-                    maxLength={80}
-                    value={buyerName}
-                    onChange={(event) => setBuyerName(event.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm outline-none focus:border-emerald-600"
-                    placeholder="Nama yang dapat dikenali penjual"
-                  />
-                </label>
-                <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Jumlah
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    max={Math.max(1, selected.quota - selected.reserved)}
-                    value={quantity}
-                    onChange={(event) => setQuantity(Number(event.target.value))}
-                    className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm outline-none focus:border-emerald-600"
-                  />
-                </label>
-                <p className="rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Total: {rupiah(selected.price * quantity)}
-                </p>
-                <label className="flex cursor-pointer items-start gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 p-3 text-[11px] leading-relaxed text-emerald-950 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-900/40">
-                  <input
-                    required
-                    type="checkbox"
-                    checked={contactConsent}
-                    onChange={(event) => setContactConsent(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700"
-                  />
-                  <span>Saya setuju nomor WhatsApp akun JB saya dibagikan kepada penjual untuk kebutuhan reservasi ini.</span>
-                </label>
+              <div>
+                <label className="block text-xs font-bold text-[#101f15] dark:text-white mb-1">Jumlah Pesanan</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                />
               </div>
-            )}
-            {error ? <p role="alert" className="mt-3 text-xs font-semibold text-rose-700">{error}</p> : null}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-emerald-800 text-xs font-extrabold text-white hover:bg-emerald-900 active:translate-y-px transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-emerald-600"
-            >
-              {submitting ? <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : null}
-              {!isAuthenticated ? "Masuk untuk memesan" : submitting ? "Menyimpan reservasi…" : "Buat reservasi"}
-            </button>
-          </form>
+              <label className="flex items-start gap-2.5 text-xs text-[#404943] dark:text-[#99d3b2] cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={contactConsent}
+                  onChange={(e) => setContactConsent(e.target.checked)}
+                  className="mt-0.5 rounded accent-[#134e35]"
+                />
+                <span>Saya setuju kontak saya diteruskan ke penyelenggara PO untuk koordinasi pickup.</span>
+              </label>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3 rounded-full bg-[#134e35] hover:bg-[#003622] text-white text-sm font-bold shadow-md disabled:opacity-50"
+              >
+                {submitting ? "Memproses..." : `Konfirmasi Pesanan (${rupiah(Number(selected.price || 0) * quantity)})`}
+              </button>
+            </form>
+          </div>
         </div>
-      ) : null}
-    </main>
+      )}
+
+      {/* Modal Sukses Reservasi */}
+      {success && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#112218] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-3 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#ceeb7a] text-[#134e35] flex items-center justify-center mx-auto">
+              <span className="material-symbols-outlined text-[28px]">check_circle</span>
+            </div>
+            <h3 className="text-lg font-extrabold text-[#003622] dark:text-white">Reservasi Berhasil!</h3>
+            <p className="text-xs text-[#404943] dark:text-[#99d3b2]">
+              Pesanan untuk <strong>{success.productName}</strong> telah dicatat.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSuccess(null)}
+              className="w-full py-2.5 rounded-full bg-[#134e35] text-white text-sm font-bold"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,1846 +1,1031 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo, useTransition } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Icon } from "@/components/Icons";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
-import { toast } from "sonner";
+import { toggleCartItem } from "@/lib/cart";
+import { openWhatsAppContact } from "@/lib/openWhatsAppContact";
 import { useSesi } from "@/components/SesiProvider";
-import { compressImage } from "@/lib/image";
-import ProductCard from "@/components/ProductCard";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { itemMatchesFypScope, sortFypItems } from "@/lib/fypScope";
-import { fetchCampusesCached } from "@/lib/cachedKampus";
 
-// Lazy-load modal berat agar tidak membebani initial bundle pendaratan
-const TagProdukPicker = dynamic(() => import("@/components/TagProdukPicker"), { ssr: false });
-const ProductPeekSheet = dynamic(() => import("@/components/ProductPeekSheet"), { ssr: false });
-const UnduhMenfessModal = dynamic(() => import("@/components/mading/UnduhMenfessModal"), { ssr: false });
-const CreateSheet = dynamic(() => import("@/components/CreateSheet"), { ssr: false });
-const OTPModal = dynamic(() => import("@/components/OTPModal"), { ssr: false });
-
-const normalizeMarketplaceFypScope = (scope) =>
-  ["campus", "province", "custom"].includes(scope) ? scope : "province";
-
-// Haptic feedback for tactile feel on mobile devices
-function triggerHaptic(type = "light") {
-  if (typeof window !== "undefined" && "vibrate" in navigator) {
-    try {
-      if (type === "light") navigator.vibrate(8);
-      else if (type === "medium") navigator.vibrate(20);
-      else if (type === "success") navigator.vibrate([10, 30, 15]);
-    } catch {}
-  }
-}
-
-// Umur relatif singkat untuk kartu feed
-function waktuLalu(dateStr) {
-  if (!dateStr) return "baru saja";
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return "baru saja";
-  if (diff < 3600) return `${Math.floor(diff / 60)} mnt lalu`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
-  return `${Math.floor(diff / 86400)} hari lalu`;
-}
-
-const WTB_ITEMS = [
-  { title: "Papan LED Laprak Arsi", price: "< 150 Rb", faculty: "Arsitektur", href: "/dicari" },
-  { title: "Buku Kalkulus Purcell Jilid 1 & 2", price: "50-80 Rb", faculty: "Fasilkom / Teknik", href: "/dicari" },
-  { title: "Kos dekat kampus", price: "Mulai dari", faculty: "Lokasi fleksibel", href: "/dicari" },
-  { title: "Kalkulator Saintifik Casio fx-991EX", price: "< 200 Rb", faculty: "Teknik", href: "/dicari" },
-  { title: "Jas Lab MIPA Ukuran L", price: "35 Rb", faculty: "MIPA", href: "/dicari" },
+const CATEGORIES = [
+  { label: "Semua", icon: "apps" },
+  { label: "Buku & Referensi", match: ["buku", "modul", "referensi", "atk"], icon: "menu_book" },
+  { label: "Elektronik", match: ["elektronik", "laptop", "gadget", "hp"], icon: "devices" },
+  { label: "Perlengkapan Kuliah", match: ["perlengkapan", "tas", "kuliah", "alat"], icon: "school" },
+  { label: "Fashion", match: ["fashion", "baju", "celana", "jaket", "sepatu"], icon: "checkroom" },
+  { label: "Konsumsi", match: ["makanan", "minuman", "snack", "konsumsi", "kuliner"], icon: "bakery_dining" },
+  { label: "Kebutuhan Harian", match: ["kos", "harian", "kamar", "perabot"], icon: "shopping_basket" },
+  { label: "Lainnya", match: ["lainnya", "jasa"], icon: "more_horiz" },
 ];
+
+function getWantedIcon(category) {
+  const value = String(category || "").toLowerCase();
+  if (value.includes("buku") || value.includes("referensi")) return "auto_stories";
+  if (value.includes("elektronik") || value.includes("laptop")) return "devices";
+  if (value.includes("kalkulator")) return "calculate";
+  return "manage_search";
+}
+
+function formatWantedTime(value) {
+  const createdAt = new Date(value).getTime();
+  if (!Number.isFinite(createdAt)) return "Tanggal tidak tersedia";
+  const minutes = Math.max(0, Math.floor((Date.now() - createdAt) / 60_000));
+  if (minutes < 1) return "Baru saja";
+  if (minutes < 60) return `${minutes} mnt lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  return `${Math.floor(hours / 24)} hari lalu`;
+}
+
+function formatCondition(cond) {
+  const c = String(cond || "").toLowerCase();
+  if (c === "new" || c === "baru") return { label: "Baru", isNew: true };
+  return { label: "Preloved", isNew: false };
+}
+
+function getListingImage(item) {
+  if (Array.isArray(item?.images) && item.images.length > 0 && item.images[0]) return item.images[0];
+  if (item?.image_url) return item.image_url;
+  return null;
+}
 
 export default function SuperAppHome({
   latestListings = [],
-  madingPosts: initialMadingPosts = [],
   initialPoBatches = [],
-  heroTitle,
-  heroSubtitle
 }) {
-  // Feed States
-  const [posts, setPosts] = useState(initialMadingPosts);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialMadingPosts.length === 15);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [feedError, setFeedError] = useState(false);
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
-  const [selectedCampus, setSelectedCampus] = useState("Semua");
-  const [campuses, setCampuses] = useState([]);
-  const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-
   const router = useRouter();
-  const { wa: userWa, profil } = useSesi();
-  const [, startTransition] = useTransition();
-  const [isMounted, setIsMounted] = useState(false);
+  const { nama: sesiNama, profil } = useSesi();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  const [selectedCampus, setSelectedCampus] = useState("Semua");
+  const [condNew, setCondNew] = useState(false);
+  const [condUsed, setCondUsed] = useState(false);
+  const [maxPrice, setMaxPrice] = useState(5000000);
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [favorites, setFavorites] = useState({});
+  const [visibleCount, setVisibleCount] = useState(16);
+  const [wantedItems, setWantedItems] = useState([]);
+  const [wantedLoading, setWantedLoading] = useState(true);
+  const [wantedError, setWantedError] = useState("");
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (profil) {
-      const camp = profil.campus || profil.marketplace_campus;
-      if (camp) {
-        setSelectedCampus(camp);
-        setListingCampus(camp);
-        setOnboardingCampus(camp);
-        try { localStorage.setItem("preferred_campus", camp); } catch {}
-      }
-      const prov = profil.marketplace_province_id || profil.fyp_province_id;
-      if (prov) {
-        setFypProvince(prov);
-        setOnboardingProvince(prov);
-        try { localStorage.setItem("preferred_province", prov); } catch {}
-      }
-    }
-  }, [profil]);
-
-  // Marketplace states
-  const [listingCampus, setListingCampus] = useState("Semua");
-  const [listingCategory, setListingCategory] = useState("Semua");
-  const [listingSort, setListingSort] = useState("terbaru"); // 'terbaru' | 'termurah'
-  const [visibleListingCount, setVisibleListingCount] = useState(30);
-
-  // FYP & Regional Preferences
-  const [provinces, setProvinces] = useState([]);
-  const [fypScope, setFypScope] = useState("campus"); // 'campus' | 'province' | 'all' | 'custom'
-  const [fypProvince, setFypProvince] = useState("sumatera-utara");
-  const [fypUniversities, setFypUniversities] = useState([]);
-  const [provinceCuratedListings, setProvinceCuratedListings] = useState([]);
-
-  // Onboarding (Wajib isi kampus & daerah acuan jual beli)
-  const [onboardingProvince, setOnboardingProvince] = useState("sumatera-utara");
-  const [onboardingCampus, setOnboardingCampus] = useState("");
-  const [onboardingScope, setOnboardingScope] = useState("campus");
-  const [savingOnboarding, setSavingOnboarding] = useState(false);
-
-  // UI Modals & Dropdowns
-  const [showCreateSheet, setShowCreateSheet] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
-  const [wtbIndex, setWtbIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setWtbIndex((prev) => (prev + 1) % 5);
-    }, 3200);
-
     try {
-      const savedScope = localStorage.getItem("fyp_scope");
-      if (savedScope) setFypScope(normalizeMarketplaceFypScope(savedScope));
-      const savedProv = localStorage.getItem("preferred_province");
-      if (savedProv) {
-        setFypProvince(savedProv);
-        setOnboardingProvince(savedProv);
-      }
-      const savedUnivs = localStorage.getItem("fyp_universities");
-      if (savedUnivs) {
-        try {
-          const parsed = JSON.parse(savedUnivs);
-          if (Array.isArray(parsed)) setFypUniversities(parsed);
-        } catch {}
-      }
+      const savedFav = JSON.parse(localStorage.getItem("kk_favorites") || "{}");
+      if (savedFav && typeof savedFav === "object") setFavorites(savedFav);
     } catch {}
-
-    const onCampus = (e) => {
-      if (e.detail?.campus) {
-        setSelectedCampus(e.detail.campus);
-        setListingCampus(e.detail.campus);
-        setOnboardingCampus(e.detail.campus);
-      }
-      if (e.detail?.province) {
-        setFypProvince(e.detail.province);
-        setOnboardingProvince(e.detail.province);
-      }
-      if (e.detail?.scope) {
-        setFypScope(normalizeMarketplaceFypScope(e.detail.scope));
-      }
-      if (Array.isArray(e.detail?.universities)) {
-        setFypUniversities(e.detail.universities);
-      }
-    };
-    fetchCampusesCached()
-      .then((data) => {
-        if (Array.isArray(data?.campuses)) {
-          setCampuses(data.campuses);
-          if (Array.isArray(data?.provinces)) {
-            setProvinces(data.provinces);
-          }
-
-          // 1. Prioritaskan URL Query Parameter (?campus=ui atau ?univ=itb)
-          const urlParams = new URLSearchParams(window.location.search);
-          const urlCampusParam = urlParams.get("campus") || urlParams.get("univ");
-          let initialCampus = null;
-
-          if (urlCampusParam) {
-            const cleanParam = urlCampusParam.trim().toLowerCase();
-            const matchedFromUrl = data.campuses.find(
-              (c) => c.shortName.toLowerCase() === cleanParam ||
-                     c.id.toLowerCase() === cleanParam ||
-                     c.name.toLowerCase().includes(cleanParam)
-            );
-            if (matchedFromUrl) {
-              initialCampus = matchedFromUrl.shortName;
-              localStorage.setItem("preferred_campus", initialCampus);
-              if (matchedFromUrl.provinceId) {
-                localStorage.setItem("preferred_province", matchedFromUrl.provinceId);
-                setFypProvince(matchedFromUrl.provinceId);
-                setOnboardingProvince(matchedFromUrl.provinceId);
-              }
-              toast.success(`Kampus aktif: ${matchedFromUrl.shortName} (${matchedFromUrl.name})`);
-            }
-          }
-
-          // 2. Fallback ke savedCampus di localStorage
-          if (!initialCampus) {
-            const savedCampus = localStorage.getItem("preferred_campus");
-            const validCampus = data.campuses.some((campus) => campus.shortName === savedCampus);
-            if (validCampus && savedCampus) {
-              initialCampus = savedCampus;
-            }
-          }
-
-          if (initialCampus) {
-            setSelectedCampus(initialCampus);
-            setListingCampus(initialCampus);
-            setOnboardingCampus(initialCampus);
-            localStorage.setItem("onboarding_seen", "1");
-            setShowOnboarding(false);
-          }
-        }
-      })
-      .catch(() => {});
-    window.addEventListener("campus:change", onCampus);
-
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener("campus:change", onCampus);
-    };
   }, []);
 
-  // Realtime Open PO Batches with FYP Scoping
-  const [poBatches, setPoBatches] = useState(Array.isArray(initialPoBatches) ? initialPoBatches : []);
-
   useEffect(() => {
-    if (fypScope !== "province" || !fypProvince) {
-      setProvinceCuratedListings([]);
-      return undefined;
-    }
     const controller = new AbortController();
-    fetch(`/api/fyp/curation?provinceId=${encodeURIComponent(fypProvince)}`, { cache: "no-store", signal: controller.signal })
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => {
-        if (data?.provinceId && data.provinceId !== fypProvince) setFypProvince(data.provinceId);
-        setProvinceCuratedListings(Array.isArray(data?.items) ? data.items : []);
-      })
-      .catch((error) => {
-        if (error?.name !== "AbortError") setProvinceCuratedListings([]);
-      });
-    return () => controller.abort();
-  }, [fypScope, fypProvince]);
 
-  const fypUniversitiesInProvince = useMemo(() => {
-    const allowed = new Set(campuses
-      .filter((campus) => String(campus.provinceId || campus.province_id || "").toLowerCase() === String(fypProvince || "").toLowerCase())
-      .flatMap((campus) => [campus.id, campus.shortName])
-      .map((value) => String(value || "").toLowerCase()));
-    return fypUniversities.filter((university) => allowed.has(String(university || "").toLowerCase()));
-  }, [campuses, fypProvince, fypUniversities]);
-
-  const activeBatches = useMemo(() => {
-    if (!Array.isArray(poBatches) || poBatches.length === 0) return [];
-    return poBatches.filter((batch) => itemMatchesFypScope(batch, {
-      scope: fypScope,
-      campus: selectedCampus,
-      provinceId: fypProvince,
-      universities: fypUniversitiesInProvince,
-      campuses,
-    }));
-  }, [poBatches, fypScope, selectedCampus, fypProvince, fypUniversitiesInProvince, campuses]);
-
-  useEffect(() => {
-    let mounted = true;
-    async function loadPo() {
+    async function loadWantedItems() {
       try {
-        const res = await fetch("/api/open-po");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (mounted && Array.isArray(data.batches)) {
-          setPoBatches(data.batches);
-        }
-      } catch {}
-    }
-    loadPo();
-    const interval = setInterval(loadPo, 35000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Dynamic ticker rotates through marketplace, Open PO, and Menfess updates.
-  const tickerItems = useMemo(() => {
-    const items = [];
-
-    if (posts?.length) {
-      posts.slice(0, 5).forEach((post) => items.push({
-        type: "menfess",
-        label: "Menfess Terkini:",
-        dotColor: "bg-rose-500",
-        pingColor: "bg-rose-400",
-        textColor: "text-rose-900 dark:text-rose-300",
-        text: `“${post.content}”`,
-        url: "#menfess-section",
-        isAnchor: true,
-      }));
-    } else {
-      items.push({
-        type: "menfess",
-        label: "Menfess Terkini:",
-        dotColor: "bg-rose-500",
-        pingColor: "bg-rose-400",
-        textColor: "text-rose-900 dark:text-rose-300",
-        text: "“Halo, ada yang tahu kos sekitar kampus yang masih tersedia bulan depan?...”",
-        url: "#menfess-section",
-        isAnchor: true,
-      });
-    }
-
-    if (latestListings?.length) {
-      latestListings.slice(0, 5).forEach((listing) => items.push({
-        type: "jual-beli",
-        label: "Jual Beli Terkini:",
-        dotColor: "bg-emerald-600",
-        pingColor: "bg-emerald-400",
-        textColor: "text-emerald-900 dark:text-emerald-300",
-        text: `“${listing.title} — ${rupiah(listing.price)} (${listing.area || listing.campus || "Sekitar Kampus"})”`,
-        url: `/produk/${buildSlug(listing.title, listing.id)}`,
-        isAnchor: false,
-      }));
-    } else {
-      items.push({
-        type: "jual-beli",
-        label: "Jual Beli Terkini:",
-        dotColor: "bg-emerald-600",
-        pingColor: "bg-emerald-400",
-        textColor: "text-emerald-900 dark:text-emerald-300",
-        text: "“Laptop Lenovo ThinkPad L480 Core i5 — Rp 2.800.000 (Fasilkom TI)”",
-        url: "/jual-beli",
-        isAnchor: false,
-      });
-    }
-
-    activeBatches.slice(0, 5).forEach((batch) => items.push({
-      type: "open-po",
-      label: "Open PO Terkini:",
-      dotColor: "bg-amber-500",
-      pingColor: "bg-amber-400",
-      textColor: "text-amber-900 dark:text-amber-300",
-      text: `“${batch.name || batch.title} — ${rupiah(batch.price || 15000)} • ${batch.location_summary || "Titik Kumpul Kampus"}”`,
-      url: batch.url || "/open-po",
-      isAnchor: false,
-    }));
-
-    const interleaved = [];
-    const menfess = items.filter((item) => item.type === "menfess");
-    const marketplace = items.filter((item) => item.type === "jual-beli");
-    const openPo = items.filter((item) => item.type === "open-po");
-    const maxLength = Math.max(menfess.length, marketplace.length, openPo.length);
-
-    for (let index = 0; index < maxLength; index++) {
-      if (marketplace[index]) interleaved.push(marketplace[index]);
-      if (openPo[index]) interleaved.push(openPo[index]);
-      if (menfess[index]) interleaved.push(menfess[index]);
-    }
-
-    return interleaved.length > 0 ? interleaved : items;
-  }, [posts, latestListings, activeBatches]);
-
-  const [tickerIndex, setTickerIndex] = useState(0);
-
-  useEffect(() => {
-    if (!tickerItems.length) return;
-    const timer = setInterval(() => {
-      setTickerIndex((prev) => (prev + 1) % tickerItems.length);
-    }, 4200);
-    return () => clearInterval(timer);
-  }, [tickerItems.length]);
-
-  const currentTicker = tickerItems[tickerIndex] || tickerItems[0];
-  const currentWtbItem = WTB_ITEMS[wtbIndex] || WTB_ITEMS[0];
-
-  // Comments State
-  const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
-  const [commentsMap, setCommentsMap] = useState({});
-  const [newCommentText, setNewCommentText] = useState("");
-  const [submittingComment, setSubmittingComment] = useState(false);
-
-  // Write Modal State
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    type: "menfess",
-    sender_name: "Anonim",
-    faculty: "Bebas",
-    title: "",
-    content: "",
-    is_anon: true,
-  });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [zoomImage, setZoomImage] = useState(null);
-  const [tagProduk, setTagProduk] = useState(null);
-  const [intipProduk, setIntipProduk] = useState(null);
-  const [unduhPost, setUnduhPost] = useState(null);
-  const [compressingImage, setCompressingImage] = useState(false);
-  const [requireLoginMenfess, setRequireLoginMenfess] = useState(true);
-
-  // Sinkronkan preferensi pengguna terdaftar dari profil
-  useEffect(() => {
-    if (!userWa) return;
-    fetch("/api/profil", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.ok && data?.profil) {
-          const marketplaceCampus = data.profil.marketplace_campus || data.profil.campus;
-          if (!marketplaceCampus || marketplaceCampus === "Semua") {
-            const savedCampus = localStorage.getItem("preferred_campus");
-            const onboardingSeen = localStorage.getItem("onboarding_seen") === "1";
-            if ((!savedCampus || savedCampus === "null" || savedCampus === "Semua") && !onboardingSeen) {
-              setShowOnboarding(true);
-            }
-          } else {
-            localStorage.setItem("onboarding_seen", "1");
-            setShowOnboarding(false);
-            if (marketplaceCampus) {
-              setSelectedCampus(marketplaceCampus);
-              setListingCampus(marketplaceCampus);
-              setOnboardingCampus(marketplaceCampus);
-              try { localStorage.setItem("preferred_campus", marketplaceCampus); } catch {}
-            }
-            const accountProvince = data.profil.marketplace_province_id || data.profil.fyp_province_id;
-            if (accountProvince) {
-              setFypProvince(accountProvince);
-              setOnboardingProvince(accountProvince);
-              try { localStorage.setItem("preferred_province", accountProvince); } catch {}
-            }
-            if (data.profil.fyp_scope) {
-              const safeScope = normalizeMarketplaceFypScope(data.profil.fyp_scope);
-              setFypScope(safeScope);
-              try { localStorage.setItem("fyp_scope", safeScope); } catch {}
-            }
-            if (Array.isArray(data.profil.fyp_universities)) {
-              setFypUniversities(data.profil.fyp_universities);
-              try { localStorage.setItem("fyp_universities", JSON.stringify(data.profil.fyp_universities)); } catch {}
-            }
-          }
-        }
-      })
-      .catch(() => {});
-  }, [userWa]);
-
-  // Onboarding (wajib diisi karena acuan jual beli)
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const savedCamp = localStorage.getItem("preferred_campus");
-        const hasSavedCampus = savedCamp && savedCamp !== "null" && savedCamp !== "Semua";
-        const seen = localStorage.getItem("onboarding_seen") === "1";
-        if (hasSavedCampus) {
-          localStorage.setItem("onboarding_seen", "1");
-        } else if (!seen) {
-          setShowOnboarding(true);
-        }
-      }
-    } catch {}
-  }, []);
-
-  const simpanOnboarding = async () => {
-    if (!onboardingCampus) {
-      toast.error("Silakan pilih kampus acuan terlebih dahulu.");
-      return;
-    }
-    try {
-      setSavingOnboarding(true);
-      if (userWa) {
-        const response = await fetch("/api/profil", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            campus: onboardingCampus,
-            fyp_province_id: onboardingProvince,
-            fyp_scope: onboardingScope,
-          }),
+        const response = await fetch("/api/wanted", {
+          cache: "no-store",
+          signal: controller.signal,
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok) {
-          throw new Error(data.error || "Preferensi kampus belum berhasil disimpan ke profil.");
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Daftar barang dicari belum dapat dimuat.");
+        if (!Array.isArray(result.listings)) throw new Error("Respons barang dicari tidak valid.");
+        setWantedItems(result.listings.slice(0, 3));
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          setWantedError(cause instanceof Error ? cause.message : "Daftar barang dicari belum dapat dimuat.");
         }
+      } finally {
+        if (!controller.signal.aborted) setWantedLoading(false);
       }
-
-      localStorage.setItem("preferred_campus", onboardingCampus);
-      localStorage.setItem("preferred_province", onboardingProvince);
-      localStorage.setItem("fyp_scope", onboardingScope);
-      localStorage.setItem("onboarding_seen", "1");
-      setSelectedCampus(onboardingCampus);
-      setListingCampus(onboardingCampus);
-      setFypProvince(onboardingProvince);
-      const safeScope = normalizeMarketplaceFypScope(onboardingScope);
-      setFypScope(safeScope);
-      window.dispatchEvent(
-        new CustomEvent("campus:change", {
-          detail: {
-            campus: onboardingCampus,
-            province: onboardingProvince,
-            scope: safeScope,
-            universities: [],
-          },
-        })
-      );
-      setShowOnboarding(false);
-      toast.success(`Kampus ${onboardingCampus} berhasil disetel sebagai acuan transaksi!`);
-    } catch (err) {
-      toast.error(err.message || "Gagal menyimpan acuan kampus.");
-    } finally {
-      setSavingOnboarding(false);
     }
-  };
 
-  const switchFypScope = (requestedScope) => {
-    const newScope = normalizeMarketplaceFypScope(requestedScope);
-    setFypScope(newScope);
-    try {
-      localStorage.setItem("fyp_scope", newScope);
-      window.dispatchEvent(
-        new CustomEvent("campus:change", {
-          detail: {
-            campus: selectedCampus,
-            province: fypProvince,
-            scope: newScope,
-            universities: fypUniversities,
-          },
-        })
-      );
-    } catch {}
-    if (userWa) {
-      fetch("/api/profil", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fyp_scope: newScope }),
-      }).catch(() => {});
-    }
-    toast.success(`Jangkauan FYP diubah ke: ${newScope === "campus" ? "Kampus Utama" : newScope === "province" ? "Satu Daerah" : "Kampus Pilihan"} dalam provinsi acuanmu.`);
-  };
-
-  // Restore Menfess Draft on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const savedDraft = localStorage.getItem("menfess_draft");
-        if (savedDraft) {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed && (parsed.content || parsed.title)) {
-            setFormData((prev) => ({
-              ...prev,
-              type: parsed.type || prev.type,
-              faculty: parsed.faculty || prev.faculty,
-              title: parsed.title || prev.title,
-              content: parsed.content || prev.content,
-            }));
-          }
-        }
-      } catch {}
-    }
+    loadWantedItems();
+    return () => controller.abort();
   }, []);
 
-  const updateFormData = (patch) => {
-    setFormData((prev) => {
-      const next = { ...prev, ...patch };
+  const campusOptions = useMemo(() => {
+    const set = new Set(["Semua"]);
+    latestListings.forEach((l) => {
+      if (l.campus) set.add(l.campus);
+    });
+    return Array.from(set);
+  }, [latestListings]);
+
+  const filteredListings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return latestListings.filter((item) => {
+      if (q) {
+        const hay = `${item.title || ""} ${item.description || ""} ${item.category || ""} ${item.area || ""} ${item.seller_name || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (selectedCategory !== "Semua") {
+        const catObj = CATEGORIES.find((c) => c.label === selectedCategory);
+        const itemCat = String(item.category || "").toLowerCase();
+        const itemTitle = String(item.title || "").toLowerCase();
+        if (catObj?.match) {
+          const matched = catObj.match.some((m) => itemCat.includes(m) || itemTitle.includes(m));
+          if (!matched) return false;
+        } else if (!itemCat.includes(selectedCategory.toLowerCase())) {
+          return false;
+        }
+      }
+      if (selectedCampus !== "Semua" && item.campus !== selectedCampus) return false;
+      if (condNew && !condUsed) {
+        const c = String(item.condition || "").toLowerCase();
+        if (c !== "new" && c !== "baru") return false;
+      } else if (condUsed && !condNew) {
+        const c = String(item.condition || "").toLowerCase();
+        if (c === "new" || c === "baru") return false;
+      }
+      const priceNum = Number(item.price || 0);
+      if (maxPrice < 5000000 && priceNum > maxPrice) return false;
+      return true;
+    });
+  }, [latestListings, searchQuery, selectedCategory, selectedCampus, condNew, condUsed, maxPrice]);
+
+  const displayedListings = filteredListings.slice(0, visibleCount);
+
+  const toggleFav = (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFavorites((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
       try {
-        localStorage.setItem(
-          "menfess_draft",
-          JSON.stringify({
-            type: next.type,
-            faculty: next.faculty,
-            title: next.title,
-            content: next.content,
-          })
-        );
+        localStorage.setItem("kk_favorites", JSON.stringify(next));
       } catch {}
       return next;
     });
   };
 
-  // User identifier for analytics
-  const [userId, setUserId] = useState("");
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      let uid = localStorage.getItem("mading_user_id");
-      if (!uid) {
-        uid = "usr_" + Math.random().toString(36).substring(2, 12);
-        localStorage.setItem("mading_user_id", uid);
-      }
-      setUserId(uid);
-
-      fetch("/api/config")
-        .then((r) => r.json())
-        .then((cfg) => {
-          if (cfg?.mading?.requireLogin != null) {
-            setRequireLoginMenfess(!!cfg.mading.requireLogin);
-          }
-        })
-        .catch(() => {});
-    }
-  }, []);
-
-  // Filter & Fetch posts
-  const fetchingMoreRef = useRef(false);
-  useEffect(() => {
-    let isMounted = true;
-    async function resetAndFetch() {
-      setIsLoadingMore(true);
-      setFeedError(false);
-      fetchingMoreRef.current = true;
-      try {
-        const query = new URLSearchParams({
-          page: "1",
-          limit: "15",
-          ...(activeTab !== "all" && { type: activeTab }),
-          ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
-          ...(debouncedQuery && { q: debouncedQuery }),
-        });
-        const res = await fetch(`/api/mading?${query.toString()}`);
-        const data = await res.json();
-        if (isMounted) {
-          setPosts(data.posts || []);
-          setPage(1);
-          setHasMore((data.posts || []).length === 15);
-        }
-      } catch (error) {
-        if (isMounted) setFeedError(true);
-      } finally {
-        fetchingMoreRef.current = false;
-        if (isMounted) setIsLoadingMore(false);
-      }
-    }
-    resetAndFetch();
-    return () => {
-      isMounted = false;
-    };
-  }, [activeTab, selectedCampus, debouncedQuery]);
-
-  const loadMorePosts = async () => {
-    if (isLoadingMore || !hasMore) return;
-    setIsLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const query = new URLSearchParams({
-        page: String(nextPage),
-        limit: "15",
-        ...(activeTab !== "all" && { type: activeTab }),
-        ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
-      });
-      const res = await fetch(`/api/mading?${query.toString()}`);
-      const data = await res.json();
-      const newItems = data.posts || [];
-      setPosts((prev) => [...prev, ...newItems]);
-      setPage(nextPage);
-      setHasMore(newItems.length === 15);
-    } catch {
-      toast.error("Gagal memuat postingan berikutnya.");
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  // Like interaction
-  const handleLike = async (postId) => {
-    triggerHaptic("light");
-    setPosts((current) =>
-      current.map((p) =>
-        p.id === postId
-          ? { ...p, likes_count: (p.likes_count || 0) + 1, user_has_liked: true }
-          : p
-      )
-    );
-    try {
-      await fetch(`/api/mading/${postId}/like`, { method: "POST" });
-    } catch {}
-  };
-
-  // Comments
-  const openComments = async (postId) => {
-    if (activeCommentsPostId === postId) {
-      setActiveCommentsPostId(null);
-      return;
-    }
-    setActiveCommentsPostId(postId);
-    if (!commentsMap[postId]) {
-      try {
-        const res = await fetch(`/api/mading/${postId}/comments`);
-        const data = await res.json();
-        setCommentsMap((prev) => ({ ...prev, [postId]: data.comments || [] }));
-      } catch {}
-    }
-  };
-
-  const handleSendComment = async (postId) => {
-    if (!newCommentText.trim()) return;
-    setSubmittingComment(true);
-    try {
-      const res = await fetch(`/api/mading/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          comment: newCommentText.trim(),
-          sender_name: "Anonim",
-        }),
-      });
-      if (res.ok) {
-        const newC = await res.json();
-        setCommentsMap((prev) => ({
-          ...prev,
-          [postId]: [...(prev[postId] || []), newC.comment],
-        }));
-        setNewCommentText("");
-        setPosts((current) =>
-          current.map((p) =>
-            p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p
-          )
-        );
-        toast.success("Komentar terkirim!");
-      }
-    } catch {
-      toast.error("Gagal mengirim komentar.");
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
-  // Image Selection for new post
-  const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setCompressingImage(true);
-    try {
-      const compressed = await compressImage(file, { maxWidth: 1200, quality: 0.8 });
-      setImageFile(compressed);
-      setImagePreview(URL.createObjectURL(compressed));
-    } catch {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    } finally {
-      setCompressingImage(false);
-    }
-  };
-
-  // Submit Menfess
-  const handleCreatePost = async (e) => {
+  const handleAddCart = (e, item) => {
     e.preventDefault();
-    if (!formData.content.trim()) return;
-    setSubmitting(true);
-    try {
-      const formPayload = new FormData();
-      formPayload.append("type", formData.type);
-      formPayload.append("faculty", formData.faculty);
-      formPayload.append("sender_name", formData.is_anon ? "Anonim" : (formData.sender_name || "Anonim"));
-      formPayload.append("content", formData.content.trim());
-      if (formData.title) formPayload.append("title", formData.title.trim());
-      if (imageFile) formPayload.append("image", imageFile);
-      if (tagProduk?.id) formPayload.append("listing_id", tagProduk.id);
-
-      const res = await fetch("/api/mading", {
-        method: "POST",
-        body: formPayload,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menerbitkan postingan");
-
-      toast.success("Postingan berhasil diterbitkan!");
-      setPosts((prev) => [data.post, ...prev]);
-      setShowModal(false);
-      setFormData({
-        type: "menfess",
-        sender_name: "Anonim",
-        faculty: "Umum",
-        title: "",
-        content: "",
-        is_anon: true,
-      });
-      setImageFile(null);
-      setImagePreview("");
-      setTagProduk(null);
-      try {
-        localStorage.removeItem("menfess_draft");
-      } catch {}
-    } catch (err) {
-      toast.error(err.message || "Gagal mengirim postingan.");
-    } finally {
-      setSubmitting(false);
-    }
+    e.stopPropagation();
+    toggleCartItem({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      image_url: getListingImage(item),
+      seller_wa: item.seller_wa,
+      seller_name: item.seller_name,
+      campus: item.campus,
+    });
+    toast.success("Ditambahkan ke keranjang");
   };
 
-  const handleShare = async (postId) => {
-    const url = `${window.location.origin}/mading#post-${postId}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "Menfess Kampus Kita", url });
-      } catch {}
-    } else {
-      navigator.clipboard.writeText(url);
-      toast.success("Tautan menfess disalin ke clipboard!");
-    }
+  const handleWaClick = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openWhatsAppContact({
+      wa: item.seller_wa,
+      listingTitle: item.title,
+      listingUrl: typeof window !== "undefined" ? `${window.location.origin}/produk/${buildSlug(item.title, item.id)}` : "",
+    });
   };
 
-  // Filtered & Sorted Feed
-  const filteredPosts = posts.filter((post) => {
-    if (activeTab !== "all" && post.type !== activeTab) return false;
-    if (selectedCampus !== "Semua") {
-      const target = selectedCampus.toLowerCase();
-      const matchFaculty = String(post.faculty || "").toLowerCase() === target;
-      const matchCampus = String(post.campus || "").toLowerCase() === target;
-      const isGeneral = !post.faculty || post.faculty === "Semua";
-      if (!matchFaculty && !matchCampus && !isGeneral) return false;
-    }
-    return true;
-  });
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("Semua");
+    setSelectedCampus("Semua");
+    setCondNew(false);
+    setCondUsed(false);
+    setMaxPrice(5000000);
+  };
 
-  // Filtered Marketplace Listings for Center Column with FYP Scoping
-  const scopedListings = latestListings
-    .filter((ad) => itemMatchesFypScope(ad, listingCampus !== "Semua"
-      ? { scope: "campus", campus: listingCampus, campuses }
-      : { scope: fypScope, campus: selectedCampus, provinceId: fypProvince, universities: fypUniversitiesInProvince, campuses }))
-    .filter((ad) => {
-      // 1. Filter Kata Kunci Pencarian
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const combined = `${ad.title || ""} ${ad.category || ""} ${ad.description || ""} ${ad.seller_name || ""}`.toLowerCase();
-        if (!combined.includes(q)) return false;
-      }
-      // 2. Filter Kategori
-      if (listingCategory !== "Semua") {
-        const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
-        if (!combined.includes(listingCategory.toLowerCase())) return false;
-      }
-      return true;
-    });
-  const curatedForScope = fypScope === "province" && listingCampus === "Semua"
-    ? provinceCuratedListings.filter((item) => {
-        const matchesScope = itemMatchesFypScope(item, {
-          scope: "province", provinceId: fypProvince, campuses,
-        });
-        if (!matchesScope) return false;
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase().trim();
-          const combined = `${item.title || ""} ${item.category || ""} ${item.description || ""} ${item.seller_name || ""}`.toLowerCase();
-          if (!combined.includes(q)) return false;
-        }
-        if (listingCategory !== "Semua") {
-          const combined = `${item.category || ""} ${item.title || ""}`.toLowerCase();
-          if (!combined.includes(listingCategory.toLowerCase())) return false;
-        }
-        return true;
-      })
-    : [];
-  // Deduplikasi: satu ID tidak boleh muncul dua kali, dan satu penjual
-  // tidak boleh mengiklankan barang yang sama (normalized title) berulang.
-  const seenById = new Set();
-  const seenBySellerTitle = new Set();
-  const dedupedScoped = scopedListings.filter((item) => {
-    const id = String(item.id);
-    if (seenById.has(id)) return false;
-    seenById.add(id);
-    const seller = String(item.seller_wa || "").toLowerCase();
-    const title = String(item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (seller && title) {
-      const key = `${seller}:${title}`;
-      if (seenBySellerTitle.has(key)) return false;
-      seenBySellerTitle.add(key);
-    }
-    return true;
-  });
-  const dedupedCurated = curatedForScope.filter((item) => {
-    const id = String(item.id);
-    if (seenById.has(id)) return false;
-    seenById.add(id);
-    const seller = String(item.seller_wa || "").toLowerCase();
-    const title = String(item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (seller && title) {
-      const key = `${seller}:${title}`;
-      if (seenBySellerTitle.has(key)) return false;
-      seenBySellerTitle.add(key);
-    }
-    return true;
-  });
-  const scopedById = new Map([...dedupedScoped, ...dedupedCurated].map((item) => [String(item.id), item]));
-  const naturallySortedListings = [...scopedById.values()].sort((a, b) => {
-      if (listingSort === "termurah") {
-        const pA = typeof a.price === "number" ? a.price : parseFloat(String(a.price).replace(/[^0-9]/g, "")) || 0;
-        const pB = typeof b.price === "number" ? b.price : parseFloat(String(b.price).replace(/[^0-9]/g, "")) || 0;
-        return pA - pB;
-      }
-      return new Date(b.created_at || b.bumped_at || 0) - new Date(a.created_at || a.bumped_at || 0);
-    });
-  const filteredListings = sortFypItems(naturallySortedListings,
-    fypScope === "province" && listingCampus === "Semua" ? curatedForScope.map((item) => item.id) : []);
+  const greetingName = sesiNama || profil?.name || "Mahasiswa";
 
   return (
-    <div className="min-h-screen bg-[var(--page)] dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
-      {/* ── ONBOARDING OVERLAY (WAJIB PILIH KAMPUS & DAERAH ACUAN) ── */}
-      {showOnboarding && (
-        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 animate-fade-in motion-reduce:animate-none">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-lg border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
-              <Icon.Landmark className="w-7 h-7" />
+    <div className="w-full min-h-screen bg-[#f4faf5] lg:bg-[#ecfeee] dark:bg-[#0a1710]">
+      {/* ==================== MOBILE VIEW (< lg) — 100% STITCH jual_beli_beranda ==================== */}
+      <div className="lg:hidden max-w-md mx-auto px-4 pt-3 pb-28 space-y-4">
+        {/* Greeting & Top Sub-actions */}
+        <section className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="relative w-11 h-11 rounded-full overflow-hidden ring-2 ring-emerald-200/60 bg-[#134e35] text-[#bef264] flex items-center justify-center flex-shrink-0 shadow-sm font-extrabold text-base">
+              {greetingName.charAt(0).toUpperCase()}
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-lime-500 rounded-full border-2 border-white" />
             </div>
-            <h2 className="text-xl font-extrabold text-center text-slate-900 dark:text-white mb-1">
-              Tentukan Kampus &amp; Wilayahmu
-            </h2>
-            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
-              <strong>Wajib ditentukan</strong> sebagai patokan utama transaksi jual-beli, COD hemat di sekitarmu, dan rekomendasi feed belanja (FYP).
-            </p>
-
-            <div className="space-y-3.5 mb-5">
-              {/* 1. Pilih Provinsi / Wilayah */}
-              <div>
-                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  1. Provinsi / Wilayah Acuan
-                </label>
-                <select
-                  value={onboardingProvince}
-                  onChange={(e) => {
-                    const pId = e.target.value;
-                    setOnboardingProvince(pId);
-                    const matching = campuses.filter((c) => (c.provinceId || "sumatera-utara") === pId);
-                    if (matching.length > 0) {
-                      setOnboardingCampus(matching[0].shortName);
-                    }
-                  }}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  {provinces.length > 0 ? (
-                    provinces.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="sumatera-utara">Sumatera Utara</option>
-                      <option value="dki-jakarta">DKI Jakarta</option>
-                      <option value="jawa-barat">Jawa Barat</option>
-                      <option value="di-yogyakarta">DI Yogyakarta</option>
-                      <option value="jawa-timur">Jawa Timur</option>
-                    </>
-                  )}
-                </select>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-bold text-[16px] text-slate-900 dark:text-white leading-tight truncate">
+                  Halo, {greetingName}!
+                </h1>
+                <span className="text-sm">👋</span>
               </div>
-
-              {/* 2. Pilih Kampus Utama */}
-              <div>
-                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  2. Kampus Utama
-                </label>
-                <select
-                  value={onboardingCampus}
-                  onChange={(e) => setOnboardingCampus(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="" disabled>-- Pilih Kampus Kamu --</option>
-                  {(campuses.filter((c) => (c.provinceId || "sumatera-utara") === onboardingProvince).length > 0
-                    ? campuses.filter((c) => (c.provinceId || "sumatera-utara") === onboardingProvince)
-                    : campuses
-                  ).map((k) => (
-                    <option key={k.id} value={k.shortName}>
-                      {k.shortName}: {k.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 3. Jangkauan Feed Beranda (FYP) */}
-              <div>
-                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  3. Jangkauan Feed Jual Beli (FYP)
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: "campus", label: "Kampus", desc: "Hanya kampus saya" },
-                    { id: "province", label: "Daerah", desc: "Satu provinsi" },
-                    { id: "all", label: "Nasional", desc: "Semua kampus" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setOnboardingScope(opt.id)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-colors ${
-                        onboardingScope === opt.id
-                          ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold ring-2 ring-emerald-500/20"
-                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium"
-                      }`}
-                    >
-                      <span className="text-xs">{opt.label}</span>
-                      <span className="text-[10px] opacity-75 mt-0.5">{opt.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={simpanOnboarding}
-                disabled={!onboardingCampus || savingOnboarding}
-                className="w-full bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold text-sm py-3.5 rounded-2xl transition-colors shadow-md disabled:opacity-50 disabled:pointer-events-none"
-              >
-                {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja"}
-              </button>
-              {isMounted &&
-                Boolean(localStorage.getItem("preferred_campus")) &&
-                !["null", "Semua"].includes(localStorage.getItem("preferred_campus")) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    localStorage.setItem("onboarding_seen", "1");
-                    setShowOnboarding(false);
-                  }}
-                  className="w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
-                >
-                  Gunakan acuan sebelumnya
-                </button>
-              )}
-              <p className="text-center text-[11px] text-slate-400">
-                Acuan kampus dan jangkauan FYP bisa diubah kapan saja di{" "}
-                <Link href="/dashboard?tab=profil" className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
-                  Dashboard &gt; Profil
-                </Link>.
+              <p className="text-[12px] text-slate-500 dark:text-[#99d3b2] leading-tight mt-0.5 font-medium">
+                Selamat datang di Kampus Kita
               </p>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* ── MAIN CONTENT AREA ── */}
-      <main className="max-w-[1440px] mx-auto w-full flex-1 px-3 py-3 sm:px-6 sm:py-5">
-        {/* Dynamic multi-category notification ticker */}
-        <div className="mb-2 flex flex-col items-center justify-between gap-2 sm:mb-4 sm:flex-row sm:gap-3">
-          <div className="w-full py-1.5 px-2.5 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-colors duration-300 sm:rounded-2xl sm:py-2.5 sm:px-4 sm:text-xs sm:gap-2">
-            <div className="flex items-center gap-1.5 flex-1 min-w-0 sm:gap-2.5">
-              <span className="flex h-2 w-2 relative shrink-0">
-                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 motion-reduce:animate-none", currentTicker?.pingColor || "bg-emerald-400")} />
-                <span className={cn("relative inline-flex rounded-full h-2 w-2", currentTicker?.dotColor || "bg-emerald-600")} />
-              </span>
-              <span className={cn("font-bold shrink-0 text-xs tracking-tight", currentTicker?.textColor || "text-emerald-900 dark:text-emerald-300")}>
-                {currentTicker?.label}
-              </span>
-              <span key={tickerIndex} className="truncate text-slate-600 dark:text-slate-300 min-w-0 font-normal animate-fade-in motion-reduce:animate-none">
-                {currentTicker?.text}
-              </span>
-            </div>
-            {currentTicker?.isAnchor ? (
-              <a
-                href={currentTicker.url}
-                onClick={(event) => {
-                  event.preventDefault();
-                  document.getElementById("menfess-section")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
-              >
-                <span>Buka</span>
-              </a>
-            ) : (
-              <Link
-                href={currentTicker?.url || "/"}
-                className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
-              >
-                <span>Buka</span>
-              </Link>
-            )}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/chat"
+              aria-label="Pesan Chat"
+              className="relative w-9 h-9 rounded-full bg-white dark:bg-[#112218] text-slate-700 dark:text-white shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-[19px]">chat_bubble_outline</span>
+            </Link>
+            <Link
+              href="/favorit"
+              aria-label="Favorit"
+              className="relative w-9 h-9 rounded-full bg-white dark:bg-[#112218] text-slate-700 dark:text-white shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined text-[20px]">favorite_border</span>
+            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Minimalist Search & Quick Actions Hub (Jual & WTB) */}
-        <div className="mb-4 flex items-center gap-2 sm:gap-2.5">
-          <div className="relative flex flex-1 items-center rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 shadow-xs transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/15 dark:border-slate-800 dark:bg-slate-800/90">
-            <Icon.Search className="mr-2.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+        {/* Search Bar */}
+        <section>
+          <div className="w-full bg-white dark:bg-[#112218] rounded-2xl shadow-sm border border-emerald-950/5 dark:border-white/10 flex items-center px-3.5 py-2.5 gap-2.5 focus-within:ring-2 focus-within:ring-[#134e35]/20 focus-within:border-[#134e35] transition-all">
+            <span className="material-symbols-outlined text-slate-400 text-[20px]">search</span>
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari barang preloved, buku kuliah, kuliner PO, kost, atau jasa di kampusmu..."
-              className="w-full bg-transparent text-xs text-slate-800 placeholder:text-slate-400 outline-none dark:text-slate-100 sm:text-sm"
-              aria-label="Cari barang dan kebutuhan kampus"
+              placeholder="Cari barang yang kamu butuhkan..."
+              className="w-full bg-transparent text-[14px] text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none font-normal"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                aria-label="Hapus kata kunci pencarian"
-                className="shrink-0 px-1 text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <Link
-            href="/jual"
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-2xl bg-emerald-800 px-3 py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-emerald-900 active:translate-y-px sm:gap-1.5 sm:px-4 sm:text-sm"
-            aria-label="Jual barang preloved atau pasang iklan gratis"
-          >
-            <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-300 sm:h-4 sm:w-4" aria-hidden="true" />
-            <span>Jual</span>
-          </Link>
-
-          <Link
-            href="/dicari?tulis=1"
-            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-2xl border border-emerald-600/25 bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-800 shadow-xs transition-colors hover:bg-emerald-100 active:translate-y-px dark:border-emerald-700/50 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 sm:gap-1.5 sm:px-4 sm:text-sm"
-            aria-label="Pasang barang dicari (WTB - Want To Buy)"
-            title="Pasang barang dicari (WTB)"
-          >
-            <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-600 dark:text-emerald-400 sm:h-4 sm:w-4" aria-hidden="true" />
-            <span>WTB</span>
-          </Link>
-        </div>
-
-        {/* Reorganized 2-Column Desktop Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT MAIN COLUMN: Open PO Swipeable + WTB + Marketplace (8 cols) */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            {/* 1. Open PO Section */}
-            <section id="po-section" className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-emerald-100 bg-white px-3 py-2 shadow-xs dark:border-emerald-900/50 dark:bg-slate-800/90">
-              <div className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
-                <Icon.Coffee className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-                <span className="truncate">
-                  {fypScope === "campus" && selectedCampus && selectedCampus !== "Semua" ? `PO ${selectedCampus}` : "Open PO"}
-                </span>
-                {activeBatches.length > 0 && (
-                  <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    {activeBatches.length}
-                  </span>
-                )}
-              </div>
-              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none]">
-                {activeBatches.length > 0 ? activeBatches.slice(0, 3).map((item, idx) => (
-                  <Link
-                    key={item.id || idx}
-                    href={item.url || "/open-po"}
-                    className="max-w-40 shrink-0 truncate rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-900 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-emerald-950 dark:hover:text-emerald-300"
-                  >
-                    {item.name || item.title}
-                  </Link>
-                )) : (
-                  <span className="truncate text-[11px] text-slate-500 dark:text-slate-400">Belum ada batch aktif</span>
-                )}
-              </div>
-              <Link href="/open-po" className="shrink-0 text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300">
-                Lihat
-              </Link>
-            </section>
-            {activeBatches.length > 0 && <Link
-              href="/open-po"
-              className="hidden"
-            >
-              <span className="inline-flex items-center gap-2">
-                <Icon.Coffee className="h-4 w-4 text-emerald-700" />
-                Open PO
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-800">
-                  {activeBatches.length} aktif
-                </span>
-              </span>
-              <span aria-hidden="true">Lihat</span>
-            </Link>}
-            <section className="hidden">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                    Pre-Order <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Kampus Sedang Buka</span>
-                  </h2>
-                  <span className="text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
-                    {activeBatches.length > 0 ? `${activeBatches.length} Batch Aktif` : "Tidak ada PO Aktif"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400 hidden sm:inline-flex items-center gap-1">
-                    <Icon.ArrowRight className="w-3 h-3 text-slate-400" />
-                    Geser untuk melihat
-                  </span>
-                  <a
-                    href="/open-po"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 flex items-center gap-1 ml-2 transition-colors"
-                  >
-                    Lihat Semua
-                  </a>
-                </div>
-              </div>
-
-              {/* Swipeable Carousel */}
-              <div className="flex gap-4 overflow-x-auto pb-2 scroll-smooth custom-scrollbar [scrollbar-width:thin]">
-                {activeBatches.map((item, idx) => {
-                  const quotaNum = Number(item.quota) || 20;
-                  const resNum = Number(item.reserved) || 0;
-                  const pct = Math.min(100, Math.round((resNum / quotaNum) * 100));
-                  const sisa = Math.max(0, quotaNum - resNum);
-
-                  return (
-                    <div
-                      key={item.id || idx}
-                      className="w-60 shrink-0 border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-colors duration-200 bg-white dark:bg-slate-900 flex flex-col group"
-                    >
-                      <div className="relative h-36 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        {item.photo ? (
-                          <img
-                            alt={item.name || item.title}
-                            className="w-full h-full object-cover transition-opacity duration-300"
-                            src={item.photo}
-                            loading={idx === 0 ? "eager" : "lazy"}
-                            fetchPriority={idx === 0 ? "high" : "auto"}
-                            width={180}
-                            height={144}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <Icon.Coffee className="w-8 h-8 opacity-40" aria-hidden="true" />
-                          </div>
-                        )}
-                        <span className="absolute top-2.5 left-2.5 bg-emerald-900/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
-                          {item.badge || "Batch Aktif"}
-                        </span>
-                        <span className="absolute top-2.5 right-2.5 bg-slate-900/85 text-white text-[9px] font-medium px-2 py-0.5 rounded-full shadow-2xs">
-                          {item.closing_time || "Tutup Segera"}
-                        </span>
-                        <div className="absolute bottom-2 left-2 right-2 bg-slate-900/85 text-white text-[9px] font-medium px-2 py-0.5 rounded-lg truncate shadow-2xs">
-                          {item.pickup_point || "Kantin / Selasar Kampus"}
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {item.name || item.title}
-                          </h3>
-                          <p className="text-xs font-extrabold text-slate-900 dark:text-emerald-400 mt-0.5">
-                            {typeof item.price === "number" ? rupiah(item.price) : item.price}
-                          </p>
-                        </div>
-                        <div className="mt-3">
-                          <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 mb-1.5">
-                            <span>Sisa {sisa} Slot</span>
-                            <span className="font-bold text-emerald-700 dark:text-emerald-400">{pct}%</span>
-                          </div>
-                          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-emerald-600 h-full rounded-full transition-transform duration-300 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
-                          </div>
-                          <a
-                            href={item.url || "/open-po"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full block mt-3 py-1.5 text-center bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-semibold rounded-xl transition shadow-xs"
-                          >
-                            Pesan Slot
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* 2. Papan Strategis: Barang Dicari Mahasiswa (WTB - Want To Buy) with Smooth Horizontal Marquee Animation */}
-            <section id="wtb-section" className="hidden">
-              <div className="flex items-center gap-2 shrink-0 z-10 bg-white dark:bg-slate-800 sm:pr-2">
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="text-xs font-bold text-slate-900 dark:text-white leading-none">WTB Mahasiswa</h2>
-                  <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800 hidden sm:inline-block">
-                    Dicari Segera
-                  </span>
-                </div>
-              </div>
-
-              {/* Auto-scrolling Marquee Track (Continuous Loop & Pause on Hover) */}
-              <div className="wtb-marquee-container flex-1 overflow-hidden relative min-w-0">
-                <div className="wtb-marquee-track flex items-center gap-2.5 py-0.5">
-                  {[...WTB_ITEMS, ...WTB_ITEMS].map((wtb, idx) => (
-                    <Link
-                      key={idx}
-                      href={wtb.href || "/dicari"}
-                      className="shrink-0 flex items-center gap-2 bg-slate-50/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-300 transition cursor-pointer shadow-xs"
-                    >
-                      <span className="text-[10px] font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-xs shrink-0">
-                        {wtb.price}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[140px]">
-                        {wtb.title}
-                      </span>
-                      <span className="text-[10px] text-slate-400 shrink-0">
-                        {wtb.faculty}
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 ml-0.5 shrink-0 whitespace-nowrap">
-                        Tawarkan
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <Link
-                href="/dicari?tulis=1"
-                className="shrink-0 text-[11px] font-semibold text-white bg-emerald-800 hover:bg-emerald-900 px-3 py-1.5 rounded-full transition flex items-center gap-1 shadow-xs z-10 sm:ml-2"
-              >
-                <span>+ Pasang WTB</span>
-              </Link>
-            </section>
-
-            {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
-            <section id="marketplace-section" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Link
-                  href="/dicari"
-                  aria-label={`WTB: ${currentWtbItem?.title || "Buka papan barang dicari"}`}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-emerald-200/80 bg-emerald-50/70 px-2 py-1.5 text-[10px] text-slate-800 shadow-2xs transition-colors hover:border-emerald-300 dark:border-emerald-800/60 dark:bg-slate-800 dark:text-slate-200 sm:gap-2 sm:rounded-2xl sm:px-3"
-                >
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
-                  </span>
-                  <span className="shrink-0 font-bold text-emerald-900 dark:text-emerald-300">WTB:</span>
-                  <span key={wtbIndex} className="min-w-0 truncate font-medium animate-fade-in motion-reduce:animate-none">
-                    {currentWtbItem?.title}
-                  </span>
-                  <span className="hidden shrink-0 text-slate-500 dark:text-slate-400 sm:inline">
-                    ({currentWtbItem?.price})
-                  </span>
-                </Link>
-                <div className="flex shrink-0 items-center gap-1">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                      aria-expanded={categoryDropdownOpen}
-                      className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60"
-                    >
-                      <span>{listingCategory === "Semua" ? "Kategori" : listingCategory}</span>
-                      <svg className="h-3 w-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                      </svg>
-                    </button>
-                    {categoryDropdownOpen && (
-                      <div className="absolute right-0 z-30 mt-1 w-44 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-lg dark:border-white/10 dark:bg-slate-800">
-                        {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => {
-                              startTransition(() => setListingCategory(cat));
-                              setCategoryDropdownOpen(false);
-                            }}
-                            className="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
-                          >
-                            <span>{cat}</span>
-                            {listingCategory === cat && <span className="font-bold text-emerald-700">✓</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => startTransition(() => setListingSort("termurah"))}
-                    className={cn(
-                      "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
-                      listingSort === "termurah"
-                        ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
-                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
-                    )}
-                  >
-                    Termurah
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => startTransition(() => setListingSort("terbaru"))}
-                    className={cn(
-                      "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
-                      listingSort === "terbaru"
-                        ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
-                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
-                    )}
-                  >
-                    Terbaru
-                  </button>
-                </div>
-              </div>
-
-              {filteredListings.length === 0 ? (
-                <div className="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 rounded-2xl p-8 text-center space-y-2">
-                  <Icon.Package className="w-10 h-10 mx-auto text-slate-400" />
-                  <p className="text-sm font-bold text-slate-800 dark:text-white">
-                    {searchQuery ? `Tidak ada barang untuk "${searchQuery}"` : "Belum ada barang di filter ini"}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {searchQuery ? "Coba gunakan kata kunci yang lebih umum atau reset pencarian." : "Coba ganti kategori atau kampus, atau reset filter."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      startTransition(() => {
-                        setListingCategory("Semua");
-                        setListingCampus("Semua");
-                      });
-                    }}
-                    className="mt-2 px-4 py-1.5 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold active:translate-y-px transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-emerald-600"
-                  >
-                    Reset Filter &amp; Pencarian
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 xs:gap-2.5 sm:gap-3.5">
-                  {filteredListings.slice(0, visibleListingCount).map((ad) => (
-                    <ProductCard key={ad.id} listing={ad} />
-                  ))}
-                </div>
-              )}
-
-              {filteredListings.length > visibleListingCount ? (
-                <div className="pt-3 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setVisibleListingCount((prev) => prev + 30)}
-                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-200/80 dark:border-white/10 shadow-xs transition-colors active:translate-y-px"
-                  >
-                    <Icon.ChevronDown className="w-4 h-4" />
-                    <span>Lihat Lainnya</span>
-                  </button>
-                </div>
-              ) : (
-                filteredListings.length > 0 && (
-                  <div className="pt-4 text-center">
-                    <Link
-                      href="/jual-beli"
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
-                    >
-                      <span>Buka Seluruh Katalog Marketplace</span>
-                    </Link>
-                  </div>
-                )
-              )}
-            </section>
-          </div>
-
-          {/* RIGHT COMPANION COLUMN: Curhat & Menfess Feed (Sejajar ke atas langsung) (4 cols) */}
-          <aside
-            id="menfess-section"
-            className="lg:col-span-4 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-5 shadow-xs lg:sticky lg:top-20 flex flex-col max-h-[580px] lg:max-h-[calc(100vh-6rem)] min-h-[420px]"
-          >
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/10 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800 shadow-xs">
-                  <svg aria-hidden="true" className="w-4 h-4 fill-emerald-600" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
-                    Menfess <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Kampus Kita</span>
-                  </h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Suara anonim mahasiswa</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  updateFormData({ type: activeTab === "info" ? "info" : "menfess" });
-                  setShowModal(true);
-                }}
-                className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition flex items-center gap-1.5 shadow-xs"
-              >
-                <Icon.Plus className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
-                <span>Tulis</span>
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between text-xs py-2.5 border-b border-slate-100 dark:border-white/10 text-slate-500 shrink-0">
-              <span className="text-[11px] font-medium text-slate-400">Filter feed:</span>
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-0.5 rounded-full text-[11px] font-semibold">
-                <button
-                  type="button"
-                  onClick={() => startTransition(() => setActiveTab("all"))}
-                  className={`px-3 py-0.5 rounded-full transition ${activeTab === "all" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
-                >
-                  Semua
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startTransition(() => setActiveTab("menfess"))}
-                  className={`px-2.5 py-0.5 rounded-full transition ${activeTab === "menfess" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
-                >
-                  Menfess
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startTransition(() => setActiveTab("info"))}
-                  className={`px-2.5 py-0.5 rounded-full transition ${activeTab === "info" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
-                >
-                  Info
-                </button>
-              </div>
-            </div>
-
-            <div
-              tabIndex={0}
-              role="region"
-              aria-label="Feed Menfess Mahasiswa"
-              className="flex-1 overflow-y-auto overscroll-contain pr-1.5 mt-1 divide-y divide-slate-100 dark:divide-white/10 text-xs custom-scrollbar [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 rounded-xl"
-            >
-              {filteredPosts.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs space-y-1">
-                  <Icon.MessageCircle className="w-8 h-8 mx-auto opacity-40 text-slate-400" />
-                  <p className="font-semibold text-slate-600 dark:text-slate-400">Belum ada suara di sini</p>
-                  <p className="text-[11px]">Jadilah yang pertama menuliskan curhat atau info!</p>
-                </div>
-              ) : (
-                filteredPosts.slice(0, 30).map((post) => (
-                <article key={post.id} className="py-3.5">
-                  <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-xs text-[10px] font-bold">
-                        {(post.sender_name || "A").slice(0, 2).toUpperCase()}
-                      </span>
-                      <span className="font-bold text-slate-900 dark:text-slate-200">
-                        {post.sender_name || "Anonim"}
-                      </span>
-                      <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
-                        {post.faculty || "Mahasiswa"}
-                      </span>
-                    </div>
-                    <time suppressHydrationWarning className="text-[10px] text-slate-400">{waktuLalu(post.created_at)}</time>
-                  </div>
-
-                  {post.title && (
-                    <h4 className="font-bold text-slate-900 dark:text-white text-xs mb-1">
-                      {post.title}
-                    </h4>
-                  )}
-
-                  <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed">
-                    {post.content}
-                  </p>
-
-                  {post.image_url && (
-                    <div
-                      onClick={() => setZoomImage(post.image_url)}
-                      className="mt-2 rounded-xl overflow-hidden cursor-zoom-in max-h-48 border border-slate-200 dark:border-white/10"
-                    >
-                      <img src={post.image_url} alt="Foto" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2.5">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleLike(post.id)}
-                        className="flex items-center gap-1 hover:text-rose-500 cursor-pointer transition active:scale-95"
-                      >
-                        <svg aria-hidden="true" className="w-3.5 h-3.5 fill-rose-500" viewBox="0 0 24 24">
-                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                        </svg>
-                        <span>{post.likes_count || 0}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openComments(post.id)}
-                        className="flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer transition"
-                      >
-                        <Icon.MessageCircle className="w-3.5 h-3.5" />
-                        <span>{post.comments_count || 0}</span>
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleShare(post.id)}
-                      className="flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-[10px] transition"
-                    >
-                      <Icon.Share className="w-3.5 h-3.5" />
-                      <span>Bagikan</span>
-                    </button>
-                  </div>
-                </article>
-              )))}
-
-              <div className="pt-3.5 pb-2 text-center shrink-0">
-                <button
-                  type="button"
-                  onClick={loadMorePosts}
-                  disabled={isLoadingMore}
-                  className="w-full py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-900 dark:text-emerald-300 font-semibold rounded-2xl text-xs transition-colors border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 shadow-xs active:translate-y-px motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Icon.RefreshCcw className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                      <span>Memuat obrolan…</span>
-                    </>
-                  ) : (
-                    <span>Muat obrolan lainnya</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        {/* SAFETY & ETHICS BANNER (TRANSAKSI AMAN MAHASISWA) */}
-        <section className="mt-6 pt-1">
-          <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-start gap-3 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Icon.Shield className="w-4 h-4 text-emerald-200" />
-            </div>
-            <div className="space-y-0.5 min-w-0">
-              <h4 className="text-[13px] text-emerald-950 dark:text-emerald-200 leading-tight font-extrabold">
-                Transaksi Aman Mahasiswa
-              </h4>
-              <p className="text-[11px] text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-normal">
-                Selalu utamakan COD di titik temu resmi kampus untuk kenyamanan dan keamanan bersama.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* ── 6. WRITE POST MODAL ── */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 animate-in fade-in duration-200 motion-reduce:animate-none">
-          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-lg border-t sm:border border-slate-200 dark:border-slate-800 relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 motion-reduce:animate-none">
-            {/* Mobile Drag Handle */}
-            <div className="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 sm:hidden" />
-
             <button
               type="button"
-              onClick={() => setShowModal(false)}
-              aria-label="Tutup modal"
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+              onClick={() => setShowMobileFilter((v) => !v)}
+              aria-label="Filter"
+              className={cn(
+                "p-1 rounded-lg transition-colors",
+                showMobileFilter ? "bg-[#134e35] text-[#bef264]" : "text-slate-400 hover:text-[#134e35]"
+              )}
             >
-              <Icon.X className="h-4 w-4" aria-hidden="true" />
+              <span className="material-symbols-outlined text-[20px]">tune</span>
             </button>
+          </div>
 
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-4">
-              Kirim Menfess &amp; Info Kampus
-            </h2>
-
-            {requireLoginMenfess && !userWa && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs mb-4">
-                <div className="flex items-center gap-2">
-                  <Icon.User className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span className="text-amber-800 dark:text-amber-300 font-medium">
-                    Masuk via WhatsApp untuk mengirim menfess. Draf ketikanmu tersimpan aman!
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowOtpModal(true)}
-                  className="shrink-0 ml-2 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors"
-                >
-                  Masuk
+          {showMobileFilter && (
+            <div className="mt-2 bg-white dark:bg-[#112218] rounded-2xl p-3.5 border border-emerald-950/10 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#134e35] dark:text-white">Filter Cepat</span>
+                <button type="button" onClick={resetFilters} className="text-[11px] font-semibold text-[#506600] hover:underline">
+                  Reset
                 </button>
               </div>
-            )}
-
-            <form onSubmit={handleCreatePost} className="space-y-4">
-              {(() => {
-                const formLocked = requireLoginMenfess && !userWa;
-                return (
-                  <>
-                    {/* Type Switcher */}
-                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                      <button
-                        type="button"
-                        onClick={() => updateFormData({ type: "menfess" })}
-                        className={`py-2 rounded-xl text-xs font-bold transition-colors ${
-                          formData.type === "menfess"
-                            ? "bg-white dark:bg-slate-700 text-amber-600 shadow-xs"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        <span className="inline-flex items-center gap-1.5"><Icon.Mail className="h-4 w-4" />Menfess</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateFormData({ type: "info" })}
-                        className={`py-2 rounded-xl text-xs font-bold transition-colors ${
-                          formData.type === "info"
-                            ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-xs"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        <span className="inline-flex items-center gap-1.5"><Icon.Megaphone className="h-4 w-4" />Info Kampus</span>
-                      </button>
-                    </div>
-
-                    {formData.type === "info" && (
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Judul Pengumuman / Event
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.title}
-                          onChange={(e) => updateFormData({ title: e.target.value })}
-                          placeholder="Contoh: Oprec Panitia Kampus 2026"
-                          className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-600 outline-none"
-                        />
-                      </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={selectedCampus}
+                  onChange={(e) => setSelectedCampus(e.target.value)}
+                  className="bg-[#e6f8e8] text-[#101f15] text-xs rounded-xl px-2.5 py-2 outline-none"
+                >
+                  {campusOptions.map((c) => (
+                    <option key={c} value={c}>{c === "Semua" ? "Semua Kampus" : c}</option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCondNew((v) => !v)}
+                    className={cn(
+                      "flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors",
+                      condNew ? "bg-[#134e35] text-white border-[#134e35]" : "bg-white text-slate-600 border-slate-200"
                     )}
+                  >
+                    Baru
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCondUsed((v) => !v)}
+                    className={cn(
+                      "flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors",
+                      condUsed ? "bg-[#134e35] text-white border-[#134e35]" : "bg-white text-slate-600 border-slate-200"
+                    )}
+                  >
+                    Preloved
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
 
-                    {/* Campus Selector */}
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Pilih Kampus / Asal
-                      </label>
-                      <select
-                        value={formData.faculty}
-                        onChange={(e) => updateFormData({ faculty: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-600 outline-none"
-                      >
-                        <option value="Bebas">Umum / Bebas</option>
-                        {campuses.map((campus) => (
-                          <option key={campus.shortName} value={campus.shortName}>
-                            {campus.shortName} ({campus.name})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+        {/* Quick Actions Grid (Jual Barang & Buat WTB) */}
+        <section className="grid grid-cols-2 gap-2.5">
+          <Link
+            href="/jual"
+            className="flex items-center justify-between p-3 bg-[#134e35] text-white rounded-2xl shadow-sm hover:bg-[#1b6345] active:scale-[0.98] transition-all text-left group"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-[#bef264] flex-shrink-0">
+                <span className="material-symbols-outlined text-[22px]">add_circle</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[13px] font-bold block leading-tight text-white">Jual Barang</span>
+                <span className="text-[11px] text-emerald-200/90 leading-tight block mt-0.5 truncate">Pasang iklan kilat</span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-[#bef264] text-[18px] opacity-80 shrink-0">chevron_right</span>
+          </Link>
 
-                    {/* Content Textarea */}
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Isi Pesan
-                      </label>
-                      <textarea
-                        required
-                        rows={4}
-                        value={formData.content}
-                        onChange={(e) => updateFormData({ content: e.target.value })}
-                        placeholder={
-                          formData.type === "menfess"
-                            ? "Tuliskan curhatan, kekaguman, atau pesan anonim kamu…"
-                            : "Tuliskan detail info, jadwal, atau pengumuman kampus…"
-                        }
-                        className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-600 outline-none"
-                      />
-                    </div>
+          <Link
+            href="/dicari"
+            className="flex items-center justify-between p-3 bg-white dark:bg-[#112218] text-[#134e35] border border-emerald-900/10 rounded-2xl shadow-sm hover:bg-emerald-50/50 active:scale-[0.98] transition-all text-left group"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100/70 flex items-center justify-center text-[#134e35] flex-shrink-0">
+                <span className="material-symbols-outlined text-[20px]">assignment</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[13px] font-bold block leading-tight text-slate-900 dark:text-white">Buat WTB</span>
+                <span className="text-[11px] text-slate-500 dark:text-[#99d3b2] leading-tight block mt-0.5 truncate">Cari kebutuhan</span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-[#134e35]/60 text-[18px] shrink-0">chevron_right</span>
+          </Link>
+        </section>
 
-                    {/* Optional Photo Attachment */}
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
-                        <span>Foto Pendukung (Opsional)</span>
-                        {compressingImage && (
-                          <span className="text-[10px] text-emerald-600 animate-pulse font-medium">Mengompres foto…</span>
-                        )}
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        disabled={compressingImage}
-                        className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-800 hover:file:bg-emerald-100"
-                      />
-                      {imagePreview && (
-                        <div className="mt-2 relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-                          <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setImageFile(null);
-                              setImagePreview("");
-                            }}
-                            className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 text-[10px] transition-colors"
-                            title="Hapus foto"
-                          >
-                            <Icon.X className="w-3.5 h-3.5" />
-                          </button>
+        {/* Promotional Banner: Open Preorder */}
+        <Link
+          href="/open-po"
+          className="relative overflow-hidden bg-gradient-to-br from-emerald-100/80 via-white to-lime-100/70 dark:from-[#134e35] dark:via-[#112218] dark:to-[#183022] p-3.5 rounded-2xl border border-emerald-200/50 shadow-sm flex items-center justify-between active:scale-[0.99] transition-transform"
+        >
+          <div className="max-w-[74%] space-y-1">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lime-300 text-lime-950 text-[10px] font-bold tracking-wide uppercase">
+              <span className="material-symbols-outlined text-[12px]">local_mall</span>
+              HEMAT ONGKIR
+            </span>
+            <h2 className="text-[15px] font-bold text-[#134e35] dark:text-[#bef264] leading-snug">Open Preorder</h2>
+            <p className="text-[11px] text-slate-600 dark:text-[#e6f8e8] leading-snug font-normal">
+              Preorder makanan &amp; merchandise kampus bareng mahasiswa lain.
+            </p>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-[#134e35]/10 border border-[#134e35]/10 flex items-center justify-center text-[#134e35] dark:text-[#bef264] flex-shrink-0 shadow-inner">
+            <span className="material-symbols-outlined text-[30px]">shopping_bag</span>
+          </div>
+        </Link>
+
+        {/* Category Filter Tabs */}
+        <section className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight">Produk Terbaru</h2>
+            <Link href="/jual-beli" className="inline-flex items-center gap-0.5 text-[12px] text-[#134e35] dark:text-[#bef264] font-semibold hover:underline">
+              Lihat semua
+              <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-4 px-4 no-scrollbar">
+            {CATEGORIES.map((cat) => {
+              const active = selectedCategory === cat.label;
+              return (
+                <button
+                  key={cat.label}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.label)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[12px] whitespace-nowrap transition-colors",
+                    active
+                      ? "bg-[#134e35] text-[#bef264] font-semibold shadow-sm"
+                      : "bg-white dark:bg-[#112218] text-slate-600 dark:text-[#99d3b2] border border-slate-200/80 dark:border-white/10 font-medium hover:bg-slate-50"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Product Listing Grid (2 Columns) */}
+        {displayedListings.length === 0 ? (
+          <div className="bg-white dark:bg-[#112218] rounded-2xl p-8 text-center border border-slate-200/60 space-y-2">
+            <span className="material-symbols-outlined text-[36px] text-slate-400">inventory_2</span>
+            <p className="text-sm font-bold text-slate-700 dark:text-white">Belum ada produk yang cocok</p>
+            <button type="button" onClick={resetFilters} className="text-xs font-bold text-[#134e35] underline">
+              Reset Pencarian
+            </button>
+          </div>
+        ) : (
+          <section className="grid grid-cols-2 gap-2.5">
+            {displayedListings.map((item) => {
+              const img = getListingImage(item);
+              const cond = formatCondition(item.condition);
+              const href = `/produk/${buildSlug(item.title, item.id)}`;
+              const sellerInitial = (item.seller_name || "M").charAt(0).toUpperCase();
+
+              return (
+                <article
+                  key={item.id}
+                  onClick={() => router.push(href)}
+                  className="flex flex-col justify-between bg-white dark:bg-[#112218] rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-sm overflow-hidden p-2.5 space-y-2 hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <div className="space-y-2">
+                    <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-slate-100">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt={item.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                          <span className="material-symbols-outlined text-[36px]">image</span>
                         </div>
+                      )}
+                      <span
+                        className={cn(
+                          "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-white text-[10px] font-bold tracking-tight shadow-sm",
+                          cond.isNew ? "bg-[#134e35]" : "bg-slate-700/80 backdrop-blur-xs"
+                        )}
+                      >
+                        {cond.label}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleAddCart(e, item)}
+                        aria-label="Tambah ke keranjang"
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/90 text-slate-700 flex items-center justify-center shadow-sm hover:text-[#134e35] active:scale-95 transition-all"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">shopping_cart</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-4 h-4 rounded-full bg-lime-200 text-lime-900 text-[9px] font-bold flex items-center justify-center flex-shrink-0">
+                        {sellerInitial}
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-800 dark:text-white truncate">
+                        {item.seller_name || "Mahasiswa"}
+                      </span>
+                      {item.campus && (
+                        <span className="text-[10px] text-slate-400 font-medium shrink-0">({item.campus})</span>
                       )}
                     </div>
 
-                    {/* Tag produk jualan */}
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Produk Jualan (Opsional)
-                      </label>
-                      <TagProdukPicker value={tagProduk} onChange={setTagProduk} />
+                    <div className="space-y-0.5">
+                      <h3 className="text-[13px] font-bold text-slate-900 dark:text-white line-clamp-1 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-[#99d3b2] line-clamp-1 leading-normal">
+                        {item.description || "Siap COD di area kampus"}
+                      </p>
+                      <p className="text-[14px] font-extrabold text-[#134e35] dark:text-[#bef264] pt-0.5">
+                        {rupiah(item.price)}
+                      </p>
                     </div>
 
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      disabled={submitting || compressingImage || formLocked}
-                      className="w-full bg-emerald-800 hover:bg-emerald-900 text-white disabled:opacity-50 py-3 rounded-full text-[13px] font-bold transition-colors shadow-md active:scale-98"
+                    <div className="flex items-center gap-1 text-slate-500 dark:text-[#99d3b2] text-[11px]">
+                      <span className="material-symbols-outlined text-[13px] text-[#134e35] dark:text-[#bef264]">location_on</span>
+                      <span className="truncate">{item.area || item.campus || "Area Kampus"}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                    <Link
+                      href={href}
+                      onClick={(e) => e.stopPropagation()}
+                      className="py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1 active:scale-95 transition-all"
                     >
-                      {submitting ? "Mengirimkan…" : compressingImage ? "Menyiapkan foto…" : formLocked ? "Login dulu untuk kirim" : "Terbitkan Sekarang"}
+                      <span className="material-symbols-outlined text-[13px]">visibility</span>
+                      Detail
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={(e) => handleWaClick(e, item)}
+                      className="py-1 px-2 rounded-lg bg-[#134e35] hover:bg-[#1b6345] text-white text-[11px] font-semibold flex items-center justify-center gap-1 active:scale-95 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">chat</span>
+                      WA
                     </button>
-                  </>
-                );
-              })()}
-            </form>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        )}
+
+        {filteredListings.length > visibleCount && (
+          <div className="pt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + 16)}
+              className="px-6 py-2.5 rounded-full bg-white border border-[#134e35]/15 text-xs font-bold text-[#134e35] shadow-sm hover:bg-[#e6f8e8] transition-colors"
+            >
+              Muat Lebih Banyak
+            </button>
           </div>
+        )}
+      </div>
+
+      {/* ==================== DESKTOP VIEW (lg+) — 100% STITCH jual_beli ==================== */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-6 w-full pt-5 pb-16">
+        <div className="grid grid-cols-12 gap-5 items-start">
+          {/* SIDEBAR KIRI (Kategori & Filter) Col 1-3 */}
+          <aside className="col-span-3 flex flex-col gap-5 sticky top-24">
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+              <div className="flex items-center gap-2 mb-4 pb-1">
+                <span className="material-symbols-outlined text-[#003622] dark:text-[#bef264] text-[20px]">grid_view</span>
+                <h2 className="text-[16px] font-bold text-[#101f15] dark:text-white tracking-tight">Kategori</h2>
+              </div>
+              <nav className="flex flex-col gap-1">
+                {CATEGORIES.map((cat) => {
+                  const active = selectedCategory === cat.label;
+                  return (
+                    <button
+                      key={cat.label}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.label)}
+                      className={cn(
+                        "group flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all",
+                        active
+                          ? "bg-[#e6f8e8] text-[#003622] font-semibold text-[14px]"
+                          : "text-[#404943] dark:text-[#99d3b2] text-[13px] hover:bg-[#e6f8e8]/60 hover:text-[#101f15]"
+                      )}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "material-symbols-outlined text-[19px]",
+                            active ? "text-[#003622]" : "text-[#707972] group-hover:text-[#003622]"
+                          )}
+                        >
+                          {cat.icon}
+                        </span>
+                        <span>{cat.label}</span>
+                      </span>
+                      {active && <span className="w-1.5 h-1.5 rounded-full bg-[#506600]" />}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#003622] dark:text-[#bef264] text-[20px]">tune</span>
+                  <h2 className="text-[16px] font-bold text-[#101f15] dark:text-white tracking-tight">Filter</h2>
+                </div>
+                <button type="button" onClick={resetFilters} className="text-[11px] font-bold text-[#506600] hover:underline">
+                  Reset
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-[11px] font-semibold text-[#404943] dark:text-[#99d3b2] mb-1.5">
+                  Lokasi Kampus
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedCampus}
+                    onChange={(e) => setSelectedCampus(e.target.value)}
+                    className="w-full appearance-none bg-[#e6f8e8] dark:bg-[#183022] py-2.5 pl-3.5 pr-8 rounded-xl text-[12px] text-[#101f15] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#003622] cursor-pointer"
+                  >
+                    {campusOptions.map((c) => (
+                      <option key={c} value={c}>{c === "Semua" ? "Semua Kampus" : c}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#707972] text-[18px]">
+                    expand_more
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-[11px] font-semibold text-[#404943] dark:text-[#99d3b2] mb-2">Kondisi</label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={condNew}
+                      onChange={(e) => setCondNew(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#003622] focus:ring-[#003622] accent-[#003622]"
+                    />
+                    <span className="text-[12px] text-[#101f15] dark:text-white">Baru</span>
+                  </label>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={condUsed}
+                      onChange={(e) => setCondUsed(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#003622] focus:ring-[#003622] accent-[#003622]"
+                    />
+                    <span className="text-[12px] text-[#101f15] dark:text-white">Bekas (Preloved)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-semibold text-[#404943] dark:text-[#99d3b2]">Rentang Harga</label>
+                  <span className="text-[10px] text-[#003622] dark:text-[#bef264] font-bold">
+                    Maks. {maxPrice >= 5000000 ? "5 Juta+" : rupiah(maxPrice)}
+                  </span>
+                </div>
+                <div className="px-1 py-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="5000000"
+                    step="50000"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(Number(e.target.value))}
+                    className="w-full accent-[#003622] bg-[#dbeddd] h-1.5 rounded-lg cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-2">
+                  <div className="flex-1 bg-[#e6f8e8] dark:bg-[#183022] px-2.5 py-1.5 rounded-lg text-left">
+                    <span className="text-[10px] text-[#707972] block">Min</span>
+                    <span className="text-[11px] text-[#101f15] dark:text-white font-semibold">Rp0</span>
+                  </div>
+                  <span className="text-[#707972] text-xs">-</span>
+                  <div className="flex-1 bg-[#e6f8e8] dark:bg-[#183022] px-2.5 py-1.5 rounded-lg text-right">
+                    <span className="text-[10px] text-[#707972] block">Maks</span>
+                    <span className="text-[11px] text-[#101f15] dark:text-white font-semibold">{rupiah(maxPrice)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="w-full py-2.5 bg-[#003622] hover:bg-[#134e35] text-white text-[13px] font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">check</span>
+                Filter Aktif
+              </button>
+            </div>
+          </aside>
+
+          {/* KONTEN TENGAH UTAMA Col 4-9 */}
+          <section className="col-span-6 flex flex-col gap-5 min-w-0">
+            {/* Greeting Card */}
+            <div className="relative overflow-hidden bg-white dark:bg-[#112218] rounded-3xl p-6 shadow-[0_4px_24px_-6px_rgba(19,78,53,0.08)] flex items-center justify-between">
+              <div className="flex items-center gap-4 z-10">
+                <div className="relative flex-shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-[#134e35] text-[#ceeb7a] flex items-center justify-center text-xl font-extrabold shadow-sm">
+                    {greetingName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#ceeb7a] rounded-full ring-2 ring-white" />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <h1 className="text-[20px] font-bold text-[#003622] dark:text-white leading-tight">
+                      Halo, {greetingName}!
+                    </h1>
+                    <span className="text-xl">👋</span>
+                  </div>
+                  <p className="text-[12px] text-[#404943] dark:text-[#99d3b2]">
+                    Selamat datang di Kampus Kita • Marketplace Mahasiswa
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden xl:flex items-center opacity-90 z-0">
+                <svg className="w-36 h-20 text-[#dbeddd]" fill="none" viewBox="0 0 160 80">
+                  <path d="M10 70C25 65 40 68 55 64C75 58 90 72 110 65C130 58 145 66 155 70V80H10V70Z" fill="currentColor" fillOpacity="0.4" />
+                  <rect fill="currentColor" fillOpacity="0.7" height="38" rx="2" width="28" x="70" y="32" />
+                  <polygon fill="currentColor" points="84,14 62,32 106,32" />
+                  <circle cx="84" cy="24" fill="#d1ee7c" r="4" />
+                  <rect fill="#ecfeee" height="10" rx="1" width="6" x="76" y="44" />
+                  <rect fill="#ecfeee" height="10" rx="1" width="6" x="86" y="44" />
+                  <rect fill="#ecfeee" height="12" width="10" x="79" y="58" />
+                  <circle cx="40" cy="55" fill="#99d3b2" fillOpacity="0.5" r="14" />
+                  <circle cx="126" cy="52" fill="#99d3b2" fillOpacity="0.5" r="16" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white dark:bg-[#112218] p-2 rounded-2xl shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] flex items-center gap-2">
+              <div className="flex items-center gap-2.5 flex-1 pl-3">
+                <span className="material-symbols-outlined text-[#707972] text-[22px]">search</span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder='Cari barang, misalnya "buku kalkulus", "tas kuliah", atau "laptop"...'
+                  className="w-full bg-transparent text-[13px] text-[#101f15] dark:text-white placeholder:text-[#707972] outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/jual-beli${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`)}
+                className="px-5 py-2.5 bg-[#003622] hover:bg-[#134e35] text-white text-[13px] font-bold rounded-xl transition-all shadow-sm"
+              >
+                Cari
+              </button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 gap-3.5">
+              <Link
+                href="/jual"
+                className="group relative overflow-hidden bg-[#003622] text-white rounded-2xl p-4 flex items-center justify-between shadow-[0_8px_20px_-4px_rgba(0,54,34,0.3)] transition-all hover:scale-[1.01]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-[#ceeb7a] transition-transform group-hover:rotate-45">
+                    <span className="material-symbols-outlined text-[24px]">add</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-bold text-white">Jual Barang</span>
+                    <span className="text-[10px] font-semibold text-[#b4f0cd]">Pasang listing cepat</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-[#ceeb7a] text-[20px] transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </Link>
+
+              <Link
+                href="/dicari"
+                className="group bg-[#ceeb7a]/45 hover:bg-[#ceeb7a]/70 text-[#161f00] rounded-2xl p-4 flex items-center justify-between transition-all hover:scale-[1.01]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#506600] shadow-sm">
+                    <span className="material-symbols-outlined text-[22px]">edit_note</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-bold text-[#101f15]">Buat WTB</span>
+                    <span className="text-[10px] font-semibold text-[#506600]">Request barang dicari</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-[#506600] text-[20px] transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </Link>
+            </div>
+
+            {/* Banner Promosi Open PO */}
+            <div className="relative overflow-hidden bg-[#134e35] rounded-3xl p-6 text-white shadow-lg flex items-center justify-between gap-6">
+              <div className="flex flex-col gap-2 z-10 max-w-sm">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ceeb7a] text-[#161f00] text-[10px] font-bold w-fit">
+                  <span className="material-symbols-outlined text-[14px]">local_mall</span>
+                  Open PO
+                </div>
+                <h2 className="text-[20px] font-extrabold text-white leading-tight">Ikuti Open PO Terbaru!</h2>
+                <p className="text-[12px] text-[#99d3b2] leading-relaxed">
+                  Pesan bareng teman sejurusan, lebih hemat ongkir, praktis, dan terpercaya.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    href="/open-po"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#ceeb7a] text-[#161f00] text-[12px] font-bold hover:bg-[#b5d263] transition-transform hover:scale-105 shadow-sm"
+                  >
+                    <span>Lihat Open PO</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                  </Link>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center justify-center z-10">
+                <div className="w-24 h-24 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-[#ceeb7a]">
+                  <span className="material-symbols-outlined text-[48px]">inventory_2</span>
+                </div>
+              </div>
+              <div className="absolute -right-8 -bottom-10 w-48 h-48 bg-[#ceeb7a]/10 rounded-full blur-2xl pointer-events-none" />
+            </div>
+
+            {/* Section: Produk Terbaru */}
+            <div className="flex flex-col gap-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[20px] font-bold text-[#101f15] dark:text-white tracking-tight">Produk Terbaru</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#dbeddd] text-[#003622] text-[10px] font-bold">
+                    {filteredListings.length} Barang
+                  </span>
+                </div>
+                <Link href="/jual-beli" className="text-[12px] font-bold text-[#506600] dark:text-[#bef264] hover:underline flex items-center gap-1">
+                  <span>Lihat semua</span>
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </Link>
+              </div>
+
+              {displayedListings.length === 0 ? (
+                <div className="bg-white dark:bg-[#112218] rounded-2xl p-10 text-center shadow-sm">
+                  <p className="text-sm font-bold text-[#101f15] dark:text-white">Tidak ada barang yang cocok dengan filter.</p>
+                  <button type="button" onClick={resetFilters} className="mt-2 text-xs font-bold text-[#003622] underline">
+                    Reset Filter
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 xl:grid-cols-3 gap-3.5">
+                  {displayedListings.map((item) => {
+                    const img = getListingImage(item);
+                    const cond = formatCondition(item.condition);
+                    const href = `/produk/${buildSlug(item.title, item.id)}`;
+                    const isFav = !!favorites[item.id];
+
+                    return (
+                      <Link
+                        key={item.id}
+                        href={href}
+                        className="bg-white dark:bg-[#112218] rounded-2xl overflow-hidden flex flex-col justify-between shadow-[0_3px_16px_-3px_rgba(19,78,53,0.06)] hover:shadow-md transition-all group"
+                      >
+                        <div>
+                          <div className="relative aspect-square w-full overflow-hidden bg-[#e6f8e8]">
+                            {img ? (
+                              <img
+                                src={img}
+                                alt={item.title}
+                                loading="lazy"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[#707972]">
+                                <span className="material-symbols-outlined text-[40px]">image</span>
+                              </div>
+                            )}
+                            <span
+                              className={cn(
+                                "absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold",
+                                cond.isNew
+                                  ? "bg-[#ceeb7a] text-[#161f00]"
+                                  : "bg-white/90 backdrop-blur-sm text-[#101f15]"
+                              )}
+                            >
+                              {cond.label}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => toggleFav(e, item.id)}
+                              aria-label="Favorit"
+                              className={cn(
+                                "absolute top-2 right-2 w-7 h-7 rounded-full bg-white/85 backdrop-blur-sm flex items-center justify-center transition-colors",
+                                isFav ? "text-[#ba1a1a]" : "text-[#707972] hover:text-[#ba1a1a]"
+                              )}
+                            >
+                              <span className={cn("material-symbols-outlined text-[16px]", isFav && "material-symbols-fill")}>
+                                favorite
+                              </span>
+                            </button>
+                          </div>
+                          <div className="p-3">
+                            <h3 className="text-[14px] text-[#101f15] dark:text-white font-semibold line-clamp-1 group-hover:text-[#003622] transition-colors">
+                              {item.title}
+                            </h3>
+                            <p className="text-[17px] text-[#003622] dark:text-[#bef264] font-extrabold mt-0.5">
+                              {rupiah(item.price)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="px-3 pb-3 pt-1 flex items-center justify-between text-[#404943] dark:text-[#99d3b2] text-[11px]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="material-symbols-outlined text-[14px] text-[#707972] flex-shrink-0">storefront</span>
+                            <span className="truncate">{item.seller_name || "Mahasiswa"}</span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-[#707972] flex-shrink-0">
+                            {item.area || item.campus || "Kampus"}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              {filteredListings.length > visibleCount && (
+                <div className="pt-2 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + 12)}
+                    className="px-6 py-2.5 rounded-full bg-white border border-[#134e35]/15 text-xs font-bold text-[#003622] shadow-sm hover:bg-[#e6f8e8] transition-colors"
+                  >
+                    Muat Lebih Banyak Barang
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* SIDEBAR KANAN (Widgets & LINUSKU) Col 10-12 */}
+          <aside className="col-span-3 flex flex-col gap-5 sticky top-24">
+            {/* Widget: Open PO Populer */}
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#003622] dark:text-[#bef264] text-[20px]">local_fire_department</span>
+                  <h2 className="text-[16px] font-bold text-[#101f15] dark:text-white tracking-tight">Open PO Populer</h2>
+                </div>
+                <Link href="/open-po" className="text-[10px] font-bold text-[#506600] hover:underline flex items-center gap-0.5">
+                  <span>Lihat semua</span>
+                  <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                </Link>
+              </div>
+              <div className="flex flex-col gap-3">
+                {initialPoBatches.length > 0 ? (
+                  initialPoBatches.slice(0, 2).map((po) => {
+                    const quota = Number(po.quota || po.max_quota || 30);
+                    const sold = Number(po.ordered_count || po.current_orders || 0);
+                    const sisa = Math.max(0, quota - sold);
+                    return (
+                      <div key={po.id} className="p-3 rounded-xl bg-[#e6f8e8] dark:bg-[#183022] flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-11 h-11 rounded-lg bg-white overflow-hidden flex-shrink-0 flex items-center justify-center text-[#134e35]">
+                            {po.image_url ? (
+                              <img src={po.image_url} alt={po.title || po.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <h4 className="text-[13px] font-semibold text-[#101f15] dark:text-white truncate">
+                              {po.title || po.name}
+                            </h4>
+                            <span className="text-[10px] text-[#404943] dark:text-[#99d3b2]">
+                              <strong className="text-[#506600] font-bold">Sisa {sisa} kuota</strong>
+                            </span>
+                          </div>
+                        </div>
+                        <Link
+                          href="/open-po"
+                          className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#003622] hover:bg-[#134e35] text-white text-[10px] font-bold transition-all shadow-sm"
+                        >
+                          Ikuti PO
+                        </Link>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-[#404943]">Belum ada batch PO aktif saat ini.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Widget: WTB Terbaru */}
+            <div className="bg-white dark:bg-[#112218] rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#003622] dark:text-[#bef264] text-[20px]">manage_search</span>
+                  <h2 className="text-[16px] font-bold text-[#101f15] dark:text-white tracking-tight">WTB Terbaru</h2>
+                </div>
+                <Link href="/dicari" className="text-[10px] font-bold text-[#506600] hover:underline flex items-center gap-0.5">
+                  <span>Lihat semua</span>
+                  <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                </Link>
+              </div>
+              <div className="flex flex-col gap-3">
+                {wantedLoading && (
+                  <p role="status" className="text-xs text-[#707972]">Memuat permintaan terbaru…</p>
+                )}
+                {wantedError && (
+                  <p role="alert" className="text-xs text-rose-700">{wantedError}</p>
+                )}
+                {!wantedLoading && !wantedError && wantedItems.length === 0 && (
+                  <p className="text-xs text-[#707972]">Belum ada permintaan barang yang tersedia.</p>
+                )}
+                {!wantedError && wantedItems.map((wtb, idx) => (
+                  <Link
+                    key={wtb.id}
+                    href="/dicari"
+                    className={cn(
+                      "flex items-start justify-between gap-2 hover:opacity-80 transition-opacity",
+                      idx < wantedItems.length - 1 && "pb-2.5 border-b border-[#dbeddd]/60"
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-[#dbeddd] flex items-center justify-center text-[#003622] flex-shrink-0 mt-0.5">
+                        <span className="material-symbols-outlined text-[16px]">{getWantedIcon(wtb.category)}</span>
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <h4 className="text-[13px] font-semibold text-[#101f15] dark:text-white truncate">
+                          {String(wtb.title || "Permintaan barang")}
+                        </h4>
+                        <span className="text-[10px] text-[#506600] font-semibold truncate">
+                          {wtb.budget > 0 ? `Maks. ${rupiah(wtb.budget)}` : "Budget belum ditentukan"}
+                          {wtb.category ? ` · ${wtb.category}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-[#707972] flex-shrink-0">{formatWantedTime(wtb.created_at)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Banner Promo LINUSKU */}
+            <div className="bg-gradient-to-br from-white to-[#e6f8e8] dark:from-[#112218] dark:to-[#183022] rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] flex flex-col gap-3 relative overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#506600] dark:text-[#bef264] text-[22px]">directions_bus</span>
+                <span className="text-[16px] text-[#003622] dark:text-white font-bold">Naik Bus Kampus?</span>
+              </div>
+              <p className="text-[11px] text-[#404943] dark:text-[#99d3b2] leading-snug">
+                Cek rute dan posisi bus mahasiswa USU secara real-time di LINUSKU!
+              </p>
+              <div className="w-full h-20 rounded-xl bg-[#134e35]/10 flex items-center justify-center">
+                <div className="bg-white/95 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#506600] animate-ping" />
+                  <span className="text-[10px] text-[#003622] font-bold">Cek status armada di peta LINUSKU</span>
+                </div>
+              </div>
+              <Link
+                href="/linusku"
+                className="w-full py-2.5 rounded-xl bg-[#ceeb7a] hover:bg-[#b5d263] text-[#161f00] text-[12px] font-bold text-center flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
+              >
+                <span>Buka LINUSKU</span>
+                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </Link>
+            </div>
+          </aside>
         </div>
-      )}
-
-      {/* ── 7. LIGHTBOX ZOOM MODAL ── */}
-      {zoomImage && (
-        <div 
-          onClick={() => setZoomImage(null)}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 cursor-zoom-out"
-        >
-          <img src={zoomImage} alt="Zoom" className="max-h-[90vh] max-w-full rounded-xl object-contain" />
-        </div>
-      )}
-
-      {/* ── 8. PRATINJAU PRODUK FEED ── */}
-      <ProductPeekSheet
-        listing={intipProduk}
-        isOpen={!!intipProduk}
-        onClose={() => setIntipProduk(null)}
-      />
-
-      {/* ── 9. MODAL UNDUH MENFESS (STORY IG / STATUS WA) ── */}
-      {unduhPost && (
-        <UnduhMenfessModal
-          post={unduhPost}
-          onClose={() => setUnduhPost(null)}
-        />
-      )}
-
-      {/* ── 10. MODAL BUAT IKLAN / KONTEN ── */}
-      <CreateSheet
-        isOpen={showCreateSheet}
-        onClose={() => setShowCreateSheet(false)}
-      />
-
-      {/* ── 11. MODAL LOGIN OTP ── */}
-      <OTPModal
-        isOpen={showOtpModal}
-        onClose={() => setShowOtpModal(false)}
-      />
+      </div>
     </div>
   );
 }

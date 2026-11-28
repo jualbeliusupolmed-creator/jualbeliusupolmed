@@ -28,7 +28,7 @@ export async function POST(request) {
     );
   }
   const proof = (await cookies()).get(SELLER_GOOGLE_OTP_PROOF_COOKIE)?.value;
-  if (!verifySellerGoogleLinkToken(proof, wa)) {
+  if (!(await verifySellerGoogleLinkToken(proof, wa))) {
     return NextResponse.json({ error: "Verifikasi WhatsApp dulu dengan kode OTP." }, { status: 403 });
   }
 
@@ -55,7 +55,7 @@ export async function POST(request) {
     path: "/api/auth/google-link",
     maxAge: 0,
   });
-  response.cookies.set(SELLER_GOOGLE_LINK_COOKIE, createSellerGoogleLinkToken(wa), {
+  response.cookies.set(SELLER_GOOGLE_LINK_COOKIE, await createSellerGoogleLinkToken(wa), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

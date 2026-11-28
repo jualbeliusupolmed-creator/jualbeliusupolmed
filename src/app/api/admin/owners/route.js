@@ -22,7 +22,7 @@ const MODULE_ACTIONS = {
   admin_requests: new Set(["read", "manage", "review"]),
 };
 
-export const DEFAULT_PROVINCE_PERMISSIONS = {
+const DEFAULT_PROVINCE_PERMISSIONS = {
   overview: ["read", "manage"],
   marketplace: ["read", "review", "manage"],
   users: ["read", "manage"],

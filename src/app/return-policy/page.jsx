@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function ReturnPolicyPage() {
   const waDisplay = `+62 ${MARKETPLACE_WA.slice(2, 5)}-${MARKETPLACE_WA.slice(5, 9)}-${MARKETPLACE_WA.slice(9)}`;
-  
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="text-center">

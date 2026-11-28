@@ -73,19 +73,19 @@ export default function OprecClient({ initialOprecs = [] }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-[calc(6.5rem+env(safe-area-inset-bottom))] font-sans selection:bg-primary/20">
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14 font-sans selection:bg-[#ceeb7a]/40">
       {/* HEADER SECTION */}
-      <div className="bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08] py-8 sm:py-10">
+      <div className="bg-white/90 dark:bg-[#112218]/90 backdrop-blur-xl border-b border-[#e2f0e6] dark:border-white/10 py-8 sm:py-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#e6f8e8] dark:bg-[#134e35]/40 px-3 py-1 text-xs font-bold text-[#134e35] dark:text-[#ceeb7a] border border-[#c8ecd0] dark:border-white/10">
                 <Icon.ClipboardList className="h-4 w-4" /><span>Portal Oprec & Kepanitiaan Kampus</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#101f15] dark:text-[#ecfeee]">
                 Pusat Open Recruitment Mahasiswa
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 max-w-2xl">
+              <p className="text-xs sm:text-sm text-[#404943] dark:text-[#9db8a2] max-w-2xl">
                 Temukan peluang kepanitiaan acara kampus, staf BEM & Himpunan, serta pendaftaran anggota baru UKM di komunitas kampusmu.
               </p>
             </div>
@@ -93,13 +93,13 @@ export default function OprecClient({ initialOprecs = [] }) {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowBuatModal(true)}
-                className="btn-primary py-2.5 px-4 text-xs font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                className="rounded-full bg-[#003622] hover:bg-[#134e35] text-white py-2.5 px-5 text-xs font-extrabold shadow-sm flex items-center justify-center gap-2 transition-colors"
               >
                 <span>+ Buka Oprec Baru</span>
               </button>
               <Link
                 href="/organisasi"
-                className="btn-outline py-2.5 px-3.5 text-xs font-semibold"
+                className="rounded-full border border-[#e2f0e6] dark:border-white/15 bg-white dark:bg-[#112218] text-[#003622] dark:text-[#ecfeee] hover:bg-[#e6f8e8] py-2.5 px-4 text-xs font-bold transition-colors"
               >
                 <span>Direktori UKM</span>
               </Link>
@@ -107,15 +107,15 @@ export default function OprecClient({ initialOprecs = [] }) {
           </div>
 
           {/* CAMPUS SELECTOR */}
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-1">
             {["Semua", ...campuses.map((campus) => campus.shortName)].map((c) => (
               <button
                 key={c}
                 onClick={() => setSelectedCampus(c)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all border shrink-0 ${
                   selectedCampus === c
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50"
+                    ? "bg-[#003622] text-white border-[#003622] shadow-sm"
+                    : "bg-white dark:bg-[#112218] border-[#e2f0e6] dark:border-white/10 text-[#404943] dark:text-[#9db8a2] hover:bg-[#e6f8e8]"
                 }`}
               >
                 {c === "Semua" ? "Semua Kampus" : `Kampus ${c}`}
@@ -162,7 +162,7 @@ export default function OprecClient({ initialOprecs = [] }) {
               return (
                 <div
                   key={op.id}
-                  className="card p-5 sm:p-6 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-xl transition-all space-y-4"
+                  className="rounded-3xl bg-white dark:bg-[#112218] p-5 sm:p-6 flex flex-col justify-between border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] hover:shadow-xl transition-all space-y-4"
                 >
                   <div className="space-y-3">
                     {/* Header: Org info & Countdown badge */}
@@ -242,7 +242,7 @@ export default function OprecClient({ initialOprecs = [] }) {
                       type="button"
                       disabled={isClosed}
                       onClick={() => setActiveDaftarModal(op)}
-                      className={`btn-primary text-xs py-2 px-5 font-bold shadow-md flex items-center gap-1.5 ${
+                      className={`rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs py-2.5 px-5 font-bold shadow-xs flex items-center gap-1.5 transition-colors ${
                         isClosed ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >

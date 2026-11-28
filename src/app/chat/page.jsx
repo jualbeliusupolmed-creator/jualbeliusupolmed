@@ -123,14 +123,14 @@ function ChatContent() {
       .then((data) => {
         if (Array.isArray(data?.campuses) && data.campuses.length) setKampusTersedia(data.campuses);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     try {
       const camp = localStorage.getItem("preferred_campus");
       const prov = localStorage.getItem("preferred_province");
       if (camp) setPreferredCampus(camp);
       if (prov) setPreferredProvince(prov);
-    } catch {}
+    } catch { }
 
     const onCampusSync = (e) => {
       if (e.detail?.campus) setPreferredCampus(e.detail.campus);
@@ -418,7 +418,7 @@ function ChatContent() {
     return () => {
       rtChannelRef.current = null;
       if (channel && supa) {
-        try { supa.removeChannel(channel); } catch {}
+        try { supa.removeChannel(channel); } catch { }
       }
     };
   }, [kanalRoomId, anonView, muatUtas, fetchRoomData, myWa, utas?.myId]);
@@ -477,7 +477,7 @@ function ChatContent() {
         body: JSON.stringify({ action: "cancel", roomId: waitingRoomId }),
       });
       toast.info("Pencarian dibatalkan.");
-    } catch {}
+    } catch { }
     if (anonView) muatUtas();
     else refreshAnonInbox();
   };
@@ -497,7 +497,7 @@ function ChatContent() {
           event: "typing",
           payload: { senderId: currentId, alias: myAlias },
         });
-      } catch {}
+      } catch { }
     }
   };
 
@@ -561,7 +561,7 @@ function ChatContent() {
         hapticLight();
         try {
           rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
-        } catch {}
+        } catch { }
       }
     } catch {
       toast.error("Gagal mengirim pesan");
@@ -606,7 +606,7 @@ function ChatContent() {
     await fetch(`/api/chat/room/${targetRoom}`, { method: "DELETE" });
     try {
       rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
-    } catch {}
+    } catch { }
     if (anonView) muatUtas();
     else router.push("/chat");
   };
@@ -714,11 +714,10 @@ function ChatContent() {
                 setDesktopMode("chat");
                 router.push("/chat");
               }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${
-                desktopMode === "chat" || roomQuery || anonView
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${desktopMode === "chat" || roomQuery || anonView
+                ? "bg-emerald-700 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               <Icon.MessageCircle className="w-4 h-4" />
               <span>Obrolan Transaksi</span>
@@ -733,11 +732,10 @@ function ChatContent() {
                 setDesktopMode("swipe");
                 router.push("/chat?mode=teman");
               }}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${
-                desktopMode === "swipe" && !roomQuery && !anonView
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors ${desktopMode === "swipe" && !roomQuery && !anonView
+                ? "bg-emerald-700 text-white shadow-xs"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
             >
               <Icon.Users className="w-4 h-4 text-emerald-300" />
               <span>Teman Kampus</span>
@@ -1034,9 +1032,8 @@ function ChatContent() {
         <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col md:flex-row overflow-hidden relative min-h-0 h-full">
           {/* PANEL KIRI (SIDEBAR): DAFTAR PESAN & MATCH BARU */}
           <aside
-            className={`w-full md:w-[350px] lg:w-[380px] flex-1 md:flex-initial md:shrink-0 bg-white dark:bg-slate-900 flex flex-col h-full min-h-0 overflow-hidden border-r border-slate-200 dark:border-slate-800 ${
-              (roomQuery || anonView) ? "hidden md:flex" : "flex"
-            }`}
+            className={`w-full md:w-[350px] lg:w-[380px] flex-1 md:flex-initial md:shrink-0 bg-white dark:bg-slate-900 flex flex-col h-full min-h-0 overflow-hidden border-r border-slate-200 dark:border-slate-800 ${(roomQuery || anonView) ? "hidden md:flex" : "flex"
+              }`}
           >
             {/* Header & Search */}
             <div className="p-3.5 pb-2.5 flex flex-col gap-2.5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
@@ -1087,11 +1084,10 @@ function ChatContent() {
                   <button
                     key={tab.id}
                     onClick={() => setSidebarFilter(tab.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors shrink-0 ${
-                      sidebarFilter === tab.id
-                        ? "bg-emerald-700 text-white shadow-xs"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors shrink-0 ${sidebarFilter === tab.id
+                      ? "bg-emerald-700 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -1117,74 +1113,73 @@ function ChatContent() {
                 (!searchFilter.trim() ||
                   "chat anonim obrolan rahasia bot telegram partner".includes(searchFilter.toLowerCase()) ||
                   ringkasAnon?.partnerAktif?.toLowerCase().includes(searchFilter.toLowerCase())) && (
-                <article
-                  onClick={() => {
-                    setDesktopMode("chat");
-                    router.push("/chat?anon=1");
-                  }}
-                  className={`p-3 rounded-2xl flex items-start gap-3 cursor-pointer transition-colors duration-150 border relative select-none ${
-                    anonView
+                  <article
+                    onClick={() => {
+                      setDesktopMode("chat");
+                      router.push("/chat?anon=1");
+                    }}
+                    className={`p-3 rounded-2xl flex items-start gap-3 cursor-pointer transition-colors duration-150 border relative select-none ${anonView
                       ? "bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent dark:from-emerald-950/50 dark:via-teal-950/30 border-emerald-500 shadow-sm ring-1 ring-emerald-500/30"
                       : "bg-white dark:bg-slate-900/80 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-slate-800/40"
-                  }`}
-                >
-                  {/* Bot Avatar Icon */}
-                  <div className="relative shrink-0">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-emerald-600/20">
-                      <Icon.Bot className="w-6 h-6" />
+                      }`}
+                  >
+                    {/* Bot Avatar Icon */}
+                    <div className="relative shrink-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-emerald-600/20">
+                        <Icon.Bot className="w-6 h-6" />
+                      </div>
+                      {/* Status Pulse Indicator */}
+                      {ringkasAnon?.partnerAktif ? (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse motion-reduce:animate-none" />
+                      ) : searching || isWaiting ? (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900 animate-ping motion-reduce:animate-none" />
+                      ) : (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400/80 ring-2 ring-white dark:ring-slate-900" />
+                      )}
                     </div>
-                    {/* Status Pulse Indicator */}
-                    {ringkasAnon?.partnerAktif ? (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse motion-reduce:animate-none" />
-                    ) : searching || isWaiting ? (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900 animate-ping motion-reduce:animate-none" />
-                    ) : (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400/80 ring-2 ring-white dark:ring-slate-900" />
-                    )}
-                  </div>
 
-                  {/* Content & Status */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
-                          <span>Chat Anonim Kampus</span>
-                          <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded">Semat</span>
+                    {/* Content & Status */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                            <span>Chat Anonim Kampus</span>
+                            <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded">Semat</span>
+                          </span>
+                        </div>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 shrink-0 border border-indigo-200/50 dark:border-indigo-800/40">
+                          {ringkasAnon?.partnerAktif ? "Terhubung" : "Bot"}
                         </span>
                       </div>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 shrink-0 border border-indigo-200/50 dark:border-indigo-800/40">
-                        {ringkasAnon?.partnerAktif ? "Terhubung" : "Bot"}
-                      </span>
-                    </div>
 
-                    <p className="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate mb-1">
-                      {ringkasAnon?.partnerAktif ? (
-                        <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
-                          <Icon.MessageCircle className="w-3 h-3 shrink-0" />
-                          <span>{ringkasAnon.partnerAktif}: {ringkasAnon.pesanTerakhir?.teks || "Sesi aktif"}</span>
-                        </span>
-                      ) : searching || isWaiting ? (
-                        <span className="text-amber-700 dark:text-amber-400 font-semibold animate-pulse motion-reduce:animate-none flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                          <span>Sedang mencari partner obrolan...</span>
-                        </span>
-                      ) : (
-                        <span>Obrolan 1-on-1 rahasia ala Telegram Bot</span>
-                      )}
-                    </p>
+                      <p className="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate mb-1">
+                        {ringkasAnon?.partnerAktif ? (
+                          <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                            <Icon.MessageCircle className="w-3 h-3 shrink-0" />
+                            <span>{ringkasAnon.partnerAktif}: {ringkasAnon.pesanTerakhir?.teks || "Sesi aktif"}</span>
+                          </span>
+                        ) : searching || isWaiting ? (
+                          <span className="text-amber-700 dark:text-amber-400 font-semibold animate-pulse motion-reduce:animate-none flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                            <span>Sedang mencari partner obrolan...</span>
+                          </span>
+                        ) : (
+                          <span>Obrolan 1-on-1 rahasia ala Telegram Bot</span>
+                        )}
+                      </p>
 
-                    <div className="flex items-center justify-between text-[9.5px]">
-                      <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                        <Icon.ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        <span>Identitas &amp; WA rahasia</span>
-                      </span>
-                      <span className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline">
-                        {anonView ? "Sedang aktif" : "Mulai Chat →"}
-                      </span>
+                      <div className="flex items-center justify-between text-[9.5px]">
+                        <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                          <Icon.ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          <span>Identitas &amp; WA rahasia</span>
+                        </span>
+                        <span className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline">
+                          {anonView ? "Sedang aktif" : "Mulai Chat →"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              )}
+                  </article>
+                )}
 
               {/* Real Marketplace & Direct DM Rooms */}
               {inboxLoading ? (
@@ -1222,11 +1217,10 @@ function ChatContent() {
                         setDesktopMode("chat");
                         router.push(`/chat?room=${room.id}`);
                       }}
-                      className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-colors border ${
-                        isSelected
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                          : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-                      }`}
+                      className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-colors border ${isSelected
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
+                        : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                        }`}
                     >
                       <div className="relative shrink-0">
                         {isDirect ? (
@@ -1286,421 +1280,417 @@ function ChatContent() {
               PANEL KANAN (CHAT AREA): ACTIVE ROOM OR WHATSAPP EMPTY STATE
               ══════════════════════════════════════════════════════════════════ */}
           <section
-            className={`flex-1 flex flex-col h-full min-h-0 bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${
-              (!roomQuery && !anonView) ? "hidden md:flex" : "flex"
-            }`}
+            className={`flex-1 flex flex-col h-full min-h-0 bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${(!roomQuery && !anonView) ? "hidden md:flex" : "flex"
+              }`}
           >
 
-          {/* ── SUB-VIEW B: UTAS ANONIM (?anon=1) ── */}
-          {anonView && (
-            <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
-              {/* Header Utas Anonim */}
-              <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 sm:px-4 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <button
-                    onClick={() => router.push("/chat")}
-                    className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full"
-                    title="Kembali"
-                  >
-                    <Icon.ChevronLeft className="w-5 h-5" />
-                  </button>
+            {/* ── SUB-VIEW B: UTAS ANONIM (?anon=1) ── */}
+            {anonView && (
+              <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
+                {/* Header Utas Anonim */}
+                <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 sm:px-4 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <button
+                      onClick={() => router.push("/chat")}
+                      className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full"
+                      title="Kembali"
+                    >
+                      <Icon.ChevronLeft className="w-5 h-5" />
+                    </button>
 
-                  <div className="relative shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold shadow-xs">
-                      <Icon.MessageCircle className="w-5 h-5" />
-                    </div>
-                    {aktifRoomId && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse motion-reduce:animate-none" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {aktifRoomId ? (segAktif ? segAktif.alias : "Partner Anonim") : "Bot Obrolan Anonim"}
-                      </p>
-                      {aktifRoomId && segAktif?.faculty && (
-                        <span className="text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full shrink-0">
-                          {segAktif.faculty}
-                        </span>
+                    <div className="relative shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold shadow-xs">
+                        <Icon.MessageCircle className="w-5 h-5" />
+                      </div>
+                      {aktifRoomId && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse motion-reduce:animate-none" />
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                      {aktifRoomId ? "Sedang terhubung langsung" : isWaiting ? "Sedang mencari partner..." : `Mahasiswa ${labelKampus}`}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {aktifRoomId ? (
-                    <>
-                      <button
-                        onClick={() => handleExchangeContact(aktifRoomId)}
-                        title="Ajak lanjut mengobrol di DM Pribadi"
-                        className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-100 transition-colors shadow-2xs"
-                      >
-                        <Icon.CheckCircle className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Tukar Kontak</span>
-                      </button>
-                      <button
-                        onClick={handleFindPartner}
-                        title="Ganti Lawan Obrolan"
-                        className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-full bg-slate-100 dark:bg-slate-800"
-                      >
-                        <Icon.Refresh className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={handleLeaveChat}
-                        title="Akhiri Obrolan"
-                        className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full"
-                      >
-                        <Icon.X className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={handleFindPartner}
-                      disabled={searching || isWaiting}
-                      className="flex items-center gap-1.5 bg-emerald-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-xs hover:bg-emerald-800 active:translate-y-px transition-colors disabled:opacity-50"
-                    >
-                      {searching ? "Mencari..." : <><Icon.Users className="w-3.5 h-3.5" aria-hidden="true" /><span>Cari Baru</span></>}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Chat Canvas Area */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {utasLoading ? (
-                  <div className="flex flex-col items-center justify-center h-full py-16 text-center space-y-3">
-                    <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs text-slate-400 font-medium">Menghubungkan ke Cari Teman...</p>
-                  </div>
-                ) : rawSegmen.length === 0 && !isWaiting ? (
-                  <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4 space-y-4">
-                    <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-3xl shadow-xs border border-emerald-500/20">
-                      <Icon.MessageCircle className="w-8 h-8 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                    </div>
-                    <div className="space-y-1.5 max-w-sm">
-                      <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
-                        Obrolan Anonim {labelKampus}
-                      </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Ngobrol santai 1-on-1 secara anonim &amp; rahasia dengan sesama mahasiswa kampus. Ketuk tombol di bawah untuk mulai!
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {aktifRoomId ? (segAktif ? segAktif.alias : "Partner Anonim") : "Bot Obrolan Anonim"}
+                        </p>
+                        {aktifRoomId && segAktif?.faculty && (
+                          <span className="text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full shrink-0">
+                            {segAktif.faculty}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        {aktifRoomId ? "Sedang terhubung langsung" : isWaiting ? "Sedang mencari partner..." : `Mahasiswa ${labelKampus}`}
                       </p>
                     </div>
-                    <button
-                      onClick={handleFindPartner}
-                      disabled={searching}
-                      className="px-6 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black shadow-xs active:translate-y-px transition-colors flex items-center gap-2"
-                    >
-                      {searching ? "Mencari Teman..." : <><Icon.Users className="w-4 h-4" aria-hidden="true" /><span>Mulai Obrolan Sekarang</span></>}
-                    </button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {rawSegmen.map((seg, sIdx) => (
-                      <div key={seg.roomId || sIdx} className="space-y-3">
-                        {/* Session Banner */}
-                        <div className="flex items-center justify-center my-2">
-                          <div className="bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-center shadow-2xs">
-                            <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 justify-center">
-                              <Icon.Users className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Terhubung dengan {seg.alias}</span>
-                              {seg.faculty && (
-                                <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold">
-                                  {seg.faculty}
-                                </span>
-                              )}
-                              {seg.mulai && (
-                                <span className="text-slate-400 font-normal text-[10px]">
-                                  · {waktuRelatif(seg.mulai)}
-                                </span>
-                              )}
-                            </p>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {aktifRoomId ? (
+                      <>
+                        <button
+                          onClick={() => handleExchangeContact(aktifRoomId)}
+                          title="Ajak lanjut mengobrol di DM Pribadi"
+                          className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-100 transition-colors shadow-2xs"
+                        >
+                          <Icon.CheckCircle className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Tukar Kontak</span>
+                        </button>
+                        <button
+                          onClick={handleFindPartner}
+                          title="Ganti Lawan Obrolan"
+                          className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white rounded-full bg-slate-100 dark:bg-slate-800"
+                        >
+                          <Icon.Refresh className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleLeaveChat}
+                          title="Akhiri Obrolan"
+                          className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full"
+                        >
+                          <Icon.X className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleFindPartner}
+                        disabled={searching || isWaiting}
+                        className="flex items-center gap-1.5 bg-emerald-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-xs hover:bg-emerald-800 active:translate-y-px transition-colors disabled:opacity-50"
+                      >
+                        {searching ? "Mencari..." : <><Icon.Users className="w-3.5 h-3.5" aria-hidden="true" /><span>Cari Baru</span></>}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chat Canvas Area */}
+                <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                  {utasLoading ? (
+                    <div className="flex flex-col items-center justify-center h-full py-16 text-center space-y-3">
+                      <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-slate-400 font-medium">Menghubungkan ke Cari Teman...</p>
+                    </div>
+                  ) : rawSegmen.length === 0 && !isWaiting ? (
+                    <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4 space-y-4">
+                      <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-3xl shadow-xs border border-emerald-500/20">
+                        <Icon.MessageCircle className="w-8 h-8 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+                      </div>
+                      <div className="space-y-1.5 max-w-sm">
+                        <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+                          Obrolan Anonim {labelKampus}
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          Ngobrol santai 1-on-1 secara anonim &amp; rahasia dengan sesama mahasiswa kampus. Ketuk tombol di bawah untuk mulai!
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleFindPartner}
+                        disabled={searching}
+                        className="px-6 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black shadow-xs active:translate-y-px transition-colors flex items-center gap-2"
+                      >
+                        {searching ? "Mencari Teman..." : <><Icon.Users className="w-4 h-4" aria-hidden="true" /><span>Mulai Obrolan Sekarang</span></>}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {rawSegmen.map((seg, sIdx) => (
+                        <div key={seg.roomId || sIdx} className="space-y-3">
+                          {/* Session Banner */}
+                          <div className="flex items-center justify-center my-2">
+                            <div className="bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-center shadow-2xs">
+                              <p className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 justify-center">
+                                <Icon.Users className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Terhubung dengan {seg.alias}</span>
+                                {seg.faculty && (
+                                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold">
+                                    {seg.faculty}
+                                  </span>
+                                )}
+                                {seg.mulai && (
+                                  <span className="text-slate-400 font-normal text-[10px]">
+                                    · {waktuRelatif(seg.mulai)}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Messages */}
-                        {seg.pesan.map((m, idx) => {
-                          const isMe = m.sender_id === utas?.myId;
-                          const parsed = parseMessageContent(m.message);
+                          {/* Messages */}
+                          {seg.pesan.map((m, idx) => {
+                            const isMe = m.sender_id === utas?.myId;
+                            const parsed = parseMessageContent(m.message);
 
-                          return (
-                            <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                              <div
-                                className={`max-w-[85%] text-xs leading-relaxed ${
-                                  parsed.isImage
+                            return (
+                              <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                                <div
+                                  className={`max-w-[85%] text-xs leading-relaxed ${parsed.isImage
                                     ? isMe
                                       ? "bg-emerald-700 text-white p-1 rounded-2xl rounded-br-sm shadow-xs"
                                       : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white p-1 rounded-2xl rounded-bl-sm"
                                     : isMe
                                       ? "bg-emerald-700 text-white px-3.5 py-2 rounded-2xl rounded-br-sm shadow-xs"
                                       : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3.5 py-2 rounded-2xl rounded-bl-sm"
-                                }`}
-                              >
-                                {parsed.isImage ? (
-                                  <div className="space-y-1">
-                                    <img
-                                      src={parsed.imgUrl}
-                                      alt="Foto"
-                                      onClick={() => setPreviewImage(parsed.imgUrl)}
-                                      className="rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-95"
-                                    />
-                                    {parsed.text && <p className="px-2 pt-1 text-xs">{parsed.text}</p>}
-                                  </div>
-                                ) : (
-                                  parsed.text
-                                )}
+                                    }`}
+                                >
+                                  {parsed.isImage ? (
+                                    <div className="space-y-1">
+                                      <img
+                                        src={parsed.imgUrl}
+                                        alt="Foto"
+                                        onClick={() => setPreviewImage(parsed.imgUrl)}
+                                        className="rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-95"
+                                      />
+                                      {parsed.text && <p className="px-2 pt-1 text-xs">{parsed.text}</p>}
+                                    </div>
+                                  ) : (
+                                    parsed.text
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Icebreakers for new chat */}
+                {aktifRoomId && realMsgCount <= 1 && (
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+                    {ICEBREAKERS.map((prompt, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSendMessage(prompt)}
+                        className="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:bg-slate-50 active:translate-y-px transition-colors motion-reduce:transition-none shadow-2xs"
+                      >
+                        {prompt}
+                      </button>
                     ))}
-                    <div ref={messagesEndRef} />
+                  </div>
+                )}
+
+                {/* Bottom Input */}
+                {aktifRoomId ? (
+                  <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadPhoto}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImg || sending}
+                      title="Kirim Foto"
+                      className="w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none text-sm disabled:opacity-50"
+                    >
+                      {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
+                    </button>
+                    <input
+                      type="text"
+                      value={inputMessage}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
+                      placeholder="Ketik pesan santai..."
+                      className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                    <button
+                      onClick={() => handleSendMessage()}
+                      disabled={!inputMessage.trim() || sending || uploadingImg}
+                      className="w-10 h-10 shrink-0 rounded-full bg-emerald-700 disabled:opacity-40 text-white flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none shadow-xs"
+                    >
+                      <Icon.ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                    <button
+                      onClick={handleFindPartner}
+                      disabled={searching}
+                      className="w-full py-2.5 rounded-full bg-emerald-700 text-white text-xs font-black shadow-xs hover:bg-emerald-800 active:translate-y-px transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {searching ? "Mencari Teman..." : <><Icon.Users className="w-4 h-4" aria-hidden="true" /><span>Cari Teman Baru</span></>}
+                    </button>
                   </div>
                 )}
               </div>
+            )}
 
-              {/* Icebreakers for new chat */}
-              {aktifRoomId && realMsgCount <= 1 && (
-                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
-                  {ICEBREAKERS.map((prompt, i) => (
+            {/* ── SUB-VIEW C: ACTIVE ROOM (?room=<id>) ── */}
+            {roomQuery && (
+              <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
+                {roomNotFound ? (
+                  <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 p-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center">
+                      <Icon.Search className="w-6 h-6" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Obrolan tidak ditemukan</p>
                     <button
-                      key={i}
-                      onClick={() => handleSendMessage(prompt)}
-                      className="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:bg-slate-50 active:translate-y-px transition-colors motion-reduce:transition-none shadow-2xs"
+                      onClick={() => router.push("/chat")}
+                      className="px-4 py-1.5 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs active:translate-y-px transition-colors motion-reduce:transition-none"
                     >
-                      {prompt}
+                      Kembali
                     </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Bottom Input */}
-              {aktifRoomId ? (
-                <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUploadPhoto}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImg || sending}
-                    title="Kirim Foto"
-                    className="w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none text-sm disabled:opacity-50"
-                  >
-                    {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
-                  </button>
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
-                    placeholder="Ketik pesan santai..."
-                    className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  />
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputMessage.trim() || sending || uploadingImg}
-                    className="w-10 h-10 shrink-0 rounded-full bg-emerald-700 disabled:opacity-40 text-white flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none shadow-xs"
-                  >
-                    <Icon.ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-3">
-                  <button
-                    onClick={handleFindPartner}
-                    disabled={searching}
-                    className="w-full py-2.5 rounded-full bg-emerald-700 text-white text-xs font-black shadow-xs hover:bg-emerald-800 active:translate-y-px transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  >
-                    {searching ? "Mencari Teman..." : <><Icon.Users className="w-4 h-4" aria-hidden="true" /><span>Cari Teman Baru</span></>}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── SUB-VIEW C: ACTIVE ROOM (?room=<id>) ── */}
-          {roomQuery && (
-            <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
-              {roomNotFound ? (
-                <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 p-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center">
-                    <Icon.Search className="w-6 h-6" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Obrolan tidak ditemukan</p>
-                  <button
-                    onClick={() => router.push("/chat")}
-                    className="px-4 py-1.5 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs active:translate-y-px transition-colors motion-reduce:transition-none"
-                  >
-                    Kembali
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* Top Room Header */}
-                  <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 sm:px-4 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <button
-                        onClick={() => router.push("/chat")}
-                        className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full"
-                        title="Kembali"
-                      >
-                        <Icon.ChevronLeft className="w-5 h-5" />
-                      </button>
+                ) : (
+                  <>
+                    {/* Top Room Header */}
+                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-3 sm:px-4 flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                          onClick={() => router.push("/chat")}
+                          className="md:hidden p-1.5 -ml-1 text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-full"
+                          title="Kembali"
+                        >
+                          <Icon.ChevronLeft className="w-5 h-5" />
+                        </button>
 
-                      <div className="relative shrink-0">
-                        <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${
-                            roomType === "direct"
+                        <div className="relative shrink-0">
+                          <div
+                            className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${roomType === "direct"
                               ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                               : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                          }`}
-                        >
-                          {roomType === "direct" ? <Icon.Users className="w-4 h-4" /> : <Icon.Package className="w-4 h-4" />}
+                              }`}
+                          >
+                            {roomType === "direct" ? <Icon.Users className="w-4 h-4" /> : <Icon.Package className="w-4 h-4" />}
+                          </div>
+                          {roomStatus === "active" && (
+                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+                          )}
                         </div>
-                        {roomStatus === "active" && (
-                          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {partnerInfo.alias}
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                            {roomType === "direct" ? `Teman Kampus · ${partnerInfo.faculty}` : `Marketplace · ${partnerInfo.faculty}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {partnerInfo.wa && (
+                          <a
+                            href={`https://wa.me/${String(partnerInfo.wa).replace(/^0/, "62")}?text=${encodeURIComponent("Halo, saya dari obrolan Kampus Kita ")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+                          >
+                            <Icon.Phone className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">WhatsApp</span>
+                          </a>
                         )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {partnerInfo.alias}
-                        </p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {roomType === "direct" ? `Teman Kampus · ${partnerInfo.faculty}` : `Marketplace · ${partnerInfo.faculty}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {partnerInfo.wa && (
-                        <a
-                          href={`https://wa.me/${String(partnerInfo.wa).replace(/^0/, "62")}?text=${encodeURIComponent("Halo, saya dari obrolan Kampus Kita ")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+                        <button
+                          onClick={handleLeaveChat}
+                          title="Tutup Obrolan"
+                          className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full"
                         >
-                          <Icon.Phone className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">WhatsApp</span>
-                        </a>
-                      )}
-                      <button
-                        onClick={handleLeaveChat}
-                        title="Tutup Obrolan"
-                        className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full"
-                      >
-                        <Icon.X className="w-4 h-4" />
-                      </button>
+                          <Icon.X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Messages Feed */}
-                  <div className="flex-1 p-4 overflow-y-auto space-y-3">
-                    {messages.map((m, idx) => {
-                      const isMe = m.sender_id === myWa;
-                      const parsed = parseMessageContent(m.message);
+                    {/* Messages Feed */}
+                    <div className="flex-1 p-4 overflow-y-auto space-y-3">
+                      {messages.map((m, idx) => {
+                        const isMe = m.sender_id === myWa;
+                        const parsed = parseMessageContent(m.message);
 
-                      return (
-                        <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                          <div
-                            className={`max-w-[85%] text-xs leading-relaxed ${
-                              parsed.isImage
+                        return (
+                          <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                            <div
+                              className={`max-w-[85%] text-xs leading-relaxed ${parsed.isImage
                                 ? isMe
                                   ? "bg-emerald-700 text-white p-1 rounded-2xl rounded-br-sm shadow-xs"
                                   : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white p-1 rounded-2xl rounded-bl-sm"
                                 : isMe
                                   ? "bg-emerald-700 text-white px-3.5 py-2 rounded-2xl rounded-br-sm shadow-xs"
                                   : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-3.5 py-2 rounded-2xl rounded-bl-sm"
-                            }`}
-                          >
-                            {parsed.isImage ? (
-                              <div className="space-y-1">
-                                <img
-                                  src={parsed.imgUrl}
-                                  alt="Foto"
-                                  onClick={() => setPreviewImage(parsed.imgUrl)}
-                                  className="rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-95"
-                                />
-                                {parsed.text && <p className="px-2 pt-1 text-xs">{parsed.text}</p>}
-                              </div>
-                            ) : (
-                              parsed.text
-                            )}
+                                }`}
+                            >
+                              {parsed.isImage ? (
+                                <div className="space-y-1">
+                                  <img
+                                    src={parsed.imgUrl}
+                                    alt="Foto"
+                                    onClick={() => setPreviewImage(parsed.imgUrl)}
+                                    className="rounded-xl max-h-60 object-cover cursor-pointer hover:opacity-95"
+                                  />
+                                  {parsed.text && <p className="px-2 pt-1 text-xs">{parsed.text}</p>}
+                                </div>
+                              ) : (
+                                parsed.text
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Room Input Bar */}
-                  {roomStatus === "active" && (
-                    <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleUploadPhoto}
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingImg || sending}
-                        title="Kirim Foto"
-                        className="w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none text-sm disabled:opacity-50"
-                      >
-                        {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
-                      </button>
-                      <input
-                        type="text"
-                        value={inputMessage}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
-                        placeholder="Ketik pesan..."
-                        className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      />
-                      <button
-                        onClick={() => handleSendMessage()}
-                        disabled={!inputMessage.trim() || sending || uploadingImg}
-                        className="w-10 h-10 shrink-0 rounded-full bg-emerald-700 disabled:opacity-40 text-white flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none shadow-xs"
-                      >
-                        <Icon.ArrowRight className="w-4 h-4" />
-                      </button>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
 
-          {/* ── SUB-VIEW D: KOTAK MASUK OBROLAN TRANSAKSI (Default saat buka /chat) ── */}
-          {desktopMode === "chat" && !roomQuery && !anonView && (
-            <div className="flex-1 flex flex-col items-center justify-center h-full bg-slate-50/50 dark:bg-black/30 p-8 text-center select-none">
-              <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-3">
-                <Icon.MessageCircle className="w-7 h-7" />
+                    {/* Room Input Bar */}
+                    {roomStatus === "active" && (
+                      <div className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadPhoto}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImg || sending}
+                          title="Kirim Foto"
+                          className="w-10 h-10 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none text-sm disabled:opacity-50"
+                        >
+                          {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
+                        </button>
+                        <input
+                          type="text"
+                          value={inputMessage}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
+                          placeholder="Ketik pesan..."
+                          className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                        />
+                        <button
+                          onClick={() => handleSendMessage()}
+                          disabled={!inputMessage.trim() || sending || uploadingImg}
+                          className="w-10 h-10 shrink-0 rounded-full bg-emerald-700 disabled:opacity-40 text-white flex items-center justify-center active:translate-y-px transition-colors motion-reduce:transition-none shadow-xs"
+                        >
+                          <Icon.ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                Pilih percakapan
-              </h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs leading-relaxed">
-                Pilih salah satu obrolan di bilah sisi kiri untuk mulai membaca dan membalas pesan.
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-    )}
+            )}
+
+            {/* ── SUB-VIEW D: KOTAK MASUK OBROLAN TRANSAKSI (Default saat buka /chat) ── */}
+            {desktopMode === "chat" && !roomQuery && !anonView && (
+              <div className="flex-1 flex flex-col items-center justify-center h-full bg-slate-50/50 dark:bg-black/30 p-8 text-center select-none">
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-3">
+                  <Icon.MessageCircle className="w-7 h-7" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  Pilih percakapan
+                </h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs leading-relaxed">
+                  Pilih salah satu obrolan di bilah sisi kiri untuk mulai membaca dan membalas pesan.
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* LIGHTBOX PREVIEW FOTO */}
       {previewImage && (

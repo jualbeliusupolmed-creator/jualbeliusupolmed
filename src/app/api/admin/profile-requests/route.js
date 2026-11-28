@@ -138,7 +138,7 @@ export async function PATCH(request) {
   await supa.from("admin_audit_events").insert({
     actor_id: actor.userId,
     action: action === "approve" ? "profile_change_approved" : "profile_change_rejected",
-    target_id: hashAdminUserAuditTarget(changeRequest.seller_wa),
+    target_id: await hashAdminUserAuditTarget(changeRequest.seller_wa),
     metadata: { field: changeRequest.field, campus: profile.campus || "", note: action === "reject" ? note : "" },
   });
   return NextResponse.json({ ok: true });

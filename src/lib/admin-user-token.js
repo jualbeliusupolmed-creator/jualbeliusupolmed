@@ -1,38 +1,55 @@
-import { createHash, createHmac } from "@/lib/cryptoCompat";
-import { customAlphabet } from "nanoid";
+import {
+  aes256GcmDecrypt,
+  aes256GcmEncrypt,
+  bytesToHex,
+  encodeUtf8,
+  hmacSha256,
+  hexToBytes,
+  randomHex,
+  sha256,
+} from "@/lib/cryptoCompat";
 
-function key() {
+async function key() {
   const secret = String(process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "");
   if (secret.length < 32) throw new Error("ADMIN_SESSION_SECRET is not configured.");
-  return createHash("sha256").update("jb-admin-user-token:" + secret).digest();
+  return sha256(`jb-admin-user-token:${secret}`);
 }
 
-export function hashAdminUserAuditTarget(wa) {
-  return createHmac("sha256", key()).update("admin-user-audit:" + String(wa)).digest("hex");
+export async function hashAdminUserAuditTarget(wa) {
+  return bytesToHex(await hmacSha256(await key(), `admin-user-audit:${String(wa)}`));
 }
 
-export function sealAdminUserToken(wa) {
-  const iv = customAlphabet("0123456789abcdef", 24)(); // Ganti randomBytes dengan nanoid
-  const cipher = createCipheriv("aes-256-gcm", key(), iv);
-  const value = Buffer.from(JSON.stringify({ wa: String(wa), exp: Date.now() + 60 * 60 * 1000 }));
-  const encrypted = Buffer.concat([cipher.update(value), cipher.final()]);
-  return `${iv}-${cipher.getAuthTag().toString("hex")}-${encrypted.toString("hex")}`;
+export async function sealAdminUserToken(wa) {
+  const iv = randomHex(24);
+  const { ciphertext, authTag } = await aes256GcmEncrypt(
+    await key(),
+    encodeUtf8(iv),
+    encodeUtf8(JSON.stringify({ wa: String(wa), exp: Date.now() + 60 * 60 * 1000 }))
+  );
+  return `${iv}-${bytesToHex(authTag)}-${bytesToHex(ciphertext)}`;
 }
 
-export function openAdminUserToken(token) {
+export async function openAdminUserToken(token) {
   if (typeof token !== "string" || token.length > 512) throw new Error("Invalid user token.");
   const [ivHex, authTagHex, encryptedHex, ...rest] = token.split("-");
-  if (!ivHex || !authTagHex || !encryptedHex || rest.length) throw new Error("Invalid user token.");
-  const iv = Buffer.from(ivHex, "utf8");
-  const authTag = Buffer.from(authTagHex, "hex");
-  const encrypted = Buffer.from(encryptedHex, "hex");
+  if (
+    !/^[\da-f]{24}$/i.test(ivHex || "")
+    || !/^[\da-f]{32}$/i.test(authTagHex || "")
+    || !/^(?:[\da-f]{2})+$/i.test(encryptedHex || "")
+    || rest.length
+  ) {
+    throw new Error("Invalid user token.");
+  }
 
-  if (iv.length !== 24 || authTag.length !== 16) throw new Error("Invalid user token."); // sesuaikan ukuran IV
-
-  const decipher = createDecipheriv("aes-256-gcm", key(), iv);
-  decipher.setAuthTag(authTag);
-  const clear = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-  const payload = JSON.parse(clear.toString("utf8"));
-  if (!/^[0-9]{8,16}$/.test(payload.wa) || Number(payload.exp) < Date.now()) throw new Error("Expired user token.");
+  const clear = await aes256GcmDecrypt(
+    await key(),
+    encodeUtf8(ivHex),
+    hexToBytes(encryptedHex),
+    hexToBytes(authTagHex)
+  );
+  const payload = JSON.parse(new TextDecoder().decode(clear));
+  if (!/^[0-9]{8,16}$/.test(payload.wa) || !Number.isFinite(payload.exp) || payload.exp <= Date.now()) {
+    throw new Error("Expired user token.");
+  }
   return payload.wa;
 }

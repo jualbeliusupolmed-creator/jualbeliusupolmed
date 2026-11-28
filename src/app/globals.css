@@ -4,51 +4,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet resmi Kampus Kita: Forest Emerald #047857 & Amber #F59E0B
-   Tone referensi (INSEAD AI Venture Lab): putih kekuningan halus #FCFCFA,
-   hijau tua #047857, hijau aksen #059669, teks #111827, muted #6B7280, pill #EEFEF9 */
+/* Stitch Design System — Kampus Kita Clean Campus Modern + USU Heritage Modern */
 :root {
-  --usu: #047857;
-  --usu-light: #059669;
-  --usu-dark: #065f46;
-  --polmed: #047857;
-  --polmed-light: #059669;
-  --polmed-dark: #065f46;
+  --usu: #134e35;
+  --usu-light: #1b6345;
+  --usu-dark: #003622;
+  --polmed: #134e35;
+  --polmed-light: #1b6345;
+  --polmed-dark: #003622;
 
-  --primary: #047857; /* Forest Emerald — tombol utama referensi */
-  --primary-hover: #065f46;
-  --primary-light: #ecfdf5;
-  --primary-foreground: #fefefe;
-  --accent: #059669; /* hijau aksen seperti teks "Sprint 2027" */
-  --accent-secondary: #f59e0b;
-  --accent-foreground: #fefefe;
+  --primary: #003622;
+  --primary-container: #134e35;
+  --primary-hover: #134e35;
+  --primary-light: #e6f8e8;
+  --primary-foreground: #ffffff;
+  --secondary: #506600;
+  --secondary-container: #ceeb7a;
+  --secondary-fixed: #ceeb7a;
+  --lime-accent: #bef264;
+  --secondary-foreground: #161f00;
+  --accent: #ceeb7a;
+  --accent-secondary: #bef264;
+  --accent-foreground: #161f00;
   --wa: #25d366;
-  --page: #fcfcfa; /* putih kekuningan halus, bukan slate-50 */
+  --page: #ecfeee;
+  --background: #ecfeee;
+  --foreground: #101f15;
   --surface: #ffffff;
-  --surface-muted: #fcfcfa;
-  --line: rgba(17, 24, 39, 0.10);
-  --line-strong: rgba(17, 24, 39, 0.16);
-  --text: #111827; /* hampir hitam */
-  --text-muted: #6b7280; /* abu-abu */
+  --surface-muted: #e6f8e8;
+  --card: #ffffff;
+  --card-foreground: #101f15;
+  --popover: #ffffff;
+  --popover-foreground: #101f15;
+  --muted: #e0f3e3;
+  --muted-foreground: #404943;
+  --border: #c0c9c1;
+  --input: #e6f8e8;
+  --ring: #134e35;
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+  --line: rgba(19, 78, 53, 0.10);
+  --line-strong: rgba(19, 78, 53, 0.20);
+  --text: #101f15;
+  --text-muted: #404943;
   --radius-card: 1rem;
   --radius-control: 0.75rem;
-  --shadow-card: 0 1px 3px rgba(17, 24, 39, 0.06), 0 8px 24px rgba(17, 24, 39, 0.04);
+  --shadow-card: 0 4px 20px -4px rgba(19, 78, 53, 0.06);
 
-  /* Dark mode token definitions (lifted for token audit) */
+  /* Dark mode token definitions */
   --dark-primary: #10b981;
   --dark-primary-hover: #059669;
   --dark-primary-light: #064e3b;
   --dark-primary-foreground: #fefefe;
-  --dark-accent: #10b981;
-  --dark-accent-secondary: #f59e0b;
-  --dark-accent-foreground: #000000;
-  --dark-page: #0f172a;
-  --dark-surface: #111827;
-  --dark-surface-muted: #1e293b;
-  --dark-line: rgba(226, 232, 240, 0.14);
-  --dark-line-strong: rgba(226, 232, 240, 0.22);
-  --dark-text: #f8fafc;
-  --dark-text-muted: #94a3b8;
+  --dark-accent: #bef264;
+  --dark-accent-secondary: #ceeb7a;
+  --dark-accent-foreground: #101f15;
+  --dark-page: #0a1710;
+  --dark-surface: #112218;
+  --dark-surface-muted: #183022;
+  --dark-line: rgba(180, 240, 205, 0.14);
+  --dark-line-strong: rgba(180, 240, 205, 0.22);
+  --dark-text: #ecfeee;
+  --dark-text-muted: #99d3b2;
 }
 
 .dark {
@@ -380,6 +397,21 @@ body::before {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--line-strong);
   border-radius: 9999px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 22;
+}
+.material-symbols-fill {
+  font-variation-settings: 'FILL' 1, 'wght' 550, 'GRAD' 0, 'opsz' 22;
 }
 
 /* Feed Card Virtualization & Render Optimization (Layer 6) */

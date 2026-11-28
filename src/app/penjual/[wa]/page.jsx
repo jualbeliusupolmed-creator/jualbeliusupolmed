@@ -136,9 +136,9 @@ async function getSellerData(wa, sessionIdentity = null) {
     let topCat = null;
     let maxCat = 0;
     (allListings || []).forEach(l => {
-      if(l.category) {
+      if (l.category) {
         catCounts[l.category] = (catCounts[l.category] || 0) + 1;
-        if(catCounts[l.category] > maxCat) {
+        if (catCounts[l.category] > maxCat) {
           maxCat = catCounts[l.category];
           topCat = l.category;
         }
@@ -316,356 +316,352 @@ export default async function SellerProfilePage({ params }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: skripJsonLd(jsonLd) }} />
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 min-w-0 text-sm text-gray-400">
-        <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
-        <span className="shrink-0">/</span>
-        <span className="shrink-0">Profil Penjual</span>
-        <span className="shrink-0">/</span>
-        <span className="truncate text-gray-500">{seller.seller_name}</span>
-        {seller.slug && (
-          <span className="text-gray-400 font-mono text-xs">(@{seller.slug})</span>
-        )}
-      </nav>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14">
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: skripJsonLd(jsonLd) }} />
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 min-w-0 text-xs font-medium text-[#707972] dark:text-[#9db8a2]">
+          <Link href="/" className="hover:text-[#003622] dark:hover:text-[#ceeb7a] shrink-0 transition-colors">Beranda</Link>
+          <span className="shrink-0">/</span>
+          <span className="shrink-0">Profil Penjual</span>
+          <span className="shrink-0">/</span>
+          <span className="truncate font-semibold text-[#101f15] dark:text-[#ecfeee]">{seller.seller_name}</span>
+          {seller.slug && (
+            <span className="text-[#707972] font-mono text-[11px]">(@{seller.slug})</span>
+          )}
+        </nav>
 
-      {/* Header Penjual */}
-      <div className={`card mt-4 p-6 flex flex-col sm:flex-row sm:items-start gap-5 ${isDistributor ? "border-orange-200 dark:border-orange-800/50 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/20 dark:to-slate-900/30" : ""}`}>
-        <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-2xl font-extrabold text-white shadow-lg ${isDistributor ? "bg-gradient-to-br from-orange-500 to-amber-400" : "bg-gradient-to-br from-primary to-primary-dark"}`}>
-          {seller.seller_name?.[0]?.toUpperCase() || "?"}
-        </div>
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-extrabold flex items-center gap-2 flex-wrap">
-              <span>{seller.seller_name}</span>
-              {seller.slug && (
-                <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 font-mono bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-md">
-                  @{seller.slug}
+        {/* Header Penjual */}
+        <div className={`mt-4 rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] p-6 flex flex-col sm:flex-row sm:items-start gap-5 ${isDistributor ? "border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50/40 to-white dark:from-amber-950/20 dark:to-[#112218]" : ""}`}>
+          <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-2xl font-extrabold text-white shadow-sm ${isDistributor ? "bg-gradient-to-br from-orange-500 to-amber-400" : "bg-[#003622] text-[#ceeb7a]"}`}>
+            {seller.seller_name?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-extrabold flex items-center gap-2 flex-wrap">
+                <span>{seller.seller_name}</span>
+                {seller.slug && (
+                  <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 font-mono bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-md">
+                    @{seller.slug}
+                  </span>
+                )}
+                {isDistributor && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800" title="Distributor Resmi">Distributor Resmi</span>
+                )}
+                {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300" title="Penjual Pro">Penjual Pro</span>
+                )}
+                {seller.trusted_seller && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500 dark:bg-blue-900/40 dark:text-blue-400" title="Penjual Terpercaya">
+                    <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                )}
+              </h1>
+              {soldCount > 0 && (
+                <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-bold text-[11px]">
+                  Terjual {soldCount}×
                 </span>
               )}
-              {isDistributor && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800" title="Distributor Resmi">Distributor Resmi</span>
+            </div>
+            {/* Identitas Kampus & Fakultas */}
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
+              <span>Mahasiswa {seller.campus || "Kampus"}</span>
+              {seller.faculty && (
+                <span className="text-slate-400 dark:text-slate-500">Fakultas {seller.faculty}</span>
               )}
-              {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300" title="Penjual Pro">Penjual Pro</span>
+              {memberSince && (
+                <span className="text-slate-400 dark:text-slate-500">
+                  Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+                </span>
+              )}
+            </div>
+
+            {/* Lencana Verifikasi Transparan */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {seller.student_verified && (
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300" title="Terverifikasi via Kartu Tanda Mahasiswa (KTM) & NIM Resmi">
+                  <Icon.CheckCircle className="h-3.5 w-3.5 fill-emerald-600 text-white dark:fill-emerald-400 dark:text-zinc-900" />
+                  <span>KTM Terverifikasi</span>
+                </div>
+              )}
+              {seller.wa_verified && (
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/50 px-2.5 py-1 text-xs font-bold text-sky-700 dark:text-sky-300" title="Nomor WhatsApp aktif dan terkonfirmasi">
+                  <Icon.Phone className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+                  <span>WhatsApp Terverifikasi</span>
+                </div>
               )}
               {seller.trusted_seller && (
-                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500 dark:bg-blue-900/40 dark:text-blue-400" title="Penjual Terpercaya">
-                  <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </span>
+                <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300" title="Penjual Terpercaya dengan track record bersih di komunitas">
+                  <Icon.Shield className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Penjual Terpercaya</span>
+                </div>
               )}
-            </h1>
-            {soldCount > 0 && (
-              <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-bold text-[11px]">
-                 Terjual {soldCount}×
-              </span>
-            )}
-          </div>
-          {/* Identitas Kampus & Fakultas */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
-            <span>Mahasiswa {seller.campus || "Kampus"}</span>
-            {seller.faculty && (
-              <span className="text-slate-400 dark:text-slate-500">Fakultas {seller.faculty}</span>
-            )}
-            {memberSince && (
-              <span className="text-slate-400 dark:text-slate-500">
-                Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
-              </span>
-            )}
-          </div>
+            </div>
 
-          {/* Lencana Verifikasi Transparan */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {seller.student_verified && (
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300" title="Terverifikasi via Kartu Tanda Mahasiswa (KTM) & NIM Resmi">
-                <Icon.CheckCircle className="h-3.5 w-3.5 fill-emerald-600 text-white dark:fill-emerald-400 dark:text-zinc-900" />
-                <span>KTM Terverifikasi</span>
+            {seller.store_status === "aktif" && seller.store_name && (
+              <div className="mt-2.5">
+                <Link
+                  href={`/toko/${seller.slug}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100 active:translate-y-px"
+                >
+                  <span>Kunjungi Toko Resmi: {seller.store_name}</span>
+                </Link>
               </div>
             )}
-            {seller.wa_verified && (
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/50 px-2.5 py-1 text-xs font-bold text-sky-700 dark:text-sky-300" title="Nomor WhatsApp aktif dan terkonfirmasi">
-                <Icon.Phone className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
-                <span>WhatsApp Terverifikasi</span>
+            {avgRating !== null && (
+              <div className="mt-2.5 flex items-center gap-2">
+                <StarDisplay value={avgRating} />
+                <span className="text-sm font-semibold text-amber-500">
+                  {avgRating.toFixed(1)} / 5
+                </span>
+                <span className="text-xs text-gray-400">
+                  ({ratings.length} ulasan terverifikasi)
+                </span>
               </div>
             )}
-            {seller.trusted_seller && (
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300" title="Penjual Terpercaya dengan track record bersih di komunitas">
-                <Icon.Shield className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                <span>Penjual Terpercaya</span>
-              </div>
+            {seller.bio && (
+              <p className="mt-3 text-sm text-gray-700 dark:text-slate-300 italic border-l-2 border-primary pl-3">
+                "{seller.bio}"
+              </p>
             )}
-          </div>
-
-          {seller.store_status === "aktif" && seller.store_name && (
-            <div className="mt-2.5">
+            {seller.topCategory && (
+              <p className="mt-2 text-xs font-semibold text-primary">
+                Kategori Utama: {seller.topCategory}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {waIntl && (
+                <a
+                  href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
+                    `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Kampus Kita.`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-wa py-2 px-4 text-xs rounded-xl"
+                >
+                  Hubungi via WA
+                </a>
+              )}
+              <ShareProfileButton />
               <Link
-                href={`/toko/${seller.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100 active:translate-y-px"
+                href="/panduan-aman"
+                className="btn-outline py-2 px-3 text-xs rounded-xl inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary"
               >
-                <span>Kunjungi Toko Resmi: {seller.store_name}</span>
+                <Icon.MapPin className="h-3.5 w-3.5 text-primary" />
+                <span>Titik COD Aman</span>
               </Link>
             </div>
-          )}
-          {avgRating !== null && (
-            <div className="mt-2.5 flex items-center gap-2">
-              <StarDisplay value={avgRating} />
-              <span className="text-sm font-semibold text-amber-500">
-                {avgRating.toFixed(1)} / 5
-              </span>
-              <span className="text-xs text-gray-400">
-                ({ratings.length} ulasan terverifikasi)
-              </span>
-            </div>
-          )}
-          {seller.bio && (
-            <p className="mt-3 text-sm text-gray-700 dark:text-slate-300 italic border-l-2 border-primary pl-3">
-              "{seller.bio}"
-            </p>
-          )}
-          {seller.topCategory && (
-             <p className="mt-2 text-xs font-semibold text-primary">
-                Kategori Utama: {seller.topCategory}
-             </p>
-          )}
-          <div className="flex flex-wrap gap-2 mt-4">
-            {waIntl && (
-              <a
-                href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
-                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Kampus Kita.`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-wa py-2 px-4 text-xs rounded-xl"
-              >
-                 Hubungi via WA
-              </a>
+
+            {/* Info Distributor */}
+            {isDistributor && (
+              <div className="mt-4 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 p-3">
+                <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1"> Mitra Distributor Resmi</p>
+                {seller.distributorCategories?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {seller.distributorCategories.map((c) => (
+                      <span key={c} className="text-[11px] bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 rounded-full px-2 py-0.5 font-medium">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] text-orange-500 dark:text-orange-500 mt-1.5">
+                  Setiap barang jualan distributor mencantumkan info fee bagi hasil yang transparan.
+                </p>
+              </div>
             )}
-            <ShareProfileButton />
-            <Link
-              href="/panduan-aman"
-              className="btn-outline py-2 px-3 text-xs rounded-xl inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary"
-            >
-              <Icon.MapPin className="h-3.5 w-3.5 text-primary" />
-              <span>Titik COD Aman</span>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] p-4 text-center shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+            <p className="text-2xl font-extrabold text-[#003622] dark:text-[#ceeb7a]">{listings.length}</p>
+            <p className="text-xs font-medium text-[#707972] dark:text-[#9db8a2] mt-0.5">Barang Aktif</p>
+          </div>
+          <div className="rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] p-4 text-center shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+            <p className="text-2xl font-extrabold text-[#134e35] dark:text-[#ceeb7a]">{soldCount}</p>
+            <p className="text-xs font-medium text-[#707972] dark:text-[#9db8a2] mt-0.5">Terjual</p>
+          </div>
+          <div className="rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] p-4 text-center shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+            <p className="text-2xl font-extrabold text-[#101f15] dark:text-[#ecfeee]">{totalViews.toLocaleString("id-ID")}</p>
+            <p className="text-xs font-medium text-[#707972] dark:text-[#9db8a2] mt-0.5">Total Dilihat</p>
+          </div>
+          <div className="rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] p-4 text-center shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)]">
+            {avgRating !== null ? (
+              <>
+                <p className="text-2xl font-extrabold text-amber-500">{avgRating.toFixed(1)}</p>
+                <p className="text-xs font-medium text-[#707972] dark:text-[#9db8a2] mt-0.5">Rating ({ratings.length})</p>
+              </>
+            ) : (
+              <>
+                <p className="text-2xl font-extrabold text-[#c8ecd0] dark:text-white/20">-</p>
+                <p className="text-xs font-medium text-[#707972] dark:text-[#9db8a2] mt-0.5">Belum ada rating</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Grid barang jualan */}
+        <h2 className="mt-8 text-lg font-extrabold text-[#101f15] dark:text-[#ecfeee]">
+          Barang Aktif <span className="text-[#707972] font-normal text-base">({listings.length})</span>
+        </h2>
+
+        {listings.length === 0 ? (
+          <div className="mt-4 rounded-3xl border border-dashed border-[#c8ecd0] dark:border-white/10 bg-white dark:bg-[#112218] grid place-items-center py-16 text-center text-[#707972]">
+            <span className="material-symbols-outlined text-[40px] text-[#9db8a2]">inventory_2</span>
+            <p className="mt-2 font-medium">Penjual ini belum punya barang aktif.</p>
+            <Link href="/" className="mt-4 rounded-full bg-[#003622] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#134e35] transition-colors">
+              Jelajahi Marketplace
             </Link>
           </div>
-
-          {/* Info Distributor */}
-          {isDistributor && (
-            <div className="mt-4 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 p-3">
-              <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1"> Mitra Distributor Resmi</p>
-              {seller.distributorCategories?.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {seller.distributorCategories.map((c) => (
-                    <span key={c} className="text-[11px] bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 rounded-full px-2 py-0.5 font-medium">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p className="text-[11px] text-orange-500 dark:text-orange-500 mt-1.5">
-                Setiap barang jualan distributor mencantumkan info fee bagi hasil yang transparan.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-extrabold text-primary">{listings.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Barang Aktif</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{soldCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Terjual</p>
-        </div>
-        <div className="card p-4 text-center">
-          <p className="text-2xl font-extrabold text-gray-800 dark:text-slate-200">{totalViews.toLocaleString("id-ID")}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Total Dilihat</p>
-        </div>
-        <div className="card p-4 text-center">
-          {avgRating !== null ? (
-            <>
-              <p className="text-2xl font-extrabold text-amber-500">{avgRating.toFixed(1)}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Rating ({ratings.length})</p>
-            </>
-          ) : (
-            <>
-              <p className="text-2xl font-extrabold text-slate-300 dark:text-slate-700">-</p>
-              <p className="text-xs text-gray-400 mt-0.5">Belum ada rating</p>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Grid barang jualan */}
-      <h2 className="mt-8 text-lg font-bold">
-        Barang Aktif <span className="text-gray-400 font-normal text-base">({listings.length})</span>
-      </h2>
-
-      {listings.length === 0 ? (
-        <div className="card mt-4 grid place-items-center py-16 text-center text-gray-400">
-          <p className="text-4xl">
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
-          </p>
-          <p className="mt-2">Penjual ini belum punya barang aktif.</p>
-          <Link href="/" className="btn-outline mt-4 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
-            Jelajahi Marketplace
-          </Link>
-        </div>
-      ) : (
-        <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {listings.map((l) => (
-            <ProductCard key={l.id} listing={l} />
-          ))}
-        </div>
-      )}
-
-      {/* Riwayat barang terjual — list kompak, tidak mengganggu barang aktif */}
-      {soldListings.length > 0 && (
-        <div className="mt-8 border-t border-gray-100 dark:border-slate-800 pt-6">
-          <p className="text-xs font-semibold text-slate-500 mb-2">
-            Riwayat Terjual ({soldCount})
-          </p>
-          <ul className="space-y-1.5">
-            {soldListings.slice(0, 6).map((l) => (
-              <li key={l.id} className="flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-slate-400">
-                <span className="truncate"> {l.title}</span>
-                <span className="shrink-0 text-xs text-gray-400 dark:text-slate-500">
-                  Rp {Number(l.price).toLocaleString("id-ID")}
-                </span>
-              </li>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {listings.map((l) => (
+              <ProductCard key={l.id} listing={l} />
             ))}
-            {soldCount > 6 && (
-              <li className="text-xs text-gray-400 dark:text-slate-500 pt-1">
-                +{soldCount - 6} barang lainnya sudah terjual
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* Ulasan */}
-      {ratings.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-lg font-bold">
-            Ulasan Pembeli{" "}
-            <span className="text-gray-400 font-normal text-base">({ratings.length})</span>
-          </h2>
-          <div className="mt-4 space-y-3">
-            {ratings.map((r) => (
-              <div key={r.id} className="card p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <StarDisplay value={r.rating} />
-                    <span className="text-sm font-semibold text-amber-500">
-                      {r.rating}/5
-                    </span>
+        {/* Riwayat barang terjual — list kompak, tidak mengganggu barang aktif */}
+        {soldListings.length > 0 && (
+          <div className="mt-8 border-t border-gray-100 dark:border-slate-800 pt-6">
+            <p className="text-xs font-semibold text-slate-500 mb-2">
+              Riwayat Terjual ({soldCount})
+            </p>
+            <ul className="space-y-1.5">
+              {soldListings.slice(0, 6).map((l) => (
+                <li key={l.id} className="flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-slate-400">
+                  <span className="truncate"> {l.title}</span>
+                  <span className="shrink-0 text-xs text-gray-400 dark:text-slate-500">
+                    Rp {Number(l.price).toLocaleString("id-ID")}
+                  </span>
+                </li>
+              ))}
+              {soldCount > 6 && (
+                <li className="text-xs text-gray-400 dark:text-slate-500 pt-1">
+                  +{soldCount - 6} barang lainnya sudah terjual
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {/* Ulasan */}
+        {ratings.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-lg font-bold">
+              Ulasan Pembeli{" "}
+              <span className="text-gray-400 font-normal text-base">({ratings.length})</span>
+            </h2>
+            <div className="mt-4 space-y-3">
+              {ratings.map((r) => (
+                <div key={r.id} className="card p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <StarDisplay value={r.rating} />
+                      <span className="text-sm font-semibold text-amber-500">
+                        {r.rating}/5
+                      </span>
+                    </div>
+                    {r.buyer_name && (
+                      <span className="text-xs text-slate-400">oleh {r.buyer_name}</span>
+                    )}
                   </div>
-                  {r.buyer_name && (
-                    <span className="text-xs text-slate-400">oleh {r.buyer_name}</span>
+                  {r.comment && (
+                    <p className="mt-2 text-sm text-gray-600 italic">
+                      &ldquo;{r.comment}&rdquo;
+                    </p>
                   )}
                 </div>
-                {r.comment && (
-                  <p className="mt-2 text-sm text-gray-600 italic">
-                    &ldquo;{r.comment}&rdquo;
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Batch Pre-Order Aktif Penjual */}
-      {poBatches.length > 0 && (
-        <section className="mt-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <span>Batch Pre-Order (PO) Aktif</span>
-              <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold text-xs">
-                {poBatches.length} PO
-              </span>
-            </h2>
-            <a
-              href="/open-po"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-bold text-primary hover:underline"
-            >
-              Buka di OpenPO
-            </a>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-            {poBatches.map((b) => (
+        {/* Batch Pre-Order Aktif Penjual */}
+        {poBatches.length > 0 && (
+          <section className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <span>Batch Pre-Order (PO) Aktif</span>
+                <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold text-xs">
+                  {poBatches.length} PO
+                </span>
+              </h2>
               <a
-                key={b.id}
-                href={b.url || "/open-po"}
+                href="/open-po"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="card p-2.5 sm:p-4 hover:border-emerald-600/40 hover:shadow-md transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 flex flex-col justify-between group rounded-xl sm:rounded-2xl"
+                className="text-xs font-bold text-primary hover:underline"
               >
-                <div>
-                  <div className="flex items-center justify-between text-[9px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5">
-                    <span className="font-semibold text-emerald-600 text-[9px] sm:text-xs">
-                      {b.emoji} {b.category}
-                    </span>
-                    <span className="text-[8px] sm:text-[10px]">Sisa {b.quota - b.reserved}</span>
-                  </div>
-                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
-                    {b.name}
-                  </h3>
-                  <p className="text-primary font-black text-xs sm:text-sm mt-0.5 sm:mt-1">
-                    Rp {b.price.toLocaleString("id-ID")}
-                  </p>
-                  <p className="text-[9px] sm:text-xs text-gray-400 mt-1 sm:mt-2 flex items-center gap-1">
-                    <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400" />
-                    <span className="truncate">{b.pickup_point}</span>
-                  </p>
-                </div>
-                <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-bold text-emerald-600">
-                  <span>Pesan Slot</span>
-                  <span aria-hidden="true">→</span>
-                </div>
+                Buka di OpenPO
               </a>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+              {poBatches.map((b) => (
+                <a
+                  key={b.id}
+                  href={b.url || "/open-po"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card p-2.5 sm:p-4 hover:border-emerald-600/40 hover:shadow-md transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 flex flex-col justify-between group rounded-xl sm:rounded-2xl"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[9px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5">
+                      <span className="font-semibold text-emerald-600 text-[9px] sm:text-xs">
+                        {b.emoji} {b.category}
+                      </span>
+                      <span className="text-[8px] sm:text-[10px]">Sisa {b.quota - b.reserved}</span>
+                    </div>
+                    <h3 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
+                      {b.name}
+                    </h3>
+                    <p className="text-primary font-black text-xs sm:text-sm mt-0.5 sm:mt-1">
+                      Rp {b.price.toLocaleString("id-ID")}
+                    </p>
+                    <p className="text-[9px] sm:text-xs text-gray-400 mt-1 sm:mt-2 flex items-center gap-1">
+                      <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400" />
+                      <span className="truncate">{b.pickup_point}</span>
+                    </p>
+                  </div>
+                  <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-bold text-emerald-600">
+                    <span>Pesan Slot</span>
+                    <span aria-hidden="true">→</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Banner Panduan COD Aman & Mediasi Kampus */}
-      <div className="mt-10 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border border-emerald-200/80 dark:border-emerald-800/40 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
-            <Icon.Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Panduan COD Aman &amp; Mediasi Kampus</span>
-          </p>
-          <p className="text-xs text-emerald-700 dark:text-emerald-400/90 leading-relaxed max-w-xl">
-            Pilih tempat umum yang ramai di sekitar kampus dan sepakati titik pertemuan terlebih dahulu. Periksa barang sebelum membayar; jika mengalami kendala, hubungi tim dukungan melalui panduan keamanan.
-          </p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Link
-            href="/panduan-aman"
-            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 transition-colors shadow-sm"
-          >
-            Titik Pertemuan
-          </Link>
-          <Link
-            href="/panduan-aman#mediasi"
-            className="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white text-emerald-800 dark:text-emerald-300 font-bold text-xs px-3.5 py-2 transition-colors"
-          >
-            Jalur Mediasi
-          </Link>
+        {/* Banner Panduan COD Aman & Mediasi Kampus */}
+        <div className="mt-10 rounded-3xl bg-[#e6f8e8] dark:bg-[#134e35]/30 border border-[#c8ecd0] dark:border-[#134e35]/50 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-extrabold text-[#003622] dark:text-[#ceeb7a] flex items-center gap-1.5">
+              <Icon.Shield className="h-4 w-4 text-[#134e35] dark:text-[#ceeb7a]" />
+              <span>Panduan COD Aman &amp; Mediasi Kampus</span>
+            </p>
+            <p className="text-xs text-[#404943] dark:text-[#9db8a2] leading-relaxed max-w-xl">
+              Pilih tempat umum yang ramai di sekitar kampus dan sepakati titik pertemuan terlebih dahulu. Periksa barang sebelum membayar; jika mengalami kendala, hubungi tim dukungan melalui panduan keamanan.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Link
+              href="/panduan-aman"
+              className="rounded-full bg-[#003622] hover:bg-[#134e35] text-white font-bold text-xs px-4 py-2 transition-colors shadow-sm"
+            >
+              Titik Pertemuan
+            </Link>
+            <Link
+              href="/panduan-aman#mediasi"
+              className="rounded-full border border-[#c8ecd0] dark:border-white/15 bg-white dark:bg-[#112218] hover:bg-[#f4faf5] text-[#003622] dark:text-[#ecfeee] font-bold text-xs px-4 py-2 transition-colors"
+            >
+              Jalur Mediasi
+            </Link>
+          </div>
         </div>
       </div>
     </div>

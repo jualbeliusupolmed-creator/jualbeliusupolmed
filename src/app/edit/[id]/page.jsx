@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
@@ -85,8 +86,6 @@ export default function EditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "edit",
-          // Dari sesi, bukan localStorage: cermin yang kosong dulu mengirim
-          // seller_wa: null dan server menolak suntingan milik sendiri.
           seller_wa: sesiWa || null,
           seller_name: form.seller_name,
           title: form.title,
@@ -111,190 +110,307 @@ export default function EditPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-center text-gray-400">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="mt-3">Memuat data barang…</p>
+      <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0a1710] flex flex-col items-center justify-center px-4 py-20 text-[#404943] dark:text-slate-400">
+        <div className="h-9 w-9 animate-spin rounded-full border-4 border-[#134e35] border-t-transparent" />
+        <p className="mt-3 text-sm font-semibold">Memuat data barang…</p>
       </div>
     );
   }
 
   if (!form) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-center text-gray-500">
-        <p className="text-4xl text-amber-500">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </p>
-        <p className="mt-3">{msg || "Barang tidak ditemukan."}</p>
+      <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0a1710] flex flex-col items-center justify-center px-4 py-20 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
+          <span className="material-symbols-outlined text-[32px]">error</span>
+        </div>
+        <h1 className="text-lg font-extrabold text-[#101f15] dark:text-white">{msg || "Barang tidak ditemukan."}</h1>
+        <Link href="/dashboard" className="mt-4 px-5 py-2.5 rounded-full bg-[#003622] text-white text-xs font-extrabold">
+          Kembali ke Dashboard
+        </Link>
       </div>
     );
   }
 
+  const descLen = (form.description || "").length;
+  const previewImg = media[0]?.preview || media[0]?.url || null;
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
-      <h1 className="text-2xl font-extrabold">Edit Barang</h1>
-      <p className="mt-1 text-gray-500">
-        Perbarui detail barang <strong>{original?.title}</strong>.
-      </p>
-
-      <form onSubmit={submit} className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          {/* Upload foto */}
-          <div className="card p-4">
-            <label className="label">Foto Barang</label>
-            <MediaUploader
-              media={media}
-              setMedia={setMedia}
-              max={5}
-              error={fileError}
-              setError={setFileError}
-            />
-          </div>
-
-          <div className="card grid gap-5 p-5 sm:grid-cols-2">
-            <div>
-              <label className="label">Kategori</label>
-              <select disabled={original?.status === "active"} className="input focus:ring-4 focus:ring-accent/10 focus:border-accent disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-slate-800" value={form.category} onChange={set("category")}>
-                {cats.map((c) => (
-                  <option key={c.slug} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
-              Jangkauan jual mengikuti provinsi kampus pada profilmu.
-            </div>
-            <div>
-              <label className="label">Lokasi COD</label>
-              <div className="floating-group">
-                <input
-                  id="edit-area"
-                  className="floating-input peer"
-                  value={form.area}
-                  onChange={set("area")}
-                  placeholder=" "
-                  required
-                />
-                <label htmlFor="edit-area" className="floating-label">Lokasi COD (kota, area, atau titik temu)</label>
-              </div>
-            </div>
-            
-            <div className="floating-group">
-              <input
-                id="edit-seller-name"
-                className="floating-input peer"
-                value={form.seller_name}
-                onChange={set("seller_name")}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="edit-seller-name" className="floating-label">Nama Penjual</label>
-            </div>
-            
-            <div className="sm:col-span-2 floating-group">
-              <input
-                id="edit-title"
-                className="floating-input peer disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-slate-800"
-                value={form.title}
-                onChange={set("title")}
-                placeholder=" "
-                required
-                disabled={original?.status === "active"}
-              />
-              <label htmlFor="edit-title" className="floating-label">Nama / Judul Barang</label>
-              {original?.status === "active" && (
-                <p className="mt-1 text-[10px] text-rose-500">Nama & kategori dikunci setelah barang ditampilkan untuk mencegah daur ulang.</p>
-              )}
-            </div>
-            
-            <div className="sm:col-span-2 floating-group">
-              <textarea
-                id="edit-description"
-                className="floating-input peer min-h-24"
-                value={form.description}
-                onChange={set("description")}
-                placeholder=" "
-              />
-              <label htmlFor="edit-description" className="floating-label">Deskripsi Lengkap</label>
-            </div>
-            
-            <div className="floating-group">
-              <input
-                id="edit-price"
-                type="text"
-                className="floating-input peer"
-                value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/\D/g, "");
-                  setForm((f) => ({ ...f, price: cleaned }));
-                }}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="edit-price" className="floating-label">Harga (Rp)</label>
-            </div>
-            
-            <div className="floating-group">
-              <input
-                id="edit-stock"
-                type="number"
-                min="0"
-                className="floating-input peer"
-                value={form.stock}
-                onChange={set("stock")}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="edit-stock" className="floating-label">Stok Barang</label>
-            </div>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="space-y-4">
-          <div className="card p-4">
-            <h3 className="font-bold dark:text-white">Simpan Perubahan</h3>
-            <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Harga baru</dt>
-                <dd className="font-semibold text-primary dark:text-white">{rupiah(form.price)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Stok baru</dt>
-                <dd className="font-semibold dark:text-white">{form.stock}</dd>
-              </div>
-            </dl>
-            <button
-              type="submit"
-              disabled={busy || !!fileError}
-              className="btn-primary mt-4 w-full"
-            >
-              {busy ? "Menyimpan…" : " Simpan Perubahan"}
-            </button>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0a1710] pb-28 lg:pb-14 font-sans text-[#101f15] dark:text-[#ecfeee]">
+      {/* Mobile Sticky Header */}
+      <header className="lg:hidden sticky top-0 z-40 bg-white/95 dark:bg-[#0f1e15]/95 backdrop-blur-md border-b border-[#e2f0e6] dark:border-white/10">
+        <div className="flex items-center justify-between px-4 h-14">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => router.back()}
-              className="btn-outline mt-2 w-full"
+              className="p-1.5 -ml-1.5 rounded-full hover:bg-[#e6f8e8] dark:hover:bg-white/10"
+              aria-label="Kembali"
             >
-              Batal
+              <span className="material-symbols-outlined text-[22px]">arrow_back</span>
             </button>
-            {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
+            <div>
+              <h1 className="text-sm font-extrabold text-[#003622] dark:text-white leading-tight">Edit Barang</h1>
+              <p className="text-[11px] text-[#707972] truncate max-w-[220px]">{original?.title}</p>
+            </div>
           </div>
+          <span className="px-2.5 py-1 rounded-full bg-[#e6f8e8] text-[#134e35] text-[10px] font-extrabold">
+            Gratis
+          </span>
+        </div>
+      </header>
 
-          <div className="card p-4 text-xs text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Info</p>
-            <ul className="mt-2 list-disc space-y-1 pl-4">
-              <li>Edit gratis, tidak ada biaya tambahan.</li>
-              <li>Status barang tidak berubah.</li>
-              <li>Perubahan langsung tayang.</li>
-            </ul>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-5 sm:pt-8">
+        {/* Desktop Header */}
+        <div className="hidden lg:flex items-center justify-between mb-6">
+          <div>
+            <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#134e35] dark:text-[#bef264] hover:underline mb-2">
+              <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+              Kembali ke Dashboard
+            </Link>
+            <h1 className="text-2xl font-extrabold text-[#003622] dark:text-white tracking-tight">Edit Barang Jualan</h1>
+            <p className="text-sm text-[#404943] dark:text-slate-400">
+              Perbarui detail barang <span className="font-bold text-[#101f15] dark:text-white">{original?.title}</span>.
+            </p>
           </div>
         </div>
-      </form>
+
+        <form id="edit-listing-form" onSubmit={submit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Desktop Left Tips */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-4">
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#e6f8e8] dark:bg-[#134e35]/40 text-[#134e35] dark:text-[#bef264] flex items-center justify-center">
+                <span className="material-symbols-outlined text-[20px]">tips_and_updates</span>
+              </div>
+              <h2 className="text-sm font-extrabold text-[#003622] dark:text-white">Info Pembaruan</h2>
+              <ul className="space-y-2 text-xs text-[#404943] dark:text-slate-300 leading-relaxed">
+                <li className="flex gap-2"><span className="text-[#134e35] font-bold">✓</span> Edit detail barang 100% gratis tanpa biaya tambahan.</li>
+                <li className="flex gap-2"><span className="text-[#134e35] font-bold">✓</span> Status tayang &amp; riwayat dilihat tetap terjaga.</li>
+                <li className="flex gap-2"><span className="text-[#134e35] font-bold">✓</span> Perubahan harga atau stok langsung tampil di marketplace.</li>
+              </ul>
+            </div>
+          </aside>
+
+          {/* Center Form */}
+          <div className="lg:col-span-6 space-y-5">
+            {/* Upload Foto */}
+            <section className="bg-white dark:bg-[#112218] rounded-3xl p-5 border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-extrabold text-[#003622] dark:text-white">Foto Produk (Maks. 5)</h2>
+                <span className="text-[11px] font-semibold text-[#707972]">{media.length}/5 foto</span>
+              </div>
+              <MediaUploader
+                media={media}
+                setMedia={setMedia}
+                max={5}
+                error={fileError}
+                setError={setFileError}
+              />
+            </section>
+
+            {/* Detail Barang */}
+            <section className="bg-white dark:bg-[#112218] rounded-3xl p-5 border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-4">
+              <h2 className="text-sm font-extrabold text-[#003622] dark:text-white">Informasi Produk</h2>
+
+              <div>
+                <label htmlFor="edit-title" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Nama / Judul Barang
+                </label>
+                <input
+                  id="edit-title"
+                  className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 px-4 py-3 text-sm font-semibold text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35] disabled:opacity-50"
+                  value={form.title}
+                  onChange={set("title")}
+                  required
+                  disabled={original?.status === "active"}
+                />
+                {original?.status === "active" && (
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
+                    Nama &amp; kategori dikunci setelah barang aktif untuk mencegah penyalahgunaan.
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">Kategori</label>
+                  <select
+                    disabled={original?.status === "active"}
+                    className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 px-4 py-3 text-sm font-semibold text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35] disabled:opacity-50"
+                    value={form.category}
+                    onChange={set("category")}
+                  >
+                    {cats.map((c) => (
+                      <option key={c.slug} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-seller-name" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                    Nama Penjual
+                  </label>
+                  <input
+                    id="edit-seller-name"
+                    className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 px-4 py-3 text-sm text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35]"
+                    value={form.seller_name}
+                    onChange={set("seller_name")}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="edit-price" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                    Harga (Rp)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-extrabold text-[#707972]">Rp</span>
+                    <input
+                      id="edit-price"
+                      type="text"
+                      className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 pl-10 pr-4 py-3 text-sm font-bold text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35]"
+                      value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/\D/g, "");
+                        setForm((f) => ({ ...f, price: cleaned }));
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-stock" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                    Stok Barang
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, stock: Math.max(0, Number(f.stock || 0) - 1) }))}
+                      className="w-11 h-11 rounded-2xl bg-[#e6f8e8] dark:bg-white/10 text-[#003622] dark:text-white font-extrabold flex items-center justify-center"
+                    >
+                      -
+                    </button>
+                    <input
+                      id="edit-stock"
+                      type="number"
+                      min="0"
+                      className="flex-1 text-center rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 py-3 text-sm font-bold text-[#101f15] dark:text-white focus:outline-none"
+                      value={form.stock}
+                      onChange={set("stock")}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, stock: Number(f.stock || 0) + 1 }))}
+                      className="w-11 h-11 rounded-2xl bg-[#e6f8e8] dark:bg-white/10 text-[#003622] dark:text-white font-extrabold flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-area" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Lokasi COD Kampus
+                </label>
+                <input
+                  id="edit-area"
+                  className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 px-4 py-3 text-sm text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35]"
+                  value={form.area}
+                  onChange={set("area")}
+                  placeholder="Mis. Pendopo USU, Pintu 1, Kantin Polmed"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="edit-description" className="block text-xs font-bold text-[#101f15] dark:text-white">
+                    Deskripsi Lengkap
+                  </label>
+                  <span className="text-[11px] text-[#707972]">{descLen}/500</span>
+                </div>
+                <textarea
+                  id="edit-description"
+                  rows={4}
+                  maxLength={500}
+                  className="w-full rounded-2xl bg-[#f4faf5] dark:bg-white/5 border border-[#e2f0e6] dark:border-white/10 p-4 text-sm text-[#101f15] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#134e35]"
+                  value={form.description}
+                  onChange={set("description")}
+                />
+              </div>
+            </section>
+          </div>
+
+          {/* Right Live Preview & Actions */}
+          <aside className="lg:col-span-3 space-y-4 lg:sticky lg:top-24">
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#707972]">Pratinjau &amp; Simpan</h3>
+
+              <div className="rounded-2xl overflow-hidden border border-[#e2f0e6] dark:border-white/10 bg-[#f4faf5] dark:bg-white/5">
+                <div className="aspect-[4/3] bg-[#e6f8e8] dark:bg-[#134e35]/30 flex items-center justify-center overflow-hidden">
+                  {previewImg ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={previewImg} alt={form.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[40px] text-[#134e35]/40">image</span>
+                  )}
+                </div>
+                <div className="p-3 space-y-1">
+                  <p className="text-xs font-bold text-[#101f15] dark:text-white line-clamp-1">{form.title || "Judul Barang"}</p>
+                  <p className="text-sm font-extrabold text-[#003622] dark:text-[#bef264]">{rupiah(form.price || 0)}</p>
+                  <p className="text-[11px] text-[#707972]">Stok: {form.stock} • {form.area || "Kampus"}</p>
+                </div>
+              </div>
+
+              {msg && (
+                <div className="rounded-xl bg-rose-50 dark:bg-rose-900/20 p-3 text-xs font-semibold text-rose-700 dark:text-rose-300">
+                  {msg}
+                </div>
+              )}
+
+              <div className="hidden lg:flex flex-col gap-2">
+                <button
+                  type="submit"
+                  disabled={busy || !!fileError}
+                  className="w-full py-3 rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs font-extrabold transition disabled:opacity-50"
+                >
+                  {busy ? "Menyimpan…" : "Simpan Perubahan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="w-full py-2.5 rounded-full border border-[#e2f0e6] dark:border-white/15 text-xs font-bold text-[#404943] dark:text-slate-300 hover:bg-[#f4faf5] dark:hover:bg-white/5"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          </aside>
+        </form>
+      </div>
+
+      {/* Mobile Sticky Bottom CTA */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0f1e15]/95 backdrop-blur-md border-t border-[#e2f0e6] dark:border-white/10 px-4 py-3 flex gap-2.5">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="px-5 py-3 rounded-full border border-[#e2f0e6] dark:border-white/15 text-xs font-bold text-[#404943] dark:text-slate-300"
+        >
+          Batal
+        </button>
+        <button
+          type="submit"
+          form="edit-listing-form"
+          disabled={busy || !!fileError}
+          className="flex-1 py-3 rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs font-extrabold disabled:opacity-50"
+        >
+          {busy ? "Menyimpan…" : "Simpan Perubahan"}
+        </button>
+      </div>
     </div>
   );
 }

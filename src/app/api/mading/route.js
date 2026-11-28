@@ -33,8 +33,12 @@ export async function GET(request) {
     const faculty = searchParams.get("faculty");
     const province = searchParams.get("province"); // 'nasional' | 'sumatera-utara' | dll.
     const q = (searchParams.get("q") || "").trim(); // keyword search
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "15", 10)));
+    const requestedPage = Number.parseInt(searchParams.get("page") || "1", 10);
+    const requestedLimit = Number.parseInt(searchParams.get("limit") || "15", 10);
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const limit = Number.isSafeInteger(requestedLimit)
+      ? Math.min(50, Math.max(1, requestedLimit))
+      : 15;
     const offset = (page - 1) * limit;
 
     let provinceCampuses = [];
@@ -49,7 +53,7 @@ export async function GET(request) {
     const supa = getAdminClient();
 
     // Opportunistic worker: Flush antrean Instagram tiap beberapa menit jika ada traffic
-    if (Date.now() - lastBackgroundSweep > 90_000 && typeof waitUntil === "function") {
+    if (type === "all" && page === 1 && Date.now() - lastBackgroundSweep > 90_000 && typeof waitUntil === "function") {
       lastBackgroundSweep = Date.now();
       try {
         waitUntil(
@@ -95,9 +99,8 @@ export async function GET(request) {
     }
 
     if (error) {
-      // Jika tabel belum di-create di supabase, kirim respons kosong terstruktur
       console.warn("mading_posts query error (table might need migration):", error.message);
-      return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
+      return NextResponse.json({ error: "Gagal memuat postingan." }, { status: 500 });
     }
 
     return NextResponse.json(

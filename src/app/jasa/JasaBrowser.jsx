@@ -80,7 +80,7 @@ export default function JasaBrowser({
           ));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -93,10 +93,10 @@ export default function JasaBrowser({
       window.pwaDeferredPrompt = e;
       setPwaReady(true);
     };
-    
+
     const onInstalled = () => {
       setPwaReady(false);
-      
+
       // 1. Send event to Google Analytics
       if (typeof window !== "undefined" && typeof window.gtag === "function") {
         window.gtag("event", "pwa_install", {
@@ -125,7 +125,7 @@ export default function JasaBrowser({
     fetch("/api/wanted?limit=4")
       .then((r) => r.json())
       .then((d) => setWantedTeaser(d.listings?.slice(0, 4) || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   async function handlePwaInstall(e) {
@@ -311,7 +311,7 @@ export default function JasaBrowser({
                 href="/jasa/tawarkan"
                 className="whitespace-nowrap rounded-full bg-gray-900 px-3.5 py-1 text-xs font-semibold text-white transition hover:bg-gray-700 active:scale-95 dark:bg-white dark:text-gray-900"
               >
-              + Tawarkan Jasa
+                + Tawarkan Jasa
               </Link>
               <Link
                 href="/dicari"
@@ -470,9 +470,9 @@ export default function JasaBrowser({
               <button
                 type="button"
                 onClick={() => setShowPriceFilter((v) => !v)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${showPriceFilter || minPrice || maxPrice
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${showPriceFilter || minPrice || maxPrice
+                  ? "bg-[#003622] text-white dark:bg-[#ceeb7a] dark:text-[#003622]"
+                  : "border border-[#e2f0e6] bg-white text-[#404943] hover:border-[#134e35] dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2]"
                   }`}
               >
                 Harga{minPrice || maxPrice ? <Icon.Check className="h-3.5 w-3.5" /> : null}
@@ -484,9 +484,9 @@ export default function JasaBrowser({
                   key={c}
                   type="button"
                   onClick={() => handleCampus(c)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${campusFilter === c
-                      ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                      : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${campusFilter === c
+                    ? "bg-[#003622] text-white dark:bg-[#ceeb7a] dark:text-[#003622]"
+                    : "border border-[#e2f0e6] bg-white text-[#404943] hover:border-[#134e35] dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2]"
                     }`}
                 >
                   {c}
@@ -502,9 +502,9 @@ export default function JasaBrowser({
                   // FIXED: use applyFilters with explicit newNego param
                   applyFilters({ newNego: next });
                 }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${negoFilter
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${negoFilter
+                  ? "bg-[#003622] text-white dark:bg-[#ceeb7a] dark:text-[#003622]"
+                  : "border border-[#e2f0e6] bg-white text-[#404943] hover:border-[#134e35] dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2]"
                   }`}
               >
                 Nego{negoFilter ? <Icon.Check className="h-3.5 w-3.5" /> : null}
@@ -625,7 +625,7 @@ export default function JasaBrowser({
                     <svg className="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                        + Tawarkan Jasa Sekarang
+                    + Tawarkan Jasa Sekarang
                   </span>
                 </Link>
               </div>
@@ -704,8 +704,10 @@ export default function JasaBrowser({
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-3 pb-6">
-      {order.map(renderSection)}
-    </main>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14">
+      <main className="mx-auto max-w-6xl px-4 pt-4 pb-6">
+        {order.map(renderSection)}
+      </main>
+    </div>
   );
 }

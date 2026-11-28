@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import OTPModal from "@/components/OTPModal";
 import QRISModal from "@/components/QRISModal";
 import { useSesi } from "@/components/SesiProvider";
+import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "jual_listing_draft";
 const INITIAL_FORM = {
@@ -142,7 +143,7 @@ export default function JualPage() {
               setSellerIsDistributor(!!d.profile?.distributor);
               setSellerPunyaToko(!!d.punyaToko);
             })
-            .catch(() => {});
+            .catch(() => { });
         }
       }
     }
@@ -150,7 +151,7 @@ export default function JualPage() {
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
-      .catch(() => {});
+      .catch(() => { });
   }, [sesiSiap, sesiWa, sesiNama]);
 
   // Check campus requirement
@@ -170,8 +171,8 @@ export default function JualPage() {
   const sebabGratis = sellerIsDistributor
     ? "Distributor"
     : sellerPunyaToko
-    ? "punya toko"
-    : "Pasar Bebas Mahasiswa";
+      ? "punya toko"
+      : "Pasar Bebas Mahasiswa";
   const totalBiaya = gratis ? 0 : fee;
 
   function validateListingDetails() {
@@ -383,489 +384,467 @@ export default function JualPage() {
     }
   }
 
+  const descLen = (form.description || "").length;
+
   return (
-    <div className="container-app py-8">
-      {/* Header */}
-      <header className="mx-auto max-w-6xl">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              Jual Barang
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Pasang iklan sekali jalan langsung tayang.
-            </p>
+    <div className="min-h-screen bg-[#f4faf5] lg:bg-[#ecfeee] dark:bg-[#0a1710] text-[#101f15] dark:text-[#ecfeee]">
+      {/* Mobile Sticky Back Header */}
+      <header className="lg:hidden sticky top-0 z-40 bg-white/95 dark:bg-[#112218]/95 backdrop-blur-md border-b border-[#134e35]/10">
+        <div className="h-14 max-w-md mx-auto px-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Kembali"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[#134e35] hover:bg-[#e6f8e8]"
+            >
+              <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+            </button>
+            <h1 className="text-[17px] font-bold text-[#101f15] dark:text-white">Jual Barang</h1>
           </div>
           {sesiWa && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Akun Aktif: {sesiNama || sesiWa}</span>
-            </div>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#e6f8e8] text-[#134e35]">
+              {sesiNama || "Aktif"}
+            </span>
           )}
         </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <p aria-live="polite" className="text-xs text-slate-500 dark:text-slate-400">
-            {draftReady ? draftStatus || "Draft tersimpan otomatis di browser ini." : "Menyiapkan draft…"}
-          </p>
-          {draftReady && hasRecoveredDraft && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">✓ Draft dipulihkan</span>
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    localStorage.removeItem(DRAFT_KEY);
-                    setForm((current) => ({
-                      ...INITIAL_FORM,
-                      seller_name: current.seller_name,
-                      seller_wa: current.seller_wa,
-                      specs: {},
-                    }));
-                    setMedia([]);
-                    setHasRecoveredDraft(false);
-                    setDraftStatus("Draft sebelumnya dibersihkan.");
-                  } catch (error) {
-                    console.error("Gagal menghapus draft iklan:", error);
-                  }
-                }}
-                className="text-xs font-semibold text-slate-500 underline hover:text-slate-800 dark:hover:text-white active:opacity-70"
-              >
-                Hapus draft
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Fix #2: Campus warning banner */}
-        {showCampusWarning && (
-          <div className="mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
-            <div className="flex items-center gap-2">
-              <Icon.AlertTriangle className="h-5 w-5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Kampus belum dipilih</p>
-                <p className="text-xs mt-0.5">Iklan tidak bisa dipasang tanpa kampus acuan. Isi di <Link href="/dashboard?tab=profil" className="underline hover:opacity-80">Profil → Pilih Kampus</Link>.</p>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Main Single-Flow Form */}
-      <form onSubmit={handleSubmit} className="mx-auto mt-6 grid max-w-6xl gap-6 lg:grid-cols-3">
-        {/* Left Column: Unified Form Fields */}
-        <div className="space-y-5 lg:col-span-2">
-          {/* Card 1: Foto Barang */}
-          <section className="card p-5 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-bold text-slate-900 dark:text-white">
-                Foto Barang <span className="font-normal text-slate-400 text-xs">(opsional, disarankan)</span>
-              </label>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-                Maksimal 5 Foto
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Foto pertama otomatis menjadi sampul kartu produk.
-            </p>
-            <MediaUploader
-              media={media}
-              setMedia={setMedia}
-              max={5}
-              error={fileError}
-              setError={setFileError}
-            />
-          </section>
+      <form onSubmit={handleSubmit} className="max-w-md lg:max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 pb-28 lg:pb-16">
+        {showCampusWarning && (
+          <div className="mb-4 p-3.5 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 flex items-center gap-2.5 text-xs font-semibold">
+            <span className="material-symbols-outlined text-[20px]">warning</span>
+            <span>
+              Kampus belum dipilih. Lengkapi di{" "}
+              <Link href="/dashboard?tab=profil" className="underline font-bold">
+                Profil → Pilih Kampus
+              </Link>
+              .
+            </span>
+          </div>
+        )}
 
-          {/* Card 2: Detail Barang */}
-          <section className="card p-5 grid gap-5 sm:grid-cols-2">
-            <div>
-              <label htmlFor="form-type" className="label">Jenis Jual Barang</label>
-              <select
-                id="form-type"
-                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                value={form.type}
-                onChange={set("type")}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* LEFT SIDEBAR (Desktop Only) */}
+          <aside className="hidden lg:flex lg:col-span-3 flex-col gap-5 sticky top-24">
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#404943] hover:text-[#003622]"
               >
-                <option value="barang">Barang ({rupiah(adFeeFor("barang", form.price))})</option>
-                <option value="sewa">Sewa ({rupiah(adFeeFor("barang", form.price))})</option>
-                <option value="poster">Poster ({rupiah(adFeeFor("poster"))})</option>
-              </select>
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                Kembali
+              </button>
+              <div>
+                <h1 className="text-[22px] font-extrabold text-[#003622] dark:text-white leading-tight">
+                  Jual Barang
+                </h1>
+                <p className="text-xs text-[#404943] dark:text-[#99d3b2] mt-1 leading-relaxed">
+                  Pasang barangmu dan jangkau pembeli di lingkungan kampus.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-[#e6f8e8] to-[#ceeb7a]/40 p-5 flex flex-col items-center justify-center text-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-[#003622] text-[#ceeb7a] flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined text-[24px]">photo_camera</span>
+                </div>
+                <span className="text-[10px] font-extrabold tracking-wider text-[#003622] uppercase">
+                  CEPAT &amp; TERVERIFIKASI
+                </span>
+              </div>
             </div>
 
-            {form.type === "sewa" ? (
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-[#ceeb7a] text-[#161f00] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[16px]">lightbulb</span>
+                </span>
+                <h2 className="text-sm font-bold text-[#101f15] dark:text-white">Tips Jual Barang</h2>
+              </div>
+              <ul className="space-y-2.5 text-xs text-[#404943] dark:text-[#99d3b2]">
+                {[
+                  "Gunakan foto yang jelas dan asli.",
+                  "Tulis deskripsi lengkap dan jujur.",
+                  "Tentukan harga yang wajar.",
+                  "Pilih metode transaksi yang sesuai.",
+                ].map((tip) => (
+                  <li key={tip} className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-[16px] text-[#134e35] dark:text-[#bef264] shrink-0">
+                      check_circle
+                    </span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+
+          {/* CENTER FORM */}
+          <div className="lg:col-span-6 bg-white dark:bg-[#112218] rounded-3xl p-4 sm:p-6 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-5">
+            {/* Mobile Info Banner */}
+            <div className="lg:hidden rounded-2xl bg-[#e6f8e8] p-3.5 flex items-center gap-3 border border-[#134e35]/10">
+              <div className="w-9 h-9 rounded-xl bg-white text-[#134e35] flex items-center justify-center shrink-0 shadow-xs">
+                <span className="material-symbols-outlined text-[20px]">deployed_code</span>
+              </div>
               <div>
-                <label htmlFor="form-rental-period" className="label">Periode Sewa</label>
+                <p className="text-xs font-bold text-[#134e35]">Pasang barangmu dengan mudah</p>
+                <p className="text-[11px] text-[#404943]">Lengkapi data berikut, lalu terbitkan langsung.</p>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <h2 className="text-[20px] font-extrabold text-[#101f15] dark:text-white">Form Jual Barang</h2>
+              <p className="text-xs text-[#404943] dark:text-[#99d3b2] mt-0.5">
+                Lengkapi informasi barangmu, lalu terbitkan langsung.
+              </p>
+            </div>
+
+            {/* Foto Barang */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#101f15] dark:text-white">
+                  Foto Barang <span className="text-[#ba1a1a]">*</span>{" "}
+                  <span className="font-normal text-[#707972]">(maks. 5 foto)</span>
+                </label>
+                <span className="text-[11px] font-bold text-[#404943]">{media.length}/5 foto</span>
+              </div>
+              <MediaUploader
+                media={media}
+                setMedia={setMedia}
+                max={5}
+                error={fileError}
+                setError={setFileError}
+              />
+            </div>
+
+            {/* Nama Barang & Kategori */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="form-title" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Nama Barang <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <input
+                  id="form-title"
+                  value={form.title}
+                  onChange={set("title")}
+                  required
+                  placeholder="Contoh: Tas Kuliah Eiger 20L"
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="form-category" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Kategori <span className="text-[#ba1a1a]">*</span>
+                </label>
                 <select
-                  id="form-rental-period"
-                  className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                  value={form.rental_period}
-                  onChange={set("rental_period")}
+                  id="form-category"
+                  value={form.category}
+                  onChange={handleCategoryChange}
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
                 >
-                  <option value="harian">Per Hari</option>
-                  <option value="mingguan">Per Minggu</option>
-                  <option value="bulanan">Per Bulan</option>
+                  {cats.map((c) => (
+                    <option key={c.slug} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
                 </select>
               </div>
-            ) : (
+            </div>
+
+            {/* Harga & Kondisi */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="label">Kondisi Barang</label>
-                <div className="flex gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
-                    className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                      form.condition === "used"
-                        ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                    }`}
-                  >
-                    Bekas
-                  </button>
+                <label htmlFor="form-price" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Harga <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-sm font-bold text-[#134e35]">Rp</span>
+                  <input
+                    id="form-price"
+                    type="text"
+                    inputMode="numeric"
+                    required
+                    value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/\D/g, "");
+                      setForm((f) => ({ ...f, price: cleaned }));
+                    }}
+                    placeholder="75.000"
+                    className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] pl-10 pr-3.5 py-2.5 text-sm font-bold text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Kondisi <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
-                    className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
                       form.condition === "new"
-                        ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                    }`}
+                        ? "bg-[#ceeb7a] border-[#134e35] text-[#134e35]"
+                        : "bg-[#e6f8e8] border-transparent text-[#404943]"
+                    )}
                   >
-                    <span className="inline-flex items-center justify-center gap-1">
-                      <Icon.Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Baru
-                    </span>
+                    <span>Baru</span>
+                    {form.condition === "new" && <span className="material-symbols-outlined text-[15px]">check_circle</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5",
+                      form.condition === "used"
+                        ? "bg-[#ceeb7a] border-[#134e35] text-[#134e35]"
+                        : "bg-[#e6f8e8] border-transparent text-[#404943]"
+                    )}
+                  >
+                    <span>Bekas</span>
+                    {form.condition === "used" && <span className="material-symbols-outlined text-[15px]">check_circle</span>}
                   </button>
                 </div>
               </div>
-            )}
-
-            <div className="sm:col-span-2">
-              <label htmlFor="form-category" className="label">Kategori</label>
-              <select
-                id="form-category"
-                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                value={form.category}
-                onChange={handleCategoryChange}
-              >
-                {cats.map((c) => (
-                  <option key={c.slug} value={c.name}>
-                    {c.name} {(() => {
-                      const feeLabel = getCategoryFeeLabel(c.name, cfg?.pricing, isFreeMode, sellerIsDistributor, sellerPunyaToko);
-                      return feeLabel === "GRATIS" ? "✓ GRATIS" : feeLabel;
-                    })()}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400">
-                Jangkauan tayang otomatis menjangkau seluruh kampus se-provinsimu.
-              </p>
             </div>
 
-            <div className="sm:col-span-2 floating-group">
-              <input
-                id="form-title"
-                className="floating-input peer"
-                value={form.title}
-                onChange={set("title")}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-title" className="floating-label">Nama / Judul Barang</label>
-            </div>
-
-            <div className="sm:col-span-2 floating-group">
+            {/* Deskripsi Barang */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="form-description" className="block text-xs font-bold text-[#101f15] dark:text-white">
+                  Deskripsi Barang <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={applyCategoryTemplate}
+                  className="text-[11px] font-bold text-[#134e35] hover:underline"
+                >
+                  Isi Template
+                </button>
+              </div>
               <textarea
                 id="form-description"
-                className="floating-input peer min-h-24"
+                rows={4}
+                maxLength={500}
                 value={form.description}
                 onChange={set("description")}
-                placeholder=" "
+                placeholder="Ceritakan kondisi barang, kelengkapan, ukuran, dan alasan dijual..."
+                className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] p-3.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
               />
-              <label htmlFor="form-description" className="floating-label">Deskripsi Lengkap (kondisi, minus, dll)</label>
+              <div className="text-right text-[11px] text-[#707972] mt-1">{descLen} / 500</div>
             </div>
 
-            <div className="sm:col-span-2 flex items-center justify-between rounded-2xl border border-dashed border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 px-4 py-3 text-sm">
+            {/* Stok & Tipe */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white">Template deskripsi kategori</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Format praktis untuk rincian cepat barang.
-                </p>
+                <label className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Stok <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <div className="flex items-center justify-between bg-[#e6f8e8] dark:bg-[#183022] rounded-xl px-2 py-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, stock: Math.max(1, Number(f.stock || 1) - 1) }))}
+                    className="w-8 h-8 rounded-full bg-white text-[#134e35] font-bold flex items-center justify-center shadow-xs"
+                  >
+                    -
+                  </button>
+                  <span className="text-sm font-bold text-[#101f15] dark:text-white">{form.stock || 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, stock: Number(f.stock || 1) + 1 }))}
+                    className="w-8 h-8 rounded-full bg-white text-[#134e35] font-bold flex items-center justify-center shadow-xs"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={applyCategoryTemplate}
-                className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-xs hover:bg-emerald-50 dark:bg-slate-900 dark:text-emerald-300 active:opacity-75"
-              >
-                Isi Template
-              </button>
-            </div>
-          </section>
 
-          {/* Card 3: Harga & Stok */}
-          <section className="card p-5 grid gap-5 sm:grid-cols-2">
-            <div className="floating-group">
-              <input
-                id="form-price"
-                type="text"
-                inputMode="numeric"
-                className="floating-input peer"
-                value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/\D/g, "");
-                  setForm((f) => ({ ...f, price: cleaned }));
-                }}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-price" className="floating-label">
-                {form.type === "sewa" ? `Harga Sewa (Rp) / ${form.rental_period || "hari"}` : "Harga (Rp)"}
-              </label>
+              <div>
+                <label htmlFor="form-type" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Jenis Listing
+                </label>
+                <select
+                  id="form-type"
+                  value={form.type}
+                  onChange={set("type")}
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                >
+                  <option value="barang">Jual Barang</option>
+                  <option value="sewa">Sewa Barang</option>
+                  <option value="poster">Poster / Info</option>
+                </select>
+              </div>
             </div>
 
-            <div className="floating-group">
-              <input
-                id="form-stock"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                className="floating-input peer"
-                value={form.stock}
-                onChange={set("stock")}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-stock" className="floating-label">Stok Barang</label>
+            {/* Lokasi COD & Kontak */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label htmlFor="form-area" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Lokasi COD <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span className="material-symbols-outlined absolute left-3 text-[#134e35] text-[18px]">
+                    location_on
+                  </span>
+                  <input
+                    id="form-area"
+                    value={form.area}
+                    onChange={set("area")}
+                    placeholder="Contoh: FISIP USU, Perpustakaan, Gerbang Utama"
+                    className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] pl-9 pr-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="form-seller-name" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  Nama Penjual <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <input
+                  id="form-seller-name"
+                  required
+                  value={form.seller_name}
+                  onChange={set("seller_name")}
+                  placeholder="Nama kamu"
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="form-seller-wa" className="block text-xs font-bold text-[#101f15] dark:text-white mb-1.5">
+                  WhatsApp <span className="text-[#ba1a1a]">*</span>
+                </label>
+                <input
+                  id="form-seller-wa"
+                  type="tel"
+                  inputMode="tel"
+                  required
+                  maxLength={15}
+                  value={form.seller_wa}
+                  onChange={handleWaChange}
+                  placeholder="0812xxxxxxxx"
+                  className="w-full rounded-xl bg-[#e6f8e8] dark:bg-[#183022] px-3.5 py-2.5 text-sm text-[#101f15] dark:text-white outline-none focus:ring-2 focus:ring-[#134e35]"
+                />
+              </div>
             </div>
 
-            {/* Auto-corrected price notice (Fix #1) */}
-            {form.price && Number(form.price) > 0 && Number(form.price) < 1000 && (
-              <div className="sm:col-span-2 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
-                <Icon.Sparkles className="h-4 w-4 text-emerald-600 shrink-0" aria-hidden="true" />
-                <span>Harga otomatis disesuaikan ke <strong>Rp {(Number(form.price) * 1000).toLocaleString("id-ID")}</strong></span>
+            {specConfig?.fields?.length > 0 && (
+              <div className="pt-2 border-t border-[#134e35]/10 space-y-3">
+                <h3 className="text-xs font-bold text-[#134e35]">Spesifikasi Tambahan ({form.category})</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {specConfig.fields.map((field) => (
+                    <div key={field.key}>
+                      <label htmlFor={`spec-${field.key}`} className="block text-[11px] font-semibold text-[#404943] mb-1">
+                        {field.label}
+                      </label>
+                      <input
+                        id={`spec-${field.key}`}
+                        value={form.specs?.[field.key] || ""}
+                        onChange={handleSpecChange(field.key)}
+                        placeholder={field.placeholder}
+                        className="w-full rounded-xl bg-[#e6f8e8] px-3 py-2 text-xs text-[#101f15] outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </section>
 
-          {/* Card 4: Titik Temu COD & Kontak Penjual */}
-          <section className="card p-5 grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2 floating-group">
-              <input
-                id="form-area"
-                className="floating-input peer"
-                value={form.area}
-                onChange={set("area")}
-                placeholder=" "
-              />
-              <label htmlFor="form-area" className="floating-label">
-                Lokasi Titik Temu COD (Opsional)
-              </label>
-              <p className="mt-1 text-[11px] text-slate-400">
-                Contoh: Gerbang Utama, Perpustakaan, atau kosongkan jika fleksibel sekitar kampus.
-              </p>
+            {msg && <p className="text-xs font-semibold text-[#ba1a1a]">{msg}</p>}
+
+            {/* Desktop Action Buttons */}
+            <div className="hidden lg:flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => toast.success("Draft tersimpan di browser")}
+                className="px-5 py-2.5 rounded-full bg-[#e6f8e8] text-[#003622] text-xs font-bold hover:bg-[#dbeddd] transition-colors"
+              >
+                Simpan Draft
+              </button>
+              <button
+                type="submit"
+                disabled={busy || !!fileError || showCampusWarning}
+                className="px-6 py-2.5 rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs font-bold shadow-md flex items-center gap-2 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[16px]">send</span>
+                <span>{busy ? "Memproses..." : gratis ? "Terbitkan Barang" : `Bayar & Terbitkan (${rupiah(totalBiaya)})`}</span>
+              </button>
             </div>
-
-            <div className="floating-group">
-              <input
-                id="form-seller-name"
-                className="floating-input peer"
-                value={form.seller_name}
-                onChange={set("seller_name")}
-                placeholder=" "
-                required
-              />
-              <label htmlFor="form-seller-name" className="floating-label">Nama Penjual</label>
-            </div>
-
-            {/* Fix #7: WA input with format preview */}
-            <div className="floating-group">
-              <input
-                id="form-seller-wa"
-                type="tel"
-                inputMode="tel"
-                className="floating-input peer"
-                value={form.seller_wa}
-                onChange={handleWaChange}
-                placeholder=" "
-                required
-                maxLength={15}
-              />
-              <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp Kontak</label>
-              <p className="mt-1 text-[11px] text-slate-400">
-                Format: 0812-3456-7890 atau 6281234567890 (otomatis diformat)
-              </p>
-            </div>
-          </section>
-
-          {/* Card 5: Spesifikasi Tambahan (Jika Kategori Memiliki Spesifikasi) */}
-          {specConfig?.fields?.length > 0 && (
-            <section className="card p-5 space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Spesifikasi Tambahan ({form.category})
-                  </h2>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Boleh dikosongkan jika tidak ada detail spesifik.
-                  </p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                  Opsional
-                </span>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {specConfig.fields.map((field) => (
-                  <div key={field.key} className="floating-group">
-                    <input
-                      id={`spec-${field.key}`}
-                      className="floating-input peer"
-                      value={form.specs?.[field.key] || ""}
-                      onChange={handleSpecChange(field.key)}
-                      placeholder=" "
-                    />
-                    <label htmlFor={`spec-${field.key}`} className="floating-label">
-                      {field.label}
-                    </label>
-                    <p className="mt-1 px-1 text-[11px] text-slate-400">{field.placeholder}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Mobile Bottom CTA Area */}
-          <div className="lg:hidden space-y-3 pt-2">
-            <button
-              type="submit"
-              disabled={busy || !!fileError || showCampusWarning}
-              className="btn-primary w-full min-h-12 text-base font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
-            >
-              {busy
-                ? "Memproses…"
-                : showCampusWarning
-                ? "Pilih Kampus Dulu"
-                : gratis
-                ? "Tayangkan Iklan Sekarang"
-                : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}
-            </button>
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-              Dengan menayangkan iklan, kamu menyetujui{" "}
-              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan</Link> &{" "}
-              <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>.
-            </p>
-            {msg && <p className="text-center text-sm text-rose-600">{msg}</p>}
           </div>
+
+          {/* RIGHT SIDEBAR: PRATINJAU LISTING (Desktop Only) */}
+          <aside className="hidden lg:flex lg:col-span-3 flex-col gap-4 sticky top-24">
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-4 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#101f15] dark:text-white">
+                <span className="material-symbols-outlined text-[18px] text-[#003622]">visibility</span>
+                <span>Pratinjau Listing</span>
+              </div>
+
+              <div className="rounded-2xl overflow-hidden border border-[#134e35]/10 bg-[#f4faf5] dark:bg-[#183022]">
+                <div className="relative aspect-square w-full bg-[#e6f8e8]">
+                  {media[0]?.preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={media[0].preview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-[#707972] gap-1">
+                      <span className="material-symbols-outlined text-[32px]">image</span>
+                      <span className="text-[11px]">Belum ada foto</span>
+                    </div>
+                  )}
+                  <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-[#ceeb7a] text-[#161f00] text-[10px] font-bold">
+                    {form.condition === "new" ? "Baru" : "Preloved"}
+                  </span>
+                </div>
+                <div className="p-3.5 space-y-1.5">
+                  <h3 className="text-sm font-bold text-[#101f15] dark:text-white line-clamp-1">
+                    {form.title.trim() || "Nama Barang Kamu"}
+                  </h3>
+                  <p className="text-lg font-extrabold text-[#003622] dark:text-[#bef264]">
+                    {form.price ? rupiah(Number(form.price)) : "Rp0"}
+                  </p>
+                  <p className="text-[11px] text-[#404943] dark:text-[#99d3b2] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">location_on</span>
+                    COD: {form.area.trim() || "Sekitar Kampus"}
+                  </p>
+                  <p className="text-[11px] text-[#404943] line-clamp-2 pt-1">
+                    {form.description.trim() || "Deskripsi barang akan tampil di sini."}
+                  </p>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#e6f8e8] text-[#003622] text-[10px] font-bold mt-1">
+                    {form.category}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-[#e6f8e8] p-3 text-[11px] text-[#404943] flex items-start gap-2">
+                <span className="material-symbols-outlined text-[16px] text-[#003622] shrink-0">info</span>
+                <span>Tampilan ini serupa dengan yang dilihat pembeli di beranda Kampus Kita.</span>
+              </div>
+            </div>
+          </aside>
         </div>
 
-        {/* Right Column: Sticky Live Preview & Action Sidebar */}
-        <aside className="space-y-5 lg:sticky lg:top-20">
-          {/* Live Preview Card */}
-          <div className="card p-4 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Icon.Eye className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                Pratinjau Kartu Produk
-              </span>
-              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                Live Preview
-              </span>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-slate-800/40 p-3 flex flex-col gap-2.5">
-              <div className="relative aspect-4/3 w-full rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700">
-                {media[0]?.preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={media[0].preview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5">
-                    <Icon.Camera className="w-7 h-7 opacity-40" aria-hidden="true" />
-                    <span className="text-[11px] font-medium">Belum ada foto</span>
-                  </div>
-                )}
-                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white dark:bg-slate-900 text-[10px] font-bold text-slate-800 dark:text-slate-200 shadow-xs">
-                  {form.category || "Kategori"}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                  {form.title.trim() || "Nama / Judul Barang Kamu"}
-                </span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-sm sm:text-base font-extrabold text-emerald-700 dark:text-emerald-400">
-                    {form.price ? rupiah(Number(form.price)) : "Rp 0"}
-                  </span>
-                  {form.type === "sewa" && (
-                    <span className="text-[10px] text-teal-600 font-medium">
-                      /{form.rental_period || "hari"}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-slate-500">
-                  <Icon.MapPin className="w-3 h-3 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                  <span className="truncate">
-                    {form.area.trim() || "Sekitar Kampus"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing & Publish Summary */}
-          <div className="card p-5 space-y-4 shadow-sm">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm">Ringkasan Biaya</h3>
-            <dl className="space-y-2 text-xs sm:text-sm">
-              <div className="flex justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Tipe Iklan</dt>
-                <dd className="font-semibold capitalize text-slate-800 dark:text-slate-200">{form.type}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Biaya Tayang</dt>
-                <dd className="font-bold text-slate-900 dark:text-white">
-                  {gratis ? "Rp 0 (GRATIS)" : rupiah(totalBiaya)}
-                </dd>
-              </div>
-              <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
-              <div className="flex justify-between text-base">
-                <dt className="font-bold text-slate-900 dark:text-white">Total Bayar</dt>
-                <dd className="font-black text-emerald-700 dark:text-emerald-400">
-                  {rupiah(totalBiaya)}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
-              {gratis
-                ? "Iklan langsung aktif dan tayang seketika di marketplace tanpa menunggu persetujuan admin."
-                : "Selesaikan pembayaran QRIS agar iklanmu langsung aktif di katalog."}
-            </div>
-
+        {/* Mobile Sticky Bottom Action Bar */}
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#112218]/95 backdrop-blur-md border-t border-[#134e35]/10 px-4 py-3 pb-safe">
+          <div className="max-w-md mx-auto grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => toast.success("Draft tersimpan di browser")}
+              className="py-3 rounded-full border border-[#134e35]/20 bg-white text-[#134e35] text-xs font-bold"
+            >
+              Simpan Draft
+            </button>
             <button
               type="submit"
               disabled={busy || !!fileError || showCampusWarning}
-              className="btn-primary w-full min-h-12 text-sm font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
+              className="py-3 rounded-full bg-[#134e35] text-white text-xs font-bold shadow-md disabled:opacity-50"
             >
-              {busy
-                ? "Memproses…"
-                : showCampusWarning
-                ? "Pilih Kampus Dulu"
-                : gratis
-                ? "Tayangkan Iklan Sekarang"
-                : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}
+              {busy ? "Memproses..." : gratis ? "Terbitkan Barang" : `Bayar (${rupiah(totalBiaya)})`}
             </button>
-
-            <p className="text-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-              Dengan menayangkan iklan, kamu menyetujui{" "}
-              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan Komunitas</Link> &{" "}
-              <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>. Calon pembeli akan menghubungimu via WhatsApp.
-            </p>
-
-            {msg && <p className="text-center text-xs text-rose-600">{msg}</p>}
           </div>
-        </aside>
+        </div>
       </form>
 
       {/* Modal QRIS */}

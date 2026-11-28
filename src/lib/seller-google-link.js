@@ -1,4 +1,11 @@
-import { createHmac } from "@/lib/cryptoCompat";
+import {
+  base64UrlToBytes,
+  bytesToBase64Url,
+  decodeUtf8,
+  encodeUtf8,
+  hmacSha256,
+  verifyHmacSha256,
+} from "@/lib/cryptoCompat";
 import { customAlphabet } from "nanoid";
 
 export const SELLER_GOOGLE_LINK_COOKIE = "seller_google_link";
@@ -18,36 +25,34 @@ function signingKey() {
   throw new Error("SESSION_SECRET belum dikonfigurasi untuk menautkan akun Google.");
 }
 
-export function createSellerGoogleLinkToken(wa) {
-  const payload = Buffer.from(
-    JSON.stringify({
+export async function createSellerGoogleLinkToken(wa) {
+  const payload = bytesToBase64Url(encodeUtf8(JSON.stringify({
       wa,
       exp: Date.now() + SELLER_GOOGLE_LINK_TTL * 1000,
       nonce: customAlphabet("0123456789abcdef", 16)(),
-    })
-  ).toString("base64url");
-  const signature = createHmac("sha256", signingKey())
-    .update(payload)
-    .digest("base64url");
+    })));
+  const signature = bytesToBase64Url(await hmacSha256(signingKey(), payload));
   return `${payload}.${signature}`;
 }
 
-export function verifySellerGoogleLinkToken(token, activeWa) {
-  if (!token || !activeWa) return false;
+export async function verifySellerGoogleLinkToken(token, activeWa) {
+  if (typeof token !== "string" || !token || !activeWa) return false;
   const [payload, signature, ...rest] = token.split(".");
   if (!payload || !signature || rest.length) return false;
 
-  const expected = createHmac("sha256", signingKey()).update(payload).digest();
-  let actual;
+  let payloadBytes;
+  let signatureBytes;
   try {
-    actual = Buffer.from(signature, "base64url");
+    payloadBytes = base64UrlToBytes(payload);
+    signatureBytes = base64UrlToBytes(signature);
   } catch {
     return false;
   }
-  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return false;
+  if (signatureBytes.length !== 32) return false;
+  if (!await verifyHmacSha256(signingKey(), payload, signatureBytes)) return false;
 
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    const data = JSON.parse(decodeUtf8(payloadBytes));
     return data.wa === activeWa && typeof data.exp === "number" && data.exp > Date.now();
   } catch {
     return false;

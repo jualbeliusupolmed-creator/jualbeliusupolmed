@@ -80,11 +80,10 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
           <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                selectedCategory === "all"
-                  ? "bg-primary text-white border-primary shadow-sm"
-                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
-              }`}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${selectedCategory === "all"
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
+                }`}
             >
               Semua Kategori
             </button>
@@ -92,11 +91,10 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
-                  selectedCategory === cat.id
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
-                }`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${selectedCategory === cat.id
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
+                  }`}
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label.replace(/^[^\w]+/, "").trim()}</span>
@@ -174,7 +172,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                           </span>
                         ) : org.ukm_verified ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                             Resmi
+                            Resmi
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800">

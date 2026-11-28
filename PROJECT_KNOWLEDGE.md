@@ -1482,3 +1482,22 @@ deployment atau verifikasi layanan produksi.
 - Belum ada uji produksi dengan akun Sumut dan Jakarta. Open PO dan barang dicari
   masih mengikuti alur wilayah tersendiri; halaman SEO/akses anonim juga tetap
   publik.
+
+### 28 November 2026 — pemulihan fungsi setelah redesign
+
+- LINUSKU driver/admin dipulihkan lewat port selektif route dan API upstream;
+  migrasi akses driver dan pembatasan RPC hanya ditambahkan sebagai file, belum
+  diterapkan ke database.
+- Open PO memakai kontrak response `photo`, `closes_at`, dan `reserved`.
+  Mading/blog memuat halaman lanjutan dari API; WTB beranda membaca `/api/wanted`.
+- Helpdesk dan Lost & Found belum memiliki kontrak backend laporan yang sesuai;
+  UI tidak membuat laporan contoh atau mengklaim pengiriman berhasil. Agenda
+  membaca posting `event` Mading, tetapi belum memiliki pendaftaran event.
+- Peta LINUSKU merender data bus/halte melalui DOM, bukan interpolasi HTML.
+  Pada 28 November 2026, commit `9703ae00` dari `origin/main` dibangun dan
+  dipublikasikan sebagai Worker dev terisolasi `kampuskita-redesign-dev`
+  menggunakan `wrangler.dev.toml`; variabel backend memakai placeholder `.invalid`.
+  GET `/` dan `/linusku` merespons HTTP 200. Tidak ada deployment/push produksi,
+  migrasi database, atau smoke test dengan akun produksi. Perubahan lokal tidak
+  ikut dipublikasikan; branch lokal `main` masih tertinggal dua commit dan
+  memiliki perubahan belum dikomit.

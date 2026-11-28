@@ -69,7 +69,7 @@ export default function TokoKatalog({ listings, warna }) {
             <div className="relative sm:w-64">
               <svg
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9db8a2]"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
               >
                 <path d="M21 21l-4.3-4.3M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -79,7 +79,7 @@ export default function TokoKatalog({ listings, warna }) {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari di toko ini…"
                 aria-label="Cari barang di toko ini"
-                className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-gray-400 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                className="w-full rounded-xl border border-[#e2f0e6] bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-[#134e35] dark:border-white/10 dark:bg-[#112218] dark:text-white"
               />
             </div>
           )}
@@ -89,7 +89,7 @@ export default function TokoKatalog({ listings, warna }) {
               value={urut}
               onChange={(e) => setUrut(e.target.value)}
               aria-label="Urutkan barang"
-              className="shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              className="shrink-0 rounded-xl border border-[#e2f0e6] bg-white px-3 py-2 text-sm font-medium outline-none dark:border-white/10 dark:bg-[#112218] dark:text-white"
             >
               {URUT.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
@@ -104,11 +104,10 @@ export default function TokoKatalog({ listings, warna }) {
                     key={k}
                     type="button"
                     onClick={() => setKategori(k)}
-                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      aktif
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${aktif
                         ? "border-transparent text-white"
-                        : "border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                    }`}
+                        : "border-[#e2f0e6] text-[#404943] hover:bg-[#f4faf5] dark:border-white/10 dark:text-[#9db8a2] dark:hover:bg-white/5"
+                      }`}
                     style={aktif ? { background: warna.utama } : undefined}
                   >
                     {k}
@@ -121,7 +120,7 @@ export default function TokoKatalog({ listings, warna }) {
       )}
 
       {tampil.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500 dark:border-slate-700 dark:text-slate-400">
+        <div className="rounded-2xl border border-dashed border-[#c8ecd0] px-6 py-10 text-center text-sm text-[#707972] dark:border-white/10 dark:text-[#9db8a2]">
           Tidak ada barang yang cocok dengan pencarianmu.
           <button
             onClick={() => { setQ(""); setKategori("Semua"); }}

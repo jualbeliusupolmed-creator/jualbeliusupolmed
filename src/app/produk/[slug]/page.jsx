@@ -291,7 +291,8 @@ export default async function ProdukPage({ params }) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0a1710] pb-24 md:pb-12 font-sans">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(productJsonLd) }}
@@ -303,17 +304,17 @@ export default async function ProdukPage({ params }) {
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={slug} />
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-slate-500 dark:text-slate-400">
-        <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
+      <nav className="flex items-center gap-2 min-w-0 text-xs font-semibold text-[#404943] dark:text-slate-400">
+        <Link href="/" className="hover:text-[#003622] dark:hover:text-white shrink-0">Beranda</Link>
         <span className="shrink-0">/</span>
-        <Link href={`/?cat=${listing.category}`} className="hover:text-primary shrink-0">
+        <Link href={`/?cat=${listing.category}`} className="hover:text-[#003622] dark:hover:text-white shrink-0">
           {listing.category}
         </Link>
         <span className="shrink-0">/</span>
-        <span className="truncate text-slate-500">{listing.title}</span>
+        <span className="truncate text-[#101f15] dark:text-white">{listing.title}</span>
       </nav>
 
-      {/* 12-Column Grid Matching 12.html blueprint */}
+      {/* 12-Column Grid */}
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         <ProductDetailInteractive
           listing={listing}
@@ -338,7 +339,7 @@ export default async function ProdukPage({ params }) {
       <section className="mt-12 mb-20 md:mb-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-extrabold text-[#003622] dark:text-white">
               {listing.type === "jasa"
                 ? "Jasa Serupa & Rekomendasi"
                 : "Produk Serupa & Rekomendasi"}
@@ -346,28 +347,29 @@ export default async function ProdukPage({ params }) {
           </div>
           <Link
             href={listing.type === "jasa" ? "/jasa" : "/jual-beli"}
-            className="text-xs font-bold text-emerald-800 hover:underline dark:text-emerald-400"
+            className="text-xs font-extrabold text-[#134e35] hover:underline dark:text-[#bef264]"
           >
-            Lihat lainnya
+            Lihat lainnya →
           </Link>
         </div>
         {related.length > 0 ? (
-          <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />
             ))}
           </div>
         ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <div className="mt-4 rounded-3xl border border-dashed border-[#c0c9c1] bg-white px-5 py-8 text-center dark:border-white/15 dark:bg-[#112218]">
+            <p className="text-sm font-bold text-[#101f15] dark:text-white">
               Belum ada rekomendasi lain untuk saat ini.
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-[#707972] dark:text-slate-400">
               Coba lihat pilihan lainnya di {listing.type === "jasa" ? "halaman jasa" : "marketplace"}.
             </p>
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

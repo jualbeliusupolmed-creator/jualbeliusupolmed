@@ -49,8 +49,8 @@ export async function GET(req) {
     listingsByWa.set(listing.seller_wa, summary);
   }
 
-  const items = (profiles || []).map((profile) => ({
-    id: sealAdminUserToken(profile.wa),
+  const items = await Promise.all((profiles || []).map(async (profile) => ({
+    id: await sealAdminUserToken(profile.wa),
     rawWa: profile.wa,
     phone: profile.wa,
     name: profile.name || profile.store_name || "Pengguna",
@@ -66,7 +66,7 @@ export async function GET(req) {
     restricted: blockedByWa.has(profile.wa),
     restrictionReason: blockedByWa.get(profile.wa) || "",
     listings: listingsByWa.get(profile.wa) || { total: 0, active: 0 },
-  }));
+  })));
   const nextOffset = count > offset + items.length ? offset + items.length : null;
   return NextResponse.json({
     items,
@@ -85,7 +85,7 @@ export async function PATCH(req) {
   if (!["restrict", "restore", "trust_toggle"].includes(body.action)) return NextResponse.json({ error: "Aksi pengguna tidak valid." }, { status: 400 });
 
   let wa;
-  try { wa = openAdminUserToken(body.userToken); }
+  try { wa = await openAdminUserToken(body.userToken); }
   catch { return NextResponse.json({ error: "Identitas akun tidak berlaku lagi. Muat ulang daftar pengguna." }, { status: 400 }); }
 
   const supa = getAdminClient();
@@ -115,13 +115,13 @@ export async function PATCH(req) {
     await supa.from("admin_audit_events").insert({
       actor_id: actor.userId,
       action: next ? "user_trusted" : "user_untrusted",
-      target_id: hashAdminUserAuditTarget(wa),
+      target_id: await hashAdminUserAuditTarget(wa),
       metadata: { trusted_seller: next, campus: profile.campus || "" },
     });
     return NextResponse.json({ ok: true, trusted_seller: next });
   }
 
-  const targetId = hashAdminUserAuditTarget(wa);
+  const targetId = await hashAdminUserAuditTarget(wa);
   await supa.from("admin_audit_events").insert({
     actor_id: actor.userId,
     action: body.action === "restrict" ? "user_restricted" : "user_restriction_removed",

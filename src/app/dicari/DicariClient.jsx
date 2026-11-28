@@ -54,7 +54,7 @@ export default function DicariPage({ initialItems = [] }) {
           setCampuses(filterByProv(allCampuses));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     const onCampusSync = (e) => {
       if (allCampuses.length > 0) {
@@ -77,8 +77,8 @@ export default function DicariPage({ initialItems = [] }) {
     const dialog = showModal
       ? postingDialogRef.current
       : qrisModal
-      ? paymentDialogRef.current
-      : null;
+        ? paymentDialogRef.current
+        : null;
     if (!dialog) return;
 
     previousModalFocusRef.current = document.activeElement;
@@ -146,7 +146,7 @@ export default function DicariPage({ initialItems = [] }) {
       .then((d) => {
         if (d?.categories?.length) setCats(d.categories);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const fetchItems = async () => {
@@ -243,278 +243,279 @@ export default function DicariPage({ initialItems = [] }) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      {/* Compact Minimalist Header */}
-      <div className="mb-4 flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 dark:border-slate-800">
-        <div>
-          <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
-            <Link href="/" className="transition-colors hover:text-emerald-700 dark:hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-emerald-600">Beranda</Link>
-            <span>/</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Barang Dicari (WTB)</span>
-          </nav>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Barang Dicari (WTB)
-          </h1>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Daftar kebutuhan barang &amp; jasa mahasiswa. Tawarkan langsung jika kamu memiliki barangnya.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            const savedWa = sesiWa || "";
-            setForm((f) => ({ ...f, buyer_wa: savedWa }));
-            setShowModal(true);
-          }}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-emerald-800 px-4 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-900 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 self-start sm:self-auto"
-          aria-label="Pasang kebutuhan barang yang sedang dicari"
-        >
-          <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-300" aria-hidden="true" />
-          <span>Pasang WTB</span>
-        </button>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {/* Search */}
-        <div className="relative min-w-0 flex-1">
-          <svg
-            aria-hidden="true"
-            className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            aria-label="Cari kebutuhan mahasiswa"
-            placeholder="Cari kebutuhan..."
-            className="w-full rounded-full border border-gray-200 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
-          />
-        </div>
-
-        {/* Campus Filter */}
-        <select
-          value={campus}
-          onChange={(e) => setCampus(e.target.value)}
-          aria-label="Filter berdasarkan kampus"
-          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-        >
-          <option value="Semua">Semua Kampus</option>
-          {campuses.map((item) => (
-            <option key={item.shortName} value={item.shortName}>{item.shortName}</option>
-          ))}
-        </select>
-
-        {/* Category Filter */}
-        <select
-          value={cat}
-          onChange={(e) => setCat(e.target.value)}
-          aria-label="Filter berdasarkan kategori"
-          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-        >
-          <option value="all">Semua Kategori</option>
-          {cats.map((c) => (
-            <option key={c.slug} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* 12-Column Main Layout matching SCREEN_11 */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Core WTB Feed (Left / 8-Cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                Daftar Kebutuhan Mahasiswa
-              </span>
-              {!loading && (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-[11px]">
-                  {items.length} Menunggu Penawaran
-                </span>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-400 hidden sm:inline">Diperbarui realtime</span>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15]">
+      <div className="mx-auto max-w-6xl px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))]">
+        {/* Compact Minimalist Header */}
+        <div className="mb-4 flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#e2f0e6] dark:border-white/10">
+          <div>
+            <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-1.5 text-xs text-[#707972] dark:text-[#9db8a2]">
+              <Link href="/" className="transition-colors hover:text-[#003622] dark:hover:text-[#ceeb7a] focus-visible:outline-2 focus-visible:outline-[#003622]">Beranda</Link>
+              <span>/</span>
+              <span className="font-semibold text-[#101f15] dark:text-[#ecfeee]">Barang Dicari (WTB)</span>
+            </nav>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#101f15] dark:text-[#ecfeee]">
+              Barang Dicari (WTB)
+            </h1>
+            <p className="mt-0.5 text-xs text-[#404943] dark:text-[#9db8a2]">
+              Daftar kebutuhan barang &amp; jasa mahasiswa. Tawarkan langsung jika kamu memiliki barangnya.
+            </p>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="card animate-pulse motion-reduce:animate-none p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-xl sm:rounded-2xl">
-                  <div className="h-3 w-1/3 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-4 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-2.5 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-slate-700" />
-                </div>
-              ))}
+          <button
+            type="button"
+            onClick={() => {
+              const savedWa = sesiWa || "";
+              setForm((f) => ({ ...f, buyer_wa: savedWa }));
+              setShowModal(true);
+            }}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#003622] px-5 text-xs font-extrabold text-white shadow-xs transition-colors hover:bg-[#134e35] active:translate-y-px focus-visible:outline-2 focus-visible:outline-[#003622] self-start sm:self-auto"
+            aria-label="Pasang kebutuhan barang yang sedang dicari"
+          >
+            <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-[#ceeb7a]" aria-hidden="true" />
+            <span>Pasang WTB</span>
+          </button>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Search */}
+          <div className="relative min-w-0 flex-1">
+            <svg
+              aria-hidden="true"
+              className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9db8a2]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              aria-label="Cari kebutuhan mahasiswa"
+              placeholder="Cari kebutuhan..."
+              className="w-full rounded-full border border-[#e2f0e6] bg-white py-2 pl-9 pr-3 text-xs text-[#101f15] outline-none transition placeholder:text-[#707972] focus:border-[#134e35] dark:border-white/10 dark:bg-[#112218] dark:text-[#ecfeee] dark:placeholder:text-[#9db8a2]"
+            />
+          </div>
+
+          {/* Campus Filter */}
+          <select
+            value={campus}
+            onChange={(e) => setCampus(e.target.value)}
+            aria-label="Filter berdasarkan kampus"
+            className="shrink-0 cursor-pointer rounded-full border border-[#e2f0e6] bg-white px-3.5 py-2 text-xs font-semibold text-[#404943] outline-none dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2]"
+          >
+            <option value="Semua">Semua Kampus</option>
+            {campuses.map((item) => (
+              <option key={item.shortName} value={item.shortName}>{item.shortName}</option>
+            ))}
+          </select>
+
+          {/* Category Filter */}
+          <select
+            value={cat}
+            onChange={(e) => setCat(e.target.value)}
+            aria-label="Filter berdasarkan kategori"
+            className="shrink-0 cursor-pointer rounded-full border border-[#e2f0e6] bg-white px-3.5 py-2 text-xs font-semibold text-[#404943] outline-none dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2]"
+          >
+            <option value="all">Semua Kategori</option>
+            {cats.map((c) => (
+              <option key={c.slug} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 12-Column Main Layout matching SCREEN_11 */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Core WTB Feed (Left / 8-Cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-4">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm sm:text-base text-[#101f15] dark:text-[#ecfeee]">
+                  Daftar Kebutuhan Mahasiswa
+                </span>
+                {!loading && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#e6f8e8] text-[#134e35] dark:bg-[#134e35]/40 dark:text-[#ceeb7a] font-bold text-[11px]">
+                    {items.length} Menunggu Penawaran
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-[#707972] hidden sm:inline">Diperbarui realtime</span>
             </div>
-          ) : error ? (
-            <div className="text-center text-rose-500 py-10">{error}</div>
-          ) : items.length === 0 ? (
-            <div className="card grid place-items-center py-12 text-center text-gray-400 bg-white dark:bg-slate-900 rounded-2xl">
-              <Icon.Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-2" />
-              <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
-                Belum ada kebutuhan di filter ini.
-              </p>
-              <p className="mt-1 max-w-sm text-xs text-gray-400 dark:text-slate-500">
-                Posting kebutuhanmu sekarang: gratis dan langsung dilihat oleh penjual mahasiswa lainnya.
-              </p>
+
+            {loading ? (
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="card animate-pulse motion-reduce:animate-none p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-xl sm:rounded-2xl">
+                    <div className="h-3 w-1/3 rounded bg-gray-100 dark:bg-slate-800" />
+                    <div className="h-4 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
+                    <div className="h-2.5 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
+                    <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-slate-700" />
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center text-rose-500 py-10">{error}</div>
+            ) : items.length === 0 ? (
+              <div className="card grid place-items-center py-12 text-center text-gray-400 bg-white dark:bg-slate-900 rounded-2xl">
+                <Icon.Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-2" />
+                <p className="mt-2 text-sm font-semibold text-gray-700 dark:text-slate-200">
+                  Belum ada kebutuhan di filter ini.
+                </p>
+                <p className="mt-1 max-w-sm text-xs text-gray-400 dark:text-slate-500">
+                  Posting kebutuhanmu sekarang: gratis dan langsung dilihat oleh penjual mahasiswa lainnya.
+                </p>
+                <button
+                  onClick={() => {
+                    const savedWa = sesiWa || "";
+                    setForm((f) => ({ ...f, buyer_wa: savedWa }));
+                    setShowModal(true);
+                  }}
+                  className="mt-4 whitespace-nowrap px-5 py-2.5 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold shadow-xs transition-colors active:translate-y-px"
+                >
+                  + Posting Kebutuhan
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {items.map((item) => {
+                  const condMatch = item.description?.match(/^\[Kondisi:\s*(Baru|Bekas)\]\n?/i);
+                  const itemCondition = condMatch ? condMatch[1] : null;
+                  const cleanDesc = condMatch ? item.description.replace(condMatch[0], "") : item.description;
+                  const isUrgent = (item.title || "").toLowerCase().includes("mendesak") || (item.title || "").toLowerCase().includes("urgent") || (item.category || "").toLowerCase().includes("praktikum");
+
+                  return (
+                    <article
+                      key={item.id}
+                      className={`flex flex-col justify-between p-3.5 sm:p-4 bg-white dark:bg-[#112218] rounded-3xl border border-[#e2f0e6] dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] hover:border-[#134e35] dark:hover:border-[#ceeb7a] transition-colors active:translate-y-px relative overflow-hidden ${isUrgent ? "border-l-4 border-l-rose-500" : ""
+                        } ${item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""}`}
+                    >
+                      <div>
+                        {/* Top Badges & Budget */}
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center gap-1 flex-wrap min-w-0">
+                            {isUrgent && (
+                              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] font-bold shrink-0">
+                                Mendesak
+                              </span>
+                            )}
+                            <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] px-1 py-0.2 shrink-0">
+                              {item.category}
+                            </span>
+                          </div>
+                          <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-[10px] sm:text-xs shrink-0 tracking-tight">
+                            {item.budget > 0 ? rupiah(item.budget) : "Nego"}
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-slate-900 dark:text-white leading-snug text-xs sm:text-sm line-clamp-2">
+                          {item.title}
+                        </h3>
+
+                        <div className="mt-2 flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                          <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
+                          <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
+                        </div>
+
+                        <p className="mt-1 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-1">
+                          {cleanDesc}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setManualOrderId(null);
+                          setManualFile(null);
+                          setManualError("");
+                          setUnlockResult(null);
+                          setQrisModal(item);
+                          fetch("/api/payments/unlock-wanted", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ wanted_id: item.id, check: true }),
+                          })
+                            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+                            .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
+                            .catch(() => { });
+                        }}
+                        className="w-full mt-2.5 py-2 px-2 rounded-full bg-[#e6f8e8] hover:bg-[#003622] text-[#003622] hover:text-white dark:bg-[#134e35]/40 dark:text-[#ceeb7a] dark:hover:bg-[#134e35] text-[10px] sm:text-xs font-bold transition-colors active:translate-y-px flex items-center justify-center gap-1"
+                      >
+                        <Icon.MessageCircle className="h-3 w-3 shrink-0" />
+                        <span className="truncate">Tawari Barang</span>
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Sticky Sidebar (4-Cols on Desktop) */}
+          <aside className="hidden lg:flex lg:col-span-4 flex-col gap-4 sticky top-20">
+            {/* CTA Box */}
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] border border-[#e2f0e6] dark:border-white/10 flex flex-col gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#e6f8e8] dark:bg-[#134e35]/40 text-[#003622] dark:text-[#ceeb7a] flex items-center justify-center">
+                <Icon.ShoppingBag className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-[#101f15] dark:text-[#ecfeee]">
+                  Cari Kebutuhan Kuliah?
+                </h3>
+                <p className="text-xs text-[#404943] dark:text-[#9db8a2] mt-1">
+                  Posting barang yang kamu cari. Mahasiswa yang punya barang akan langsung menghubungimu.
+                </p>
+              </div>
               <button
                 onClick={() => {
                   const savedWa = sesiWa || "";
                   setForm((f) => ({ ...f, buyer_wa: savedWa }));
                   setShowModal(true);
                 }}
-                className="mt-4 whitespace-nowrap px-5 py-2.5 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold shadow-xs transition-colors active:translate-y-px"
+                className="w-full whitespace-nowrap py-2.5 rounded-full bg-[#003622] hover:bg-[#134e35] text-white text-xs font-extrabold shadow-xs transition-colors active:translate-y-px text-center"
               >
                 + Posting Kebutuhan
               </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {items.map((item) => {
-                const condMatch = item.description?.match(/^\[Kondisi:\s*(Baru|Bekas)\]\n?/i);
-                const itemCondition = condMatch ? condMatch[1] : null;
-                const cleanDesc = condMatch ? item.description.replace(condMatch[0], "") : item.description;
-                const isUrgent = (item.title || "").toLowerCase().includes("mendesak") || (item.title || "").toLowerCase().includes("urgent") || (item.category || "").toLowerCase().includes("praktikum");
 
-                return (
-                  <article
-                    key={item.id}
-                    className={`card flex flex-col justify-between p-3 sm:p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-slate-700 transition-colors active:translate-y-px relative overflow-hidden ${
-                      isUrgent ? "border-l-3 border-l-rose-500" : ""
-                    } ${item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""}`}
+            {/* Tips COD Aman */}
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] border border-[#e2f0e6] dark:border-white/10 flex flex-col gap-2.5">
+              <div className="flex items-center gap-2 text-xs font-extrabold text-[#101f15] dark:text-[#ecfeee]">
+                <Icon.ShieldCheck className="w-4 h-4 text-[#134e35] dark:text-[#ceeb7a]" />
+                <span>Protokol Keamanan WTB</span>
+              </div>
+              <ul className="text-xs text-[#404943] dark:text-[#9db8a2] space-y-1.5 list-disc list-inside">
+                <li>Pilih titik COD ramai di kampus (Pendopo / Kantin).</li>
+                <li>Periksa fisik &amp; fungsi barang sebelum membayar.</li>
+                <li>Jangan pernah transfer uang muka (DP) duluan.</li>
+                <li>Pastikan identitas stambuk penjual sesuai.</li>
+              </ul>
+            </div>
+
+            {/* Permintaan Populer */}
+            <div className="bg-white dark:bg-[#112218] rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] border border-[#e2f0e6] dark:border-white/10 flex flex-col gap-2.5">
+              <span className="text-xs font-extrabold text-[#101f15] dark:text-[#ecfeee]">
+                Paling Sering Dicari:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {["Papan LED Laprak", "Buku Kalkulus Purcell", "Jas Lab Kimia", "Kosan Pintu 2", "Laptop Core i5"].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setQ(tag)}
+                    className="px-3 py-1 rounded-full bg-[#f4faf5] hover:bg-[#e6f8e8] text-[#404943] hover:text-[#003622] dark:bg-white/5 dark:text-[#9db8a2] text-[11px] font-semibold transition border border-[#e2f0e6] dark:border-white/10"
                   >
-                    <div>
-                      {/* Top Badges & Budget */}
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <div className="flex items-center gap-1 flex-wrap min-w-0">
-                          {isUrgent && (
-                            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] font-bold shrink-0">
-                              Mendesak
-                            </span>
-                          )}
-                          <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] px-1 py-0.2 shrink-0">
-                            {item.category}
-                          </span>
-                        </div>
-                        <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-[10px] sm:text-xs shrink-0 tracking-tight">
-                          {item.budget > 0 ? rupiah(item.budget) : "Nego"}
-                        </span>
-                      </div>
-
-                      <h3 className="font-bold text-slate-900 dark:text-white leading-snug text-xs sm:text-sm line-clamp-2">
-                        {item.title}
-                      </h3>
-
-                      <div className="mt-2 flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                        <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
-                        <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
-                      </div>
-
-                      <p className="mt-1 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-1">
-                        {cleanDesc}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setManualOrderId(null);
-                        setManualFile(null);
-                        setManualError("");
-                        setUnlockResult(null);
-                        setQrisModal(item);
-                        fetch("/api/payments/unlock-wanted", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ wanted_id: item.id, check: true }),
-                        })
-                          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-                          .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
-                          .catch(() => {});
-                      }}
-                      className="w-full mt-2 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-emerald-800 text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-emerald-800 dark:hover:text-white text-[10px] sm:text-xs font-semibold transition-colors active:translate-y-px flex items-center justify-center gap-1"
-                    >
-                      <Icon.MessageCircle className="h-3 w-3 shrink-0" />
-                      <span className="truncate">Tawari Barang</span>
-                    </button>
-                  </article>
-                );
-              })}
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+          </aside>
         </div>
-
-        {/* Right Sticky Sidebar (4-Cols on Desktop) */}
-        <aside className="hidden lg:flex lg:col-span-4 flex-col gap-4 sticky top-20">
-          {/* CTA Box */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-              <Icon.ShoppingBag className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                Cari Kebutuhan Kuliah?
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Posting barang yang kamu cari. Mahasiswa yang punya barang akan langsung menghubungimu.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                const savedWa = sesiWa || "";
-                setForm((f) => ({ ...f, buyer_wa: savedWa }));
-                setShowModal(true);
-              }}
-              className="w-full whitespace-nowrap py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold shadow-xs transition-colors active:translate-y-px text-center"
-            >
-              + Posting Kebutuhan
-            </button>
-          </div>
-
-          {/* Tips COD Aman */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-2.5">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-              <Icon.ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              <span>Protokol Keamanan WTB</span>
-            </div>
-            <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 list-disc list-inside">
-              <li>Pilih titik COD ramai di kampus (Pendopo / Kantin).</li>
-              <li>Periksa fisik &amp; fungsi barang sebelum membayar.</li>
-              <li>Jangan pernah transfer uang muka (DP) duluan.</li>
-              <li>Pastikan identitas stambuk penjual sesuai.</li>
-            </ul>
-          </div>
-
-          {/* Permintaan Populer */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-2.5">
-            <span className="text-xs font-bold text-slate-900 dark:text-white">
-              Paling Sering Dicari:
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {["Papan LED Laprak", "Buku Kalkulus Purcell", "Jas Lab Kimia", "Kosan Pintu 2", "Laptop Core i5"].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setQ(tag)}
-                  className="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300 text-[11px] font-medium transition"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
       </div>
 
       {/* Posting Modal */}
@@ -650,7 +651,7 @@ export default function DicariPage({ initialItems = [] }) {
                   />
                 </div>
               </div>
-                <Icon.X className="h-5 w-5" />
+              <Icon.X className="h-5 w-5" />
               <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-outline px-4 py-2 text-xs">Batal</button>
                 <button type="submit" disabled={submitting} className="btn-primary px-5 py-2 text-xs">{submitting ? "Mengirim..." : "Post Kebutuhan"}</button>
@@ -674,14 +675,14 @@ export default function DicariPage({ initialItems = [] }) {
                 aria-label="Tutup pembayaran"
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
 
             {unlockResult?.pending ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
-                   Pembayaran diterima!
+                  Pembayaran diterima!
                 </div>
                 <p className="mt-3 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                   Nomor pembeli untuk postingan ini sedang diproses admin dan akan dikirim ke WhatsApp Anda segera. Mohon tunggu ya.
@@ -696,7 +697,7 @@ export default function DicariPage({ initialItems = [] }) {
             ) : unlockResult ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
-                   Struk valid! Pembayaran dikonfirmasi AI.
+                  Struk valid! Pembayaran dikonfirmasi AI.
                 </div>
 
                 <div className="mt-4 border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800 text-left text-xs">
@@ -866,13 +867,13 @@ export default function DicariPage({ initialItems = [] }) {
       )}
 
       <QRISModal
-        qrisUrl={activeQrisUrl} 
-        fee={activeQrisFee} 
+        qrisUrl={activeQrisUrl}
+        fee={activeQrisFee}
         transactionId={activeQrisOrderId}
         onClose={() => {
           setActiveQrisUrl("");
           router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || sesiWa || "")}`);
-        }} 
+        }}
         onSuccess={() => {
           setActiveQrisUrl("");
           router.push(`/dashboard?paid=1&wa=${encodeURIComponent(form.buyer_wa || sesiWa || "")}`);

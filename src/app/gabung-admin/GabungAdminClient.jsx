@@ -67,7 +67,7 @@ export default function GabungAdminClient() {
           }
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingKatalog(false));
   }, []);
 

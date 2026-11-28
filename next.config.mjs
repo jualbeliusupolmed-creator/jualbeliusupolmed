@@ -1,4 +1,10 @@
-import { nextOnPages } from "@cloudflare/next-on-pages";
+let nextOnPages;
+try {
+  const pkg = await import("@cloudflare/next-on-pages");
+  nextOnPages = pkg?.nextOnPages || pkg?.default?.nextOnPages;
+} catch {
+  nextOnPages = null;
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,4 +26,4 @@ const nextConfig = {
   },
 };
 
-export default nextOnPages(nextConfig);
+export default typeof nextOnPages === "function" ? nextOnPages(nextConfig) : nextConfig;

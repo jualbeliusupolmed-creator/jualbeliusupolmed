@@ -54,7 +54,7 @@ describe("POST /api/auth/google-link/start", () => {
   it("only starts for a phone-authenticated profile without a Google identity", async () => {
     mocks.getSellerSession.mockReturnValue("081234567890");
     mocks.proofCookie.mockReturnValue({
-      value: createSellerGoogleLinkToken("081234567890"),
+      value: await createSellerGoogleLinkToken("081234567890"),
     });
     profileQuery({ wa: "google_account_abc123", phone_wa: "081234567890", email_google: null });
 

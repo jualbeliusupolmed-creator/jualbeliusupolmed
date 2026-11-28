@@ -12,11 +12,11 @@ function Metric({ label, value, detail, href, icon: Icon, accent = "emerald" }) 
     violet: "bg-violet-50 text-violet-800",
   };
   return (
-    <Link href={href} className="group rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_4px_18px_-16px_rgba(15,23,42,.3)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-5">
-      <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl ${accents[accent]}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span><ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-700" /></div>
-      <p className="mt-5 text-xs font-semibold text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-black tracking-tight text-slate-950">{value ?? 0}</p>
-      <p className="mt-1 text-[11px] font-medium text-slate-400">{detail}</p>
+    <Link href={href} className="group rounded-3xl border border-[#e2f0e6] bg-white p-4 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] transition hover:-translate-y-0.5 hover:border-[#134e35]/40 hover:shadow-md sm:p-5">
+      <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl ${accents[accent]}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span><ArrowRight className="h-4 w-4 text-[#9db8a2] transition group-hover:translate-x-0.5 group-hover:text-[#003622]" /></div>
+      <p className="mt-5 text-xs font-semibold text-[#707972]">{label}</p>
+      <p className="mt-1 text-2xl font-extrabold tracking-tight text-[#101f15]">{value ?? 0}</p>
+      <p className="mt-1 text-[11px] font-medium text-[#707972]">{detail}</p>
     </Link>
   );
 }
@@ -52,10 +52,10 @@ export default function OverviewView({ stats = {}, actor }) {
 
   return (
     <div className="space-y-6 sm:space-y-7">
-      <section className="overflow-hidden rounded-[26px] bg-[linear-gradient(118deg,#064e3b_0%,#047857_58%,#10a46b_100%)] p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-7">
+      <section className="overflow-hidden rounded-3xl bg-[#003622] p-5 text-white shadow-lg sm:p-7">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-emerald-100/75">{isSuperadmin ? "Kontrol proyek" : "Ruang kerja owner"}</p><h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Selamat datang, {isSuperadmin ? "Superadmin" : actor?.label?.split(" ")[0] || "Owner"}</h2><p className="mt-2 text-sm leading-relaxed text-emerald-50/85">{isSuperadmin ? `Cakupan ringkasan: ${stats.scopeLabel || "seluruh platform"}. Fokus operasi saat ini Sumatera Utara.` : `Cakupan kerja: ${stats.scopeLabel || stats.campuses?.join(", ") || "belum ditetapkan"}. Ringkasan hanya memuat data di wilayah yang diberikan.`}</p></div>
-          {isSuperadmin ? <Link href="/admin/owners" className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-xs font-extrabold text-emerald-950 transition hover:bg-emerald-50 sm:self-auto"><Plus className="h-4 w-4" />Tambah akses owner</Link> : null}
+          <div className="max-w-2xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-[#ceeb7a]">{isSuperadmin ? "Kontrol proyek" : "Ruang kerja owner"}</p><h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">Selamat datang, {isSuperadmin ? "Superadmin" : actor?.label?.split(" ")[0] || "Owner"}</h2><p className="mt-2 text-sm leading-relaxed text-white/80">{isSuperadmin ? `Cakupan ringkasan: ${stats.scopeLabel || "seluruh platform"}. Fokus operasi saat ini Sumatera Utara.` : `Cakupan kerja: ${stats.scopeLabel || stats.campuses?.join(", ") || "belum ditetapkan"}. Ringkasan hanya memuat data di wilayah yang diberikan.`}</p></div>
+          {isSuperadmin ? <Link href="/admin/owners" className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-full bg-[#ceeb7a] px-5 text-xs font-extrabold text-[#003622] transition hover:bg-[#bef264] sm:self-auto"><Plus className="h-4 w-4" />Tambah akses owner</Link> : null}
         </div>
       </section>
 

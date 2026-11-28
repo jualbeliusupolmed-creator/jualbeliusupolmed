@@ -25,6 +25,7 @@ export default defineConfig({
     ],
     alias: {
       '@': resolve(import.meta.dirname, './src'),
+      'server-only': resolve(import.meta.dirname, './src/test/server-only.js'),
     },
     coverage: {
       provider: 'v8',

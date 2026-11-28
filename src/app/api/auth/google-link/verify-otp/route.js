@@ -86,7 +86,7 @@ export async function POST(request) {
     if (deleteError) return jawabGalat(deleteError, { pesan: "Kode verifikasi belum dapat digunakan." });
 
     const response = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
-    response.cookies.set(SELLER_GOOGLE_OTP_PROOF_COOKIE, createSellerGoogleLinkToken(phone), {
+    response.cookies.set(SELLER_GOOGLE_OTP_PROOF_COOKIE, await createSellerGoogleLinkToken(phone), {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

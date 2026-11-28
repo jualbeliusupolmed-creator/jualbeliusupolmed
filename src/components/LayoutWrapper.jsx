@@ -21,7 +21,6 @@ import ThemeToggleFloating from "./ThemeToggleFloating";
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
-  const isLinusku = pathname === "/linusku" || pathname?.startsWith("/linusku/");
   const isChat = pathname?.startsWith("/chat");
   const isTeman = pathname?.startsWith("/teman");
   const hideFooter = isAdmin || isChat;
@@ -94,11 +93,11 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <SesiProvider>
-      {isAdmin || isLinusku ? (
+      {isAdmin ? (
         children
       ) : (
         <div className={cn(
-          "w-full relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans",
+          "w-full relative overflow-x-clip bg-[#ecfeee] dark:bg-[#0a1710] text-[#101f15] dark:text-[#ecfeee] flex flex-col justify-between font-sans",
           isChat ? "h-screen h-dvh overflow-hidden" : "min-h-screen"
         )}>
           {/* Emergency Alert Banner */}

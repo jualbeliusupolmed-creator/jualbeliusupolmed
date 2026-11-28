@@ -139,17 +139,17 @@ export default function OwnerWorkspaceShell({ actor, scopeFilter, children }) {
       <nav aria-label="Navigasi admin" className="space-y-5 pb-5">
         {groups.map((group) => (
           <section key={group.label}>
-            <h2 className="mb-2 px-3 text-xs font-bold text-slate-500">{group.label}</h2>
+            <h2 className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-wider text-emerald-200/50">{group.label}</h2>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = iconByKey[item.key] || LayoutDashboard;
                 const active = current?.key === item.key;
                 return (
                   <Link key={item.key} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined}
-                    className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition focus-visible:outline-2 focus-visible:outline-emerald-600 active:opacity-85 ${active ? "bg-emerald-50 text-emerald-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
-                    <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} />
+                    className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition focus-visible:outline-2 focus-visible:outline-[#ceeb7a] active:opacity-85 ${active ? "bg-[#134e35] text-white shadow-xs" : "text-emerald-100/75 hover:bg-white/10 hover:text-white"}`}>
+                    <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#ceeb7a]" : ""}`} strokeWidth={1.8} />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    {active ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-700" /> : null}
+                    {active ? <span className="h-1.5 w-1.5 rounded-full bg-[#ceeb7a]" /> : null}
                   </Link>
                 );
               })}
@@ -161,35 +161,35 @@ export default function OwnerWorkspaceShell({ actor, scopeFilter, children }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
-      <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-200/80 bg-white lg:flex ${collapsed ? "w-[84px]" : "w-[268px]"}`}>
-        <div className={`flex h-[76px] items-center border-b border-slate-100 ${collapsed ? "justify-center px-3" : "gap-3 px-5"}`}>
-          <Link href="/admin/overview" aria-label="Kampus Kita workspace" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-800 text-white shadow-lg shadow-emerald-900/15">
+    <div className="min-h-screen bg-[#f4faf5] text-[#101f15]">
+      <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col bg-[#0a2e1f] text-white lg:flex ${collapsed ? "w-[84px]" : "w-[268px]"}`}>
+        <div className={`flex h-[76px] items-center border-b border-white/10 ${collapsed ? "justify-center px-3" : "gap-3 px-5"}`}>
+          <Link href="/admin/overview" aria-label="Kampus Kita workspace" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#134e35] text-[#ceeb7a] shadow-lg">
             <span className="text-sm font-black tracking-tight">KK</span>
           </Link>
-          {!collapsed ? <div className="min-w-0 flex-1"><p className="truncate text-sm font-black tracking-tight">Kampus Kita</p><p className="mt-0.5 text-xs font-semibold text-slate-400">Admin Workspace</p></div> : null}
-          {!collapsed ? <button type="button" onClick={() => setCollapsed(true)} aria-label="Ciutkan menu" title="Ciutkan menu" className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-800"><PanelLeftClose className="h-4 w-4" /></button> : null}
+          {!collapsed ? <div className="min-w-0 flex-1"><p className="truncate text-sm font-black tracking-tight text-white">Kampus Kita</p><p className="mt-0.5 text-xs font-semibold text-emerald-200/60">Admin Workspace</p></div> : null}
+          {!collapsed ? <button type="button" onClick={() => setCollapsed(true)} aria-label="Ciutkan menu" title="Ciutkan menu" className="rounded-lg p-2 text-emerald-200/60 hover:bg-white/10 hover:text-white"><PanelLeftClose className="h-4 w-4" /></button> : null}
         </div>
-        {collapsed ? <button type="button" onClick={() => setCollapsed(false)} aria-label="Perluas menu" title="Perluas menu" className="mx-auto mt-3 rounded-lg p-2 text-slate-400 hover:bg-slate-50"><Menu className="h-4 w-4" /></button> : null}
+        {collapsed ? <button type="button" onClick={() => setCollapsed(false)} aria-label="Perluas menu" title="Perluas menu" className="mx-auto mt-3 rounded-lg p-2 text-emerald-200/60 hover:bg-white/10"><Menu className="h-4 w-4" /></button> : null}
         <div id="admin-desktop-navigation" className={`mt-4 min-h-0 flex-1 overflow-y-auto ${collapsed ? "px-2" : "px-3"}`}>
-          {collapsed ? <div className="space-y-2">{allItems.map((item) => { const Icon = iconByKey[item.key] || LayoutDashboard; return <Link key={item.key} title={item.label} aria-label={item.label} aria-current={current?.key === item.key ? "page" : undefined} href={item.href} className={`mx-auto grid h-11 w-11 place-items-center rounded-xl ${current?.key === item.key ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}><Icon className="h-[18px] w-[18px]" /></Link>; })}</div> : navContent()}
+          {collapsed ? <div className="space-y-2">{allItems.map((item) => { const Icon = iconByKey[item.key] || LayoutDashboard; return <Link key={item.key} title={item.label} aria-label={item.label} aria-current={current?.key === item.key ? "page" : undefined} href={item.href} className={`mx-auto grid h-11 w-11 place-items-center rounded-xl ${current?.key === item.key ? "bg-[#134e35] text-[#ceeb7a]" : "text-emerald-100/70 hover:bg-white/10"}`}><Icon className="h-[18px] w-[18px]" /></Link>; })}</div> : navContent()}
         </div>
-        <div className={`border-t border-slate-100 py-3 ${collapsed ? "px-2" : "px-3"}`}>
-          {!collapsed ? <div className="mb-2 rounded-xl bg-emerald-50/70 px-3 py-2.5"><p className="truncate text-xs font-extrabold text-emerald-950">{actor.role === "superadmin" ? "Superadmin" : actor.label}</p><p className="mt-0.5 truncate text-[10px] font-medium text-emerald-800/70">{scopeText}</p></div> : null}
-          <button type="button" onClick={logout} aria-label="Keluar" title="Keluar" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-xs font-bold text-slate-500 transition hover:bg-rose-50 hover:text-rose-700 ${collapsed ? "justify-center px-0" : ""}`}><LogOut className="h-4 w-4" />{collapsed ? null : "Keluar"}</button>
+        <div className={`border-t border-white/10 py-3 ${collapsed ? "px-2" : "px-3"}`}>
+          {!collapsed ? <div className="mb-2 rounded-xl bg-white/10 px-3 py-2.5"><p className="truncate text-xs font-extrabold text-white">{actor.role === "superadmin" ? "Superadmin" : actor.label}</p><p className="mt-0.5 truncate text-[10px] font-medium text-emerald-200/70">{scopeText}</p></div> : null}
+          <button type="button" onClick={logout} aria-label="Keluar" title="Keluar" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-xs font-bold text-emerald-100/70 transition hover:bg-rose-500/20 hover:text-rose-200 ${collapsed ? "justify-center px-0" : ""}`}><LogOut className="h-4 w-4" />{collapsed ? null : "Keluar"}</button>
         </div>
       </aside>
 
-      <div hidden={!mobileOpen} className="fixed inset-0 z-50 bg-slate-950/35 lg:hidden" onClick={closeMobileNavigation}>
-        <aside ref={mobileNavigationRef} id="admin-mobile-navigation" role="dialog" aria-modal={mobileOpen ? "true" : undefined} aria-label="Navigasi admin" className="flex h-full w-[min(86vw,310px)] flex-col bg-white px-3" onClick={(event) => event.stopPropagation()}>
-          <div className="flex h-[72px] items-center justify-between border-b border-slate-100 px-2"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-800 text-sm font-black text-white">KK</span><span className="text-sm font-black">Kampus Kita</span></div><button type="button" onClick={closeMobileNavigation} className="rounded-lg p-2 text-slate-400" aria-label="Tutup menu"><X className="h-5 w-5" /></button></div>
+      <div hidden={!mobileOpen} className="fixed inset-0 z-50 bg-slate-950/45 lg:hidden" onClick={closeMobileNavigation}>
+        <aside ref={mobileNavigationRef} id="admin-mobile-navigation" role="dialog" aria-modal={mobileOpen ? "true" : undefined} aria-label="Navigasi admin" className="flex h-full w-[min(86vw,310px)] flex-col bg-[#0a2e1f] text-white px-3" onClick={(event) => event.stopPropagation()}>
+          <div className="flex h-[72px] items-center justify-between border-b border-white/10 px-2"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-2xl bg-[#134e35] text-sm font-black text-[#ceeb7a]">KK</span><span className="text-sm font-black">Kampus Kita</span></div><button type="button" onClick={closeMobileNavigation} className="rounded-lg p-2 text-emerald-200/70" aria-label="Tutup menu"><X className="h-5 w-5" /></button></div>
           <div className="mt-4 flex-1 overflow-y-auto">{navContent(closeMobileNavigation)}</div>
-          <div className="border-t border-slate-100 py-4"><p className="truncate px-3 text-xs font-bold">{actor.role === "superadmin" ? "Superadmin" : actor.label}</p><button type="button" onClick={logout} className="mt-2 flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-700"><LogOut className="h-4 w-4" />Keluar</button></div>
+          <div className="border-t border-white/10 py-4"><p className="truncate px-3 text-xs font-bold text-white">{actor.role === "superadmin" ? "Superadmin" : actor.label}</p><button type="button" onClick={logout} className="mt-2 flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-xs font-bold text-emerald-100/75 hover:bg-rose-500/20 hover:text-rose-200"><LogOut className="h-4 w-4" />Keluar</button></div>
         </aside>
       </div>
 
       <main className={`min-h-screen ${collapsed ? "lg:pl-[84px]" : "lg:pl-[268px]"}`}>
-        <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
+        <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-[#e2f0e6] bg-white/95 px-4 backdrop-blur-xl sm:px-7">
           <button type="button" onClick={() => setMobileOpen(true)} className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka navigasi admin" aria-haspopup="dialog" aria-expanded={mobileOpen} aria-controls="admin-mobile-navigation"><Menu className="h-5 w-5" /></button>
           
           <div className="min-w-0 flex-1 flex items-center gap-3">

@@ -10,10 +10,10 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
   const inisial = nama.slice(0, 2).toUpperCase();
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="overflow-hidden rounded-3xl border border-[#e2f0e6] bg-white shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] dark:border-white/10 dark:bg-[#112218]">
       {/* ── Sampul ─────────────────────────────────────────────────────── */}
-      <div className="relative h-32 sm:h-48 bg-gray-50 dark:bg-slate-800">
-        {profil.banner_url ? (
+      <div className="relative h-32 sm:h-48 bg-[#e6f8e8] dark:bg-[#0f1e15]">
+        {profil.banner_url ? ( // eslint-disable-line
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={profil.banner_url} alt="Cover toko" className="h-full w-full object-cover" />
@@ -52,7 +52,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
         <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:gap-6">
           {/* Avatar / Logo */}
           <div className="relative z-10 mx-auto shrink-0 sm:mx-0">
-            <div className="h-[96px] w-[96px] shrink-0 overflow-hidden rounded-full border-[4px] border-white bg-white shadow-sm dark:border-slate-900 dark:bg-slate-900 sm:h-[120px] sm:w-[120px]">
+            <div className="h-[96px] w-[96px] shrink-0 overflow-hidden rounded-full border-[4px] border-white bg-white shadow-sm dark:border-[#112218] dark:bg-[#112218] sm:h-[120px] sm:w-[120px]">
               {profil.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profil.logo_url} alt={nama} className="h-full w-full object-cover" />
@@ -77,7 +77,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
           </div>
 
           <div className="min-w-0 flex-1 text-center sm:pb-2 sm:text-left">
-            <h1 className="flex items-center justify-center gap-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:justify-start sm:text-3xl">
+            <h1 className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-[#101f15] dark:text-white sm:justify-start sm:text-3xl">
               <span className="truncate">{nama}</span>
               {profil.trusted_seller && (
                 <span
@@ -92,7 +92,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
             </h1>
 
             {profil.tagline && (
-              <p className="mt-1.5 text-sm font-medium text-gray-500 dark:text-slate-400 sm:text-base">
+              <p className="mt-1.5 text-sm font-medium text-[#707972] dark:text-[#9db8a2] sm:text-base">
                 {profil.tagline}
               </p>
             )}
@@ -110,8 +110,8 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
               </span>
 
               {profil.store_area && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4faf5] border border-[#e2f0e6] px-3 py-1.5 text-xs font-medium text-[#404943] dark:border-white/10 dark:bg-white/5 dark:text-[#9db8a2]">
+                  <svg className="h-3.5 w-3.5 text-[#9db8a2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" strokeLinejoin="round" />
                     <circle cx="12" cy="10" r="2.4" />
                   </svg>
@@ -120,8 +120,8 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
               )}
 
               {profil.store_hours && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f4faf5] border border-[#e2f0e6] px-3 py-1.5 text-xs font-medium text-[#404943] dark:border-white/10 dark:bg-white/5 dark:text-[#9db8a2]">
+                  <svg className="h-3.5 w-3.5 text-[#9db8a2]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <circle cx="12" cy="12" r="9" />
                     <path d="M12 7v5l3 2" strokeLinecap="round" />
                   </svg>
@@ -151,7 +151,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
                 href={`https://instagram.com/${profil.store_instagram}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#e2f0e6] bg-white px-4 py-2 text-sm font-medium text-[#404943] shadow-sm transition hover:bg-[#f4faf5] hover:text-[#101f15] dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2] dark:hover:bg-white/5"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="3" width="18" height="18" rx="5" />
@@ -166,7 +166,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
                 href={profil.store_gmaps}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#e2f0e6] bg-white px-4 py-2 text-sm font-medium text-[#404943] shadow-sm transition hover:bg-[#f4faf5] hover:text-[#101f15] dark:border-white/10 dark:bg-[#112218] dark:text-[#9db8a2] dark:hover:bg-white/5"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -180,7 +180,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
         </div>
 
         {/* ── Angka toko ───────────────────────────────────────────────── */}
-        <div className="mt-8 flex flex-wrap justify-center sm:justify-start gap-6 sm:gap-10 border-t border-gray-100 pt-6 dark:border-slate-800">
+        <div className="mt-8 flex flex-wrap justify-center sm:justify-start gap-6 sm:gap-10 border-t border-[#e2f0e6] pt-6 dark:border-white/10">
           <Angka nilai={statistik.aktif} label="Barang Aktif" warna={warna} tebal />
           <Angka nilai={statistik.terjual} label="Terjual" warna={warna} />
           <Angka
@@ -206,7 +206,7 @@ function Angka({ nilai, label, warna, tebal, ikon }) {
         {nilai}
         {ikon && <span style={{ color: warna.utama }} className="text-lg">{ikon}</span>}
       </p>
-      <p className="mt-0.5 text-xs font-medium text-gray-500 uppercase tracking-wide dark:text-slate-400">
+      <p className="mt-0.5 text-xs font-medium text-[#707972] uppercase tracking-wide dark:text-[#9db8a2]">
         {label}
       </p>
     </div>

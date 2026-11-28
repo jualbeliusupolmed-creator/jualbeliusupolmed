@@ -11,13 +11,14 @@ export default function SyaratKetentuanPage() {
   const waDisplay = `+62 ${MARKETPLACE_WA.slice(2, 5)}-${MARKETPLACE_WA.slice(5, 9)}-${MARKETPLACE_WA.slice(9)}`;
   
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Syarat &amp; Ketentuan</h1>
-        <p className="mt-2 text-sm text-gray-500">Terakhir Diperbarui: 25 Juni 2026</p>
-      </div>
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0f1e15] pb-28 lg:pb-14">
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#101f15] dark:text-[#ecfeee] sm:text-4xl">Syarat &amp; Ketentuan</h1>
+          <p className="mt-2 text-sm text-[#707972] dark:text-[#9db8a2]">Terakhir Diperbarui: 25 Juni 2026</p>
+        </div>
 
-      <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
+        <div className="rounded-3xl border border-[#e2f0e6] dark:border-white/10 bg-white dark:bg-[#112218] shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] mt-8 p-6 sm:p-8 space-y-6 text-sm text-[#404943] dark:text-[#9db8a2] leading-relaxed">
         <p>
           Selamat datang di <strong>Kampus Kita</strong>. Dengan mengakses, mendaftar, atau menggunakan platform kami, Anda setuju untuk terikat oleh Syarat dan Ketentuan berikut. Mohon baca dengan saksama sebelum menggunakan layanan kami.
         </p>
@@ -112,6 +113,7 @@ export default function SyaratKetentuanPage() {
           Kembali ke Beranda
         </Link>
       </div>
+    </div>
     </div>
   );
 }

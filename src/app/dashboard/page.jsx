@@ -484,7 +484,8 @@ function DashboardInner() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="min-h-screen bg-[#f4faf5] dark:bg-[#0a1710] pb-24 lg:pb-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
 
       {/* ===== Modals ===== */}
 
@@ -708,96 +709,269 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      {/* ===== DASHBOARD HEADER ===== */}
-      <header className="page-header mb-5 border-0 pb-0">
-        <div>
-          <p className="page-eyebrow">Ruang akun</p>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-description">Kelola barang, pesanan, performa, dan profil akunmu.</p>
-        </div>
-        <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
-          {wa && <PushNotificationButton wa={wa} />}
-          {loaded && (
-            <Link 
-              href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
-              className="btn-primary min-h-11 w-full rounded-full px-4 py-2 text-xs font-extrabold shadow-sm sm:w-auto"
-            >
-              <Icon.PlusCircle className="w-3.5 h-3.5" />
-              <span>{isUkmAccount ? "Tambah Danus / Merch" : "Jual Barang"}</span>
-            </Link>
-          )}
-        </div>
-      </header>
-
-      <section className="card-shell mb-5 rounded-3xl p-4 shadow-sm sm:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-black text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
-              {sellerProfile?.photo_url ? (
-                <Image
-                  src={sellerProfile.photo_url}
-                  alt="Avatar"
-                  fill
-                  className="object-cover"
-                />
-              ) : sellerProfile?.name ? (
-                sellerProfile.name.charAt(0).toUpperCase()
-              ) : (
-                <Icon.User className="h-7 w-7" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-lg">
-                  {sellerProfile?.ukm_name || sellerProfile?.name || "Dashboard Penjual"}
-                </h2>
-                {isUkmAccount && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-                    <Icon.Landmark className="h-3.5 w-3.5" />
-                    UKM / BEM RESMI
-                  </span>
-                )}
-                {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
-                    <Icon.Star className="h-3.5 w-3.5" />
-                    PRO
-                  </span>
-                )}
-                {sellerProfile?.distributor && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-950/60 px-2.5 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800">
-                    <Icon.Store className="h-3.5 w-3.5" />
-                    DISTRIBUTOR
-                  </span>
-                )}
-              </div>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                <span className="inline-flex items-center gap-1">
-                  <Icon.Phone className="h-3.5 w-3.5" />
-                  {wa || "Nomor terhubung"}
+      {/* ===== DASHBOARD SHELL (Stitch Desktop Sidebar + Mobile-First Main) ===== */}
+      <div className="lg:grid lg:grid-cols-12 lg:gap-7 lg:items-start">
+        {/* Desktop Left Sidebar */}
+        <aside className="hidden lg:block lg:col-span-3 bg-white dark:bg-[#112218] rounded-3xl p-4 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] border border-[#e2f0e6] dark:border-white/10 sticky top-24 space-y-1">
+          {[
+            { id: "jual", label: "Dashboard", icon: "dashboard" },
+            { id: "jual-list", target: "jual", label: isUkmAccount ? "Danus / Merch" : "Barang Jualan", icon: "shopping_bag", count: active.length },
+            { id: "open-po", label: "Open PO", icon: "calendar_today" },
+            { id: "dicari", label: "Barang Dicari (WTB)", icon: "campaign", count: wantedItems.length },
+            { id: "tawaran", label: "Tawaran Masuk", icon: "chat_bubble_outline", count: offers.filter((o) => o.status === "pending").length },
+            { id: "statistik", label: "Performa", icon: "bar_chart" },
+          ].map((nav) => {
+            const targetTab = nav.target || nav.id;
+            const isActive = nav.id === "jual" ? activeTab === "jual" : activeTab === targetTab && nav.id !== "jual-list";
+            return (
+              <button
+                key={nav.id}
+                type="button"
+                onClick={() => selectTab(targetTab)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                  isActive
+                    ? "bg-[#003622] text-white shadow-xs"
+                    : "text-[#404943] dark:text-slate-300 hover:bg-[#e6f8e8]/70 dark:hover:bg-white/5"
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[18px]">{nav.icon}</span>
+                  {nav.label}
                 </span>
-                {sellerProfile?.free_bumps > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-                    <Icon.RefreshCcw className="h-3 w-3" />
-                    {sellerProfile.free_bumps}x Free Bump
+                {typeof nav.count === "number" && nav.count > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${isActive ? "bg-[#ceeb7a] text-[#003622]" : "bg-[#e6f8e8] text-[#134e35]"}`}>
+                    {nav.count}
                   </span>
                 )}
+              </button>
+            );
+          })}
+
+          <div className="my-3 border-t border-[#e2f0e6] dark:border-white/10" />
+
+          {[
+            { id: "profil", label: "Profil & Toko", icon: "person_outline" },
+            { id: "pro", label: "Kampus Kita PRO", icon: "workspace_premium", highlight: true },
+            { id: "referral", label: "Referral", icon: "group_add" },
+            { id: "blog", label: "Blog / Penulis", icon: "edit_note" },
+            ...(isUkmAccount ? [{ id: "ukm", label: "UKM / Organisasi", icon: "apartment" }] : []),
+          ].map((nav) => {
+            const isActive = activeTab === nav.id;
+            return (
+              <button
+                key={nav.id}
+                type="button"
+                onClick={() => selectTab(nav.id)}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                  isActive
+                    ? "bg-[#003622] text-white shadow-xs"
+                    : nav.highlight
+                      ? "text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                      : "text-[#404943] dark:text-slate-300 hover:bg-[#e6f8e8]/70 dark:hover:bg-white/5"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{nav.icon}</span>
+                {nav.label}
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* Main Content */}
+        <div className="lg:col-span-9 min-w-0">
+          {/* Header */}
+          <header className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-[#101f15] dark:text-white tracking-tight">
+                Dashboard Saya
+              </h1>
+              <p className="text-xs sm:text-sm text-[#404943] dark:text-slate-400">
+                Kelola jual beli, Open PO, dan aktivitas toko kamu.
               </p>
             </div>
-          </div>
+            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
+              {wa && <PushNotificationButton wa={wa} />}
+              {loaded && (
+                <Link
+                  href={isUkmAccount ? "/jual?type=danus" : "/jual"}
+                  className="inline-flex items-center justify-center gap-1.5 min-h-10 rounded-full bg-[#003622] hover:bg-[#134e35] text-white px-4 py-2 text-xs font-extrabold shadow-sm transition"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  <span>{isUkmAccount ? "Tambah Danus / Merch" : "Jual Barang"}</span>
+                </Link>
+              )}
+            </div>
+          </header>
 
-          {sellerProfile?.slug && (
-            <a
-              href={isUkmAccount ? "/organisasi" : `/toko/${sellerProfile.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-outline min-h-10 self-start px-3 text-xs sm:self-auto"
-            >
-              <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
-              <Icon.ArrowRight className="h-3.5 w-3.5" />
-            </a>
+          {/* Store Profile Card */}
+          <section className="bg-white dark:bg-[#112218] border border-[#e2f0e6] dark:border-white/10 mb-5 rounded-3xl p-4 shadow-[0_4px_20px_-4px_rgba(19,78,53,0.06)] sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3.5">
+                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#e2f0e6] bg-[#e6f8e8] text-lg font-black text-[#003622] dark:border-white/10 dark:bg-[#134e35]/40 dark:text-[#bef264]">
+                  {sellerProfile?.photo_url ? (
+                    <Image
+                      src={sellerProfile.photo_url}
+                      alt="Avatar"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : sellerProfile?.name ? (
+                    sellerProfile.name.charAt(0).toUpperCase()
+                  ) : (
+                    <span className="material-symbols-outlined text-[24px]">storefront</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-extrabold tracking-tight text-[#101f15] dark:text-white">
+                      {sellerProfile?.ukm_name || sellerProfile?.name || "Toko Kampus"}
+                    </h2>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f8e8] dark:bg-[#134e35]/40 px-2.5 py-0.5 text-[10px] font-extrabold text-[#134e35] dark:text-[#bef264]">
+                      <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                      Aktif
+                    </span>
+                    {isUkmAccount && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400">
+                        UKM / BEM
+                      </span>
+                    )}
+                    {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-400">
+                        PRO
+                      </span>
+                    )}
+                    {sellerProfile?.distributor && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-950/60 px-2.5 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-400">
+                        DISTRIBUTOR
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#707972] dark:text-slate-400">
+                    <span>Akun Penjual • {wa || "Nomor terhubung"}</span>
+                    {sellerProfile?.free_bumps > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f8e8] px-2 py-0.5 text-[10px] font-bold text-[#134e35]">
+                        {sellerProfile.free_bumps}x Free Bump
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => selectTab("profil")}
+                  className="px-4 py-2 rounded-full border border-[#e2f0e6] dark:border-white/15 bg-white dark:bg-white/5 hover:bg-[#e6f8e8] text-xs font-bold text-[#101f15] dark:text-white transition"
+                >
+                  Edit Profil Toko
+                </button>
+                {sellerProfile?.slug && (
+                  <a
+                    href={isUkmAccount ? "/organisasi" : `/toko/${sellerProfile.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-2 rounded-full bg-[#e6f8e8] dark:bg-white/10 text-xs font-bold text-[#003622] dark:text-white hover:bg-[#ceeb7a] transition"
+                  >
+                    {isUkmAccount ? "Direktori" : "Lihat Toko"}
+                  </a>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* 4 KPI Cards (Stitch Grid) */}
+          {loaded && (
+            <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+              <div className="bg-white dark:bg-[#112218] rounded-2xl p-4 border border-[#e2f0e6] dark:border-white/10 shadow-xs">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#707972] dark:text-slate-400">
+                  <span className="material-symbols-outlined text-[16px] text-[#134e35] dark:text-[#bef264]">inventory_2</span>
+                  Barang aktif
+                </div>
+                <p className="mt-1.5 text-2xl font-extrabold text-[#101f15] dark:text-white">{active.length}</p>
+              </div>
+              <div className="bg-white dark:bg-[#112218] rounded-2xl p-4 border border-[#e2f0e6] dark:border-white/10 shadow-xs">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#707972] dark:text-slate-400">
+                  <span className="material-symbols-outlined text-[16px] text-[#134e35] dark:text-[#bef264]">chat_bubble_outline</span>
+                  Tawaran masuk
+                </div>
+                <p className="mt-1.5 text-2xl font-extrabold text-[#101f15] dark:text-white">
+                  {offers.filter((o) => o.status === "pending").length}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#112218] rounded-2xl p-4 border border-[#e2f0e6] dark:border-white/10 shadow-xs">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#707972] dark:text-slate-400">
+                  <span className="material-symbols-outlined text-[16px] text-[#134e35] dark:text-[#bef264]">visibility</span>
+                  Total dilihat
+                </div>
+                <p className="mt-1.5 text-2xl font-extrabold text-[#101f15] dark:text-white">
+                  {totalViews.toLocaleString("id-ID")}
+                </p>
+              </div>
+              <div className="bg-white dark:bg-[#112218] rounded-2xl p-4 border border-[#e2f0e6] dark:border-white/10 shadow-xs">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#707972] dark:text-slate-400">
+                  <span className="material-symbols-outlined text-[16px] text-[#134e35] dark:text-[#bef264]">shopping_cart</span>
+                  Barang terjual
+                </div>
+                <p className="mt-1.5 text-2xl font-extrabold text-[#101f15] dark:text-white">{soldItems.length}</p>
+              </div>
+            </section>
           )}
-        </div>
-      </section>
+
+          {/* Mobile Akses Cepat & PRO Card */}
+          {loaded && (
+            <div className="lg:hidden space-y-4 mb-5">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-extrabold text-[#101f15] dark:text-white">Akses Cepat</h3>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { id: "jual", label: "Barang", icon: "inventory_2" },
+                    { id: "open-po", label: "Open PO", icon: "calendar_today" },
+                    { id: "tawaran", label: "Tawaran", icon: "chat" },
+                    { id: "statistik", label: "Performa", icon: "bar_chart" },
+                    { id: "profil", label: "Profil", icon: "person" },
+                  ].map((q) => (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => selectTab(q.id)}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-xs transition ${
+                        activeTab === q.id
+                          ? "bg-[#003622] text-white border-[#003622]"
+                          : "bg-white dark:bg-[#112218] text-[#134e35] dark:text-[#bef264] border-[#e2f0e6] dark:border-white/10"
+                      }`}>
+                        <span className="material-symbols-outlined text-[20px]">{q.icon}</span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-[#404943] dark:text-slate-300">{q.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => selectTab("pro")}
+                className="w-full text-left bg-white dark:bg-[#112218] rounded-2xl p-3.5 border border-[#e2f0e6] dark:border-white/10 shadow-xs flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <span className="material-symbols-fill text-[20px]">star</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-extrabold text-[#101f15] dark:text-white">Kampus Kita PRO</span>
+                      <span className="px-1.5 py-0.5 rounded bg-amber-400 text-[#451a03] text-[9px] font-extrabold">PRO</span>
+                    </div>
+                    <p className="text-[10px] text-[#707972]">Tingkatkan visibilitas dan fitur toko</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-[#707972] text-[18px]">chevron_right</span>
+              </button>
+            </div>
+          )}
 
       {note && (
         <div className="mb-6 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3 text-xs font-semibold text-primary">
@@ -1809,6 +1983,9 @@ function DashboardInner() {
           </div>
         </div>
       )}
+        </div>
+      </div>
+      </div>
     </div>
   );
 }

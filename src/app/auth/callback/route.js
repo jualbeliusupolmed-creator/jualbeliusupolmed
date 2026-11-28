@@ -284,7 +284,7 @@ export async function GET(request) {
   const isGoogleLinkFlow = isSellerGoogleLinkFlow(searchParams, googleLinkToken);
   if (
     isGoogleLinkFlow &&
-    (!googleLinkToken || !googleLinkWa || !verifySellerGoogleLinkToken(googleLinkToken, googleLinkWa))
+    (!googleLinkToken || !googleLinkWa || !(await verifySellerGoogleLinkToken(googleLinkToken, googleLinkWa)))
   ) {
     return googleLinkRedirect(request, "failed");
   }
@@ -405,7 +405,7 @@ export async function POST(request) {
     const isGoogleLinkFlow = Boolean(requestedGoogleLinkFlow || googleLinkToken);
     if (isGoogleLinkFlow) {
       const wa = formatWa(await getSellerSessionAsync() || "");
-      if (!googleLinkToken || !wa || !verifySellerGoogleLinkToken(googleLinkToken, wa)) {
+      if (!googleLinkToken || !wa || !(await verifySellerGoogleLinkToken(googleLinkToken, wa))) {
         return googleLinkJson(
           { success: false, redirectUrl: `${origin}/dashboard?tab=profil&google_link=failed` },
           403
