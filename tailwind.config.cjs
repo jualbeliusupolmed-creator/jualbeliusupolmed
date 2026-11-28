@@ -2,8 +2,8 @@
 module.exports = {
   darkMode: "class",
   content: [
-    "./src/app/**/*.{js,jsx}",
-    "./src/components/**/*.{js,jsx}",
+    "./src/app/**/*.{js,jsx,ts,tsx}",
+    "./src/components/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
@@ -21,8 +21,8 @@ module.exports = {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          dark: "#065f46",
-          light: "#059669",
+          dark: "#0a2e1f",
+          light: "#256b4f",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -39,22 +39,22 @@ module.exports = {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
-          dark: "#03411f",
-          light: "#059669",
+          dark: "#0a2e1f",
+          light: "#d9f99d",
         },
         // Dua warna kampus dinamai apa adanya supaya niatnya terbaca di kelas
         // utility: text-usu jelas maksudnya, text-emerald-700 tidak.
         usu: {
-          DEFAULT: "#065932",
-          light: "#0d8348",
-          dark: "#03411f",
-          soft: "#e3efe7",
+          DEFAULT: "#134e35",
+          light: "#256b4f",
+          dark: "#0a2e1f",
+          soft: "#e4f2e8",
         },
         polmed: {
-          DEFAULT: "#047857",
-          light: "#059669",
-          dark: "#065f46",
-          soft: "#d1fae5",
+          DEFAULT: "#134e35",
+          light: "#256b4f",
+          dark: "#0a2e1f",
+          soft: "#e4f2e8",
         },
         popover: {
           DEFAULT: "var(--popover)",

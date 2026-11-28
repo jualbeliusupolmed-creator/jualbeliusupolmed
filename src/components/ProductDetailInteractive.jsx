@@ -4,18 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { rupiah } from "@/lib/fees";
-import { formatWa } from "@/lib/constants";
-import MinatButton from "@/components/MinatButton";
 import OfferButton from "@/components/OfferButton";
 import CartButton from "@/components/CartButton";
 import ShareModal from "@/components/ShareModal";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import QRButton from "@/components/QRButton";
-import NativeShareButton from "@/components/NativeShareButton";
 import OwnerFastActions from "@/components/OwnerFastActions";
-import RatingWidget from "@/components/RatingWidget";
 import ReportButton from "@/components/ReportButton";
-import { toast } from "sonner";
 
 export default function ProductDetailInteractive({
   listing,
@@ -25,24 +20,16 @@ export default function ProductDetailInteractive({
   gallery,
 }) {
   const [activeTab, setActiveTab] = useState("specs"); // 'specs' | 'usage' | 'diagnostic'
-  
-  const defaultCodPoints = [{
-    id: "campus-public",
-    title: listing.campus && listing.campus !== "Semua" ? `Area aman sekitar ${listing.campus}` : "Area kampus yang disepakati",
-    tag: "Rekomendasi",
-    desc: "Pilih titik temu publik yang ramai, terang, dan mudah dijangkau kedua pihak.",
-    icon: "location_on",
-  }];
+  const codMessage = "Lokasi publik yang disepakati";
 
-  const [selectedCodPoint, setSelectedCodPoint] = useState(defaultCodPoints[0]);
-
-  // Extract or synthesize hardware diagnosis and usage notes
   const conditionLabel =
     listing.condition === "new"
-      ? "Baru (Segel / Belum Dipakai)"
+      ? "Baru"
       : listing.condition === "like_new"
-      ? "Seperti Baru (Mulus 95-99%)"
-      : "Bekas Normal (Pemakaian Kuliah)";
+      ? "Seperti baru"
+      : listing.condition === "used"
+      ? "Bekas"
+      : "Kondisi belum dicantumkan";
 
   // Seller display attributes
   const isStudentVerified = !!(
@@ -50,7 +37,9 @@ export default function ProductDetailInteractive({
   );
   const sellerCampus =
     listing.seller_profiles?.student_campus ||
-    (listing.campus !== "Semua" ? listing.campus : "Semua Kampus");
+    (listing.campus === "Semua"
+      ? "Semua Kampus"
+      : listing.campus || "Kampus belum dicantumkan");
   const sellerFaculty =
     listing.seller_profiles?.student_faculty ||
     listing.seller_profiles?.faculty ||
@@ -68,9 +57,16 @@ export default function ProductDetailInteractive({
     ? Number(listing.seller_profiles.total_deals)
     : null;
   const sellerResponse = listing.seller_profiles?.response_time || null;
+  const viewCount = Number(listing.views);
+  const hasViewCount =
+    listing.views !== null &&
+    listing.views !== undefined &&
+    listing.views !== "" &&
+    Number.isFinite(viewCount) &&
+    viewCount >= 0;
 
   // Rute aman WhatsApp via server tanpa membocorkan nomor penjual ke HTML
-  const waUrl = `/chat-wa/${listing.id}?cod=${encodeURIComponent(selectedCodPoint.title || "")}`;
+  const waUrl = `/chat-wa/${listing.id}?cod=${encodeURIComponent(codMessage)}`;
 
   return (
     <>
@@ -82,13 +78,40 @@ export default function ProductDetailInteractive({
           </div>
         )}
 
+        <section
+          aria-labelledby="product-description-title"
+          className="rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-white/10 dark:bg-slate-900 sm:p-6"
+        >
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <h2
+              id="product-description-title"
+              className="text-lg font-extrabold tracking-tight text-slate-950 dark:text-white"
+            >
+              Tentang barang
+            </h2>
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              {conditionLabel}
+            </span>
+          </div>
+          {listing.description?.trim() ? (
+            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700 dark:text-slate-300">
+              {listing.description.trim()}
+            </p>
+          ) : (
+            <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Penjual belum menambahkan deskripsi untuk barang ini.
+            </p>
+          )}
+        </section>
+
         {/* TAB NAVIGATION (SCREEN_15 & 12.html standard) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3 overflow-x-auto [scrollbar-width:none]">
             <button
               type="button"
               onClick={() => setActiveTab("specs")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
+              aria-pressed={activeTab === "specs"}
+              className={`min-h-11 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "specs"
                   ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
@@ -101,7 +124,8 @@ export default function ProductDetailInteractive({
             <button
               type="button"
               onClick={() => setActiveTab("usage")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
+              aria-pressed={activeTab === "usage"}
+              className={`min-h-11 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "usage"
                   ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
@@ -114,7 +138,8 @@ export default function ProductDetailInteractive({
             <button
               type="button"
               onClick={() => setActiveTab("diagnostic")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
+              aria-pressed={activeTab === "diagnostic"}
+              className={`min-h-11 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "diagnostic"
                   ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
@@ -141,7 +166,7 @@ export default function ProductDetailInteractive({
                     {conditionLabel}
                   </span>
                   <span className="text-xs text-slate-500">
-                    Sesuai dengan foto fisik asli tanpa editan.
+                    Periksa foto dan kondisi barang sebelum bertransaksi.
                   </span>
                 </div>
 
@@ -172,13 +197,6 @@ export default function ProductDetailInteractive({
                 ))}
               </div>
 
-              {/* Deskripsi dasar */}
-              <div className="pt-2">
-                <span className="text-xs font-bold text-slate-500 block mb-1">Deskripsi Tambahan:</span>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                  {listing.description || "Tidak ada deskripsi tambahan dari penjual."}
-                </p>
-              </div>
             </div>
           )}
 
@@ -195,20 +213,19 @@ export default function ProductDetailInteractive({
                   Alasan Dijual &amp; Riwayat
                 </span>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {listing.description?.includes("Alasan") || listing.description?.includes("dijual")
-                    ? listing.description
-                    : "Barang pemakaian mahasiswa kuliah aktif (sudah lulus mata kuliah / praktikum terkait atau ingin upgrade). Kondisi terawat siap pakai."}
+                  {listing.description?.trim() ||
+                    "Penjual belum menambahkan catatan pemakaian atau alasan dijual."}
                 </p>
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Standar Kelengkapan Paket Janjian COD:
+                  Yang perlu dikonfirmasi sebelum COD:
                 </span>
                 <ul className="list-disc list-inside text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-1 pl-1">
-                  <li>Unit barang utama sesuai foto dan deskripsi</li>
-                  <li>Aksesoris / kabel / charger bawaan jika barang elektronik</li>
-                  <li>Dapat dicek dan dicoba langsung sepuasnya saat COD sebelum bayar</li>
+                  <li>Kondisi barang sesuai foto dan deskripsi</li>
+                  <li>Kelengkapan yang termasuk dalam penjualan</li>
+                  <li>Tanyakan apakah barang dapat diperiksa sebelum membayar</li>
                 </ul>
               </div>
             </div>
@@ -228,15 +245,15 @@ export default function ProductDetailInteractive({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[
-                  { label: "Bodi & Fisik", status: "Cek goresan, retak, atau jahitan" },
-                  { label: "Layar & Tampilan", status: "Uji kecerahan & pixel layar" },
-                  { label: "Koneksi & Jaringan", status: "Coba hubungkan ke Wi-Fi / Hotspot" },
-                  { label: "Tombol & Fungsi", status: "Coba seluruh tuts & fungsi utama" },
-                  { label: "Port & Colokan", status: "Periksa slot colokan & kabel daya" },
-                  { label: "Baterai & Daya", status: "Periksa sisa persentase baterai" },
-                ].map((item, idx) => (
+                  { label: "Kondisi", status: "Bandingkan dengan foto dan deskripsi" },
+                  { label: "Kelengkapan", status: "Pastikan item yang disepakati tersedia" },
+                  { label: "Fungsi", status: "Coba fitur utama yang relevan" },
+                  { label: "Harga", status: "Konfirmasi harga sebelum bertemu" },
+                  { label: "Lokasi", status: "Pilih tempat publik yang disepakati" },
+                  { label: "Pembayaran", status: "Selesaikan setelah barang diperiksa" },
+                ].map((item) => (
                   <div
-                    key={idx}
+                    key={item.label}
                     className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 text-xs font-medium"
                   >
                     <Icon.CheckCircle className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -250,7 +267,7 @@ export default function ProductDetailInteractive({
                 ))}
               </div>
               <p className="text-[11px] text-slate-500 italic">
-                *Demi kenyamanan bersama, selalu periksa dan coba barang secara langsung di lokasi titik temu kampus sebelum melakukan pembayaran.
+                Sesuaikan pemeriksaan dengan jenis barang dan kesepakatan bersama.
               </p>
             </div>
           )}
@@ -266,7 +283,7 @@ export default function ProductDetailInteractive({
               Panduan Aman Transaksi Mahasiswa (COD)
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Prioritaskan keselamatan dan transparansi. Jangan pernah mengirimkan uang panjar/DP sebelum memeriksa kondisi fisik barang secara langsung di titik jemput kampus resmi.
+              Pilih lokasi publik yang disepakati bersama. Periksa kondisi barang sebelum menyelesaikan pembayaran.
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
               <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
@@ -293,14 +310,16 @@ export default function ProductDetailInteractive({
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-5 lg:gap-3 lg:p-5">
           {/* Header & Badges */}
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
               <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">
                 {listing.category}
               </span>
-              <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                <Icon.Eye className="w-3.5 h-3.5" />
-                <span>{listing.views || 1}x dilihat</span>
-              </div>
+              {hasViewCount && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <Icon.Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{new Intl.NumberFormat("id-ID").format(viewCount)} kali dilihat</span>
+                </div>
+              )}
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white leading-snug">
@@ -324,76 +343,31 @@ export default function ProductDetailInteractive({
             </div>
           </div>
 
-          {/* Bebas Ongkir & Temu di Kampus Banner */}
+          {/* Meeting guidance */}
           <div className="rounded-xl p-3.5 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/50 flex items-center gap-3 lg:hidden">
             <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Icon.ShoppingBag className="w-4 h-4 text-emerald-100" aria-hidden="true" />
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 leading-tight">
-                Bebas Ongkir &amp; Janjian di Kampus
+                Janjian di kampus
               </span>
               <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                Tatap muka langsung sesama mahasiswa di lingkungan kampus.
+                Sepakati lokasi dan waktu bertemu langsung dengan penjual.
               </span>
             </div>
           </div>
 
-          {/* INTERACTIVE TITIK KUMPUL COD PICKER (SCREEN_15 Standard) */}
+          {/* Meeting guidance */}
           <div className="flex flex-col gap-2.5 lg:gap-1">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Icon.MapPin className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-                Pilih Titik Kumpul COD Favorit:
+                Titik temu
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold lg:hidden">Klik untuk pilih</span>
             </div>
-
-            <div className="flex flex-col gap-2">
-              {defaultCodPoints.map((point) => {
-                const isSelected = selectedCodPoint.id === point.id;
-                return (
-                  <button
-                    key={point.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCodPoint(point);
-                      toast.success(`Titik COD dipilih: ${point.title}`);
-                    }}
-                    className={`text-left p-3 rounded-xl border transition-colors active:translate-y-px flex items-start gap-2.5 lg:p-2 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
-                      isSelected
-                        ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-700 shadow-xs"
-                        : "bg-slate-50 dark:bg-slate-800/50 border-slate-200/70 dark:border-white/5 hover:border-slate-300"
-                    }`}
-                  >
-                    <Icon.MapPin
-                      className={`w-4 h-4 mt-0.5 shrink-0 ${
-                        isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"
-                      }`}
-                      aria-hidden="true"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {point.title}
-                        </span>
-                        <span
-                          className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-                            isSelected
-                              ? "bg-emerald-700 text-white"
-                              : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
-                          }`}
-                        >
-                          {point.tag}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 lg:hidden">
-                        {point.desc}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+              Sepakati lokasi publik yang ramai dan mudah dijangkau saat menghubungi penjual.
             </div>
           </div>
 
@@ -403,14 +377,13 @@ export default function ProductDetailInteractive({
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    {(listing.seller_name?.[0] || "M").toUpperCase()}
+                    {(listing.seller_name?.[0] || "P").toUpperCase()}
                   </div>
-                  <span className="w-3 h-3 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900 absolute bottom-0 right-0"></span>
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                      {listing.seller_name || "Mahasiswa Kampus"}
+                          {listing.seller_name || "Penjual"}
                     </span>
                     {isStudentVerified && (
                       <Icon.CheckCircle className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" title="KTM Terverifikasi" aria-hidden="true" />
@@ -422,12 +395,18 @@ export default function ProductDetailInteractive({
                 </div>
               </div>
 
-              <Link
-                href={`/penjual/${sellerUsername}`}
-                className="px-3 py-1 rounded-full bg-white dark:bg-slate-900 text-emerald-700 hover:bg-emerald-700 hover:text-white text-xs font-semibold border border-slate-200 dark:border-white/10 transition-colors shadow-2xs focus-visible:outline-2 focus-visible:outline-emerald-600"
-              >
-                Lihat Profil
-              </Link>
+              {sellerUsername ? (
+                <Link
+                  href={`/penjual/${sellerUsername}`}
+                  className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-emerald-700 shadow-2xs transition-colors hover:bg-emerald-700 hover:text-white focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-white/10 dark:bg-slate-900"
+                >
+                  Lihat Profil
+                </Link>
+              ) : (
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Profil belum tersedia
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
@@ -449,7 +428,9 @@ export default function ProductDetailInteractive({
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
                     {sellerResponse || "Belum diatur"}
                   </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">Balas Cepat</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Waktu respons
+                  </span>
                 </div>
               </div>
             </div>
@@ -468,7 +449,7 @@ export default function ProductDetailInteractive({
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors active:translate-y-px lg:py-2.5 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-xs transition-colors hover:bg-emerald-800 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 <Icon.MessageCircle className="w-4 h-4" aria-hidden="true" />
                 <span>Janjian COD via WhatsApp</span>
@@ -476,7 +457,7 @@ export default function ProductDetailInteractive({
 
               <OfferButton
                 listing={listing}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 <span>Tawar Harga Mahasiswa</span>
               </OfferButton>
@@ -506,13 +487,13 @@ export default function ProductDetailInteractive({
         </div>
       </div>
 
-      {/* MOBILE STICKY BOTTOM BAR (Sync with selected COD point) */}
+      {/* Mobile purchase actions stay reachable while scrolling. */}
       {available && (
         <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-between gap-3 motion-safe:animate-fade-in motion-reduce:animate-none">
           <div className="min-w-0 flex-1">
             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center leading-tight truncate">
               <Icon.MapPin className="inline w-3 h-3 text-emerald-700 dark:text-emerald-400 mr-1 shrink-0" aria-hidden="true" />
-              <span className="truncate">{selectedCodPoint.title.split("(")[0]}</span>
+              <span className="truncate">Sepakati titik temu</span>
             </span>
             <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight block truncate">
               {rupiah(listing.price)}
@@ -522,7 +503,7 @@ export default function ProductDetailInteractive({
           <div className="shrink-0 flex items-center gap-2">
             <OfferButton
               listing={listing}
-              className="!w-auto !px-3 !py-2 !text-xs !rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+              className="!w-auto !min-h-11 !px-3 !py-2 !text-xs !rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
               Nego
             </OfferButton>
@@ -531,7 +512,7 @@ export default function ProductDetailInteractive({
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="!w-auto px-4 py-2 text-xs rounded-xl shadow-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+              className="!w-auto min-h-11 px-4 py-2 text-xs rounded-xl shadow-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
               <Icon.MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Janjian COD</span>

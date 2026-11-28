@@ -1,6 +1,5 @@
 import "./globals.css";
 import localFont from "next/font/local";
-import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
 import AdSenseScript from "@/components/AdSenseScript";
@@ -99,8 +98,8 @@ export const viewport = {
   // Cubit-untuk-perbesar dibiarkan hidup: mengunci zoom bikin teks kecil
   // mustahil dibaca sebagian orang, dan itu pelanggaran aksesibilitas.
   maximumScale: 5,
-  // Warna bilah peramban di Android/iOS: Forest Emerald #047857 resmi Kampus Kita
-  themeColor: "#047857",
+  // Match the browser chrome to the shared forest-green brand color.
+  themeColor: "#134e35",
 };
 
 export default async function RootLayout({ children }) {
@@ -138,7 +137,7 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="id" className={cn("font-sans overflow-x-clip", jakartaSans.variable)} suppressHydrationWarning>
+    <html lang="id" data-scroll-behavior="smooth" className={cn("font-sans overflow-x-clip", jakartaSans.variable)} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -225,6 +224,8 @@ export default async function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
+                var isLinuskuPath = window.location.pathname === '/linusku' ||
+                                    window.location.pathname.startsWith('/linusku/');
                 var isDev = window.location.hostname === 'localhost' ||
                             window.location.hostname === '127.0.0.1' ||
                             window.location.port === '3000' ||
@@ -239,7 +240,7 @@ export default async function RootLayout({ children }) {
                       for (var k of keys) { caches.delete(k); }
                     });
                   }
-                } else {
+                } else if (!isLinuskuPath) {
                   window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/sw.js').catch(function(err) {
                       console.warn('SW reg failed: ', err);
@@ -253,7 +254,6 @@ export default async function RootLayout({ children }) {
         <LayoutWrapper>{children}</LayoutWrapper>
         <BackToTop />
         <Toaster position="top-center" theme="system" richColors closeButton />
-        <Analytics />
       </body>
     </html>
   );

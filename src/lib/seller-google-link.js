@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { createHmac } from "@/lib/cryptoCompat";
 import { customAlphabet } from "nanoid";
 
@@ -44,7 +45,7 @@ export function verifySellerGoogleLinkToken(token, activeWa) {
   } catch {
     return false;
   }
-  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return false;
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return false;
 
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));

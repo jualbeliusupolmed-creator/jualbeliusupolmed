@@ -470,7 +470,12 @@ function DashboardInner() {
 
   if (!mounted) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-6 animate-pulse space-y-6">
+      <div
+        role="status"
+        aria-label="Memuat data dashboard"
+        className="mx-auto max-w-6xl space-y-6 px-4 py-6 animate-pulse sm:px-7"
+      >
+        <span className="sr-only">Memuat dashboard akun.</span>
         <div className="h-32 rounded-3xl bg-gray-100 dark:bg-slate-800/50" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="h-10 rounded-xl bg-gray-100 dark:bg-slate-800/50" />
@@ -484,7 +489,7 @@ function DashboardInner() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-5 pb-24 sm:px-7 sm:py-8 sm:pb-10">
 
       {/* ===== Modals ===== */}
 
@@ -709,30 +714,34 @@ function DashboardInner() {
       {/* ===== UI ===== */}
 
       {/* ===== DASHBOARD HEADER ===== */}
-      <header className="page-header mb-5 border-0 pb-0">
-        <div>
-          <p className="page-eyebrow">Ruang akun</p>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-description">Kelola barang, pesanan, performa, dan profil akunmu.</p>
+      <header className="mb-5 flex flex-col gap-4 border-b border-emerald-950/10 pb-5 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Ruang akun</p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700 dark:text-slate-300">
+            Kelola barang, pesanan, performa, dan profil akunmu.
+          </p>
         </div>
         <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
             <Link 
               href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
-              className="btn-primary min-h-11 w-full rounded-full px-4 py-2 text-xs font-extrabold shadow-sm sm:w-auto"
+              className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#134e35] px-5 text-sm font-bold text-white transition-colors hover:bg-[#0a2e1f] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:w-auto"
             >
-              <Icon.PlusCircle className="w-3.5 h-3.5" />
+              <Icon.PlusCircle className="h-4 w-4" aria-hidden="true" />
               <span>{isUkmAccount ? "Tambah Danus / Merch" : "Jual Barang"}</span>
             </Link>
           )}
         </div>
       </header>
 
-      <section className="card-shell mb-5 rounded-3xl p-4 shadow-sm sm:p-5">
+      <section className="mb-5 overflow-hidden rounded-2xl border border-emerald-950/10 bg-[#0a2e1f] p-5 text-white sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-black text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-lime-200/70 bg-emerald-950 text-lg font-black text-lime-200">
               {sellerProfile?.photo_url ? (
                 <Image
                   src={sellerProfile.photo_url}
@@ -743,41 +752,41 @@ function DashboardInner() {
               ) : sellerProfile?.name ? (
                 sellerProfile.name.charAt(0).toUpperCase()
               ) : (
-                <Icon.User className="h-7 w-7" />
+                <Icon.User className="h-7 w-7" aria-hidden="true" />
               )}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-lg">
+                <h2 className="break-words text-base font-extrabold tracking-tight text-white sm:text-lg">
                   {sellerProfile?.ukm_name || sellerProfile?.name || "Dashboard Penjual"}
                 </h2>
                 {isUkmAccount && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
-                    <Icon.Landmark className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-lime-200/50 bg-emerald-950/70 px-2 py-1 text-[10px] font-bold text-lime-100">
+                    <Icon.Landmark className="h-3.5 w-3.5" aria-hidden="true" />
                     UKM / BEM RESMI
                   </span>
                 )}
                 {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
-                    <Icon.Star className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-200/50 bg-amber-950/50 px-2 py-1 text-[10px] font-bold text-amber-100">
+                    <Icon.Star className="h-3.5 w-3.5" aria-hidden="true" />
                     PRO
                   </span>
                 )}
                 {sellerProfile?.distributor && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-orange-950/60 px-2.5 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800">
-                    <Icon.Store className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-orange-200/50 bg-orange-950/50 px-2 py-1 text-[10px] font-bold text-orange-100">
+                    <Icon.Store className="h-3.5 w-3.5" aria-hidden="true" />
                     DISTRIBUTOR
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                <span className="inline-flex items-center gap-1">
-                  <Icon.Phone className="h-3.5 w-3.5" />
+              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-emerald-50">
+                <span className="inline-flex min-h-6 items-center gap-1.5">
+                  <Icon.Phone className="h-3.5 w-3.5" aria-hidden="true" />
                   {wa || "Nomor terhubung"}
                 </span>
                 {sellerProfile?.free_bumps > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-                    <Icon.RefreshCcw className="h-3 w-3" />
+                  <span className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-lime-200/50 bg-emerald-950/60 px-2 text-[10px] font-bold text-lime-100">
+                    <Icon.RefreshCcw className="h-3 w-3" aria-hidden="true" />
                     {sellerProfile.free_bumps}x Free Bump
                   </span>
                 )}
@@ -790,10 +799,10 @@ function DashboardInner() {
               href={isUkmAccount ? "/organisasi" : `/toko/${sellerProfile.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="btn-outline min-h-10 self-start px-3 text-xs sm:self-auto"
+              className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-xl border border-emerald-50/60 px-4 text-sm font-bold text-white transition-colors hover:bg-white/10 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-300 sm:self-auto"
             >
               <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
-              <Icon.ArrowRight className="h-3.5 w-3.5" />
+              <Icon.ArrowRight className="h-4 w-4" aria-hidden="true" />
             </a>
           )}
         </div>
@@ -807,17 +816,18 @@ function DashboardInner() {
 
       {/* Bug #2 Fix: Tampilkan UI error yang jelas + tombol retry kalau load() gagal */}
       {loadError && !busy && (
-        <div className="mb-6 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <Icon.AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5 sm:mt-0" />
+        <div role="alert" className="mb-6 flex flex-col gap-3 rounded-2xl border border-rose-300 bg-rose-50 px-5 py-4 text-rose-950 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-100 sm:flex-row sm:items-center">
+          <Icon.AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-700 dark:text-rose-300 sm:mt-0" aria-hidden="true" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-rose-700 dark:text-rose-300">Gagal memuat data dashboard</p>
-            <p className="text-xs text-rose-500 dark:text-rose-400 mt-0.5">Periksa koneksi internet lalu coba lagi. Jika masalah berlanjut, coba muat ulang halaman.</p>
+            <p className="text-sm font-bold">Gagal memuat data dashboard</p>
+            <p className="mt-0.5 text-xs">Periksa koneksi internet lalu coba lagi. Jika masalah berlanjut, muat ulang halaman.</p>
           </div>
           <button
+            type="button"
             onClick={() => load(wa)}
-            className="px-4 py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-500 text-white active:scale-95 transition-all shrink-0 flex items-center gap-1.5"
+            className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg bg-rose-800 px-4 text-sm font-bold text-white transition-colors hover:bg-rose-900 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-800"
           >
-            <Icon.RefreshCcw className="h-3.5 w-3.5" />
+            <Icon.RefreshCcw className="h-4 w-4" aria-hidden="true" />
             Coba Lagi
           </button>
         </div>
@@ -844,7 +854,7 @@ function DashboardInner() {
           {/* One navigation layer for every dashboard workspace. */}
           <nav
             aria-label="Bagian dashboard"
-            className="sticky top-14 z-30 mb-5 flex min-w-0 gap-1 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-100/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:top-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="mb-5 flex min-w-0 gap-2 overflow-x-auto rounded-2xl border border-emerald-950/10 bg-white p-2 dark:border-white/10 dark:bg-slate-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {(isUkmAccount ? [
               {
@@ -900,10 +910,10 @@ function DashboardInner() {
                 onClick={hub.onClick}
                 type="button"
                 aria-pressed={hub.active}
-                className={`relative flex min-h-12 min-w-[68px] flex-1 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-center text-[10px] font-bold transition-colors sm:min-w-0 sm:py-2.5 ${
+                className={`relative flex min-h-12 min-w-[68px] flex-1 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-center text-xs font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:min-w-0 sm:py-2.5 ${
                   hub.active
-                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
-                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-white"
+                    ? "bg-[#134e35] text-white"
+                    : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                 }`}
               >
                 <hub.IconComponent className="h-4 w-4 shrink-0" />
@@ -1047,15 +1057,32 @@ function DashboardInner() {
 
           {activeTab === "tawaran" ? (
 
-            <div className="space-y-5">
-              <h2 className="section-heading">Tawaran Harga Masuk</h2>
+            <section className="space-y-5">
+              <header className="flex flex-col gap-3 border-b border-emerald-950/10 pb-4 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Tawaran masuk</p>
+                  <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+                    Respons calon pembeli
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    Periksa harga yang diajukan dan tanggapi tawaran yang masih menunggu.
+                  </p>
+                </div>
+                <p className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                  {offers.filter((offer) => offer.status === "pending").length} menunggu
+                </p>
+              </header>
               {offers.length === 0 ? (
-                <div className="card-shell mt-3 flex flex-col items-center justify-center rounded-3xl px-4 py-12 text-center">
-                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-                    <Icon.MessageCircle className="h-8 w-8" />
+                <div className="grid min-h-56 place-items-center rounded-2xl border border-dashed border-emerald-950/20 bg-white px-5 py-10 text-center dark:border-white/15 dark:bg-slate-900">
+                  <div>
+                    <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                      <Icon.MessageCircle className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <h3 className="mt-3 text-lg font-extrabold text-slate-950 dark:text-white">Belum ada tawaran</h3>
+                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                      Tawaran dari pembeli akan muncul di sini.
+                    </p>
                   </div>
-                  <h3 className="text-lg font-extrabold text-gray-900 dark:text-white mb-1">Belum ada tawaran</h3>
-                  <p className="text-sm text-gray-500 dark:text-slate-400">Tawaran dari pembeli akan muncul di sini.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -1065,36 +1092,38 @@ function DashboardInner() {
                     const MetaIcon = statusGroup === "pending" ? Icon.Clock3 : statusGroup === "accepted" ? Icon.Check : Icon.X;
                     const label = statusGroup === "pending" ? "Menunggu" : statusGroup === "accepted" ? "Diterima" : "Ditolak";
                     return (
-                      <div key={statusGroup}>
-                        <p className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                          <MetaIcon className="h-3.5 w-3.5" />
+                      <section key={statusGroup} aria-label={`${label}, ${grouped.length} tawaran`}>
+                        <h3 className="mb-2 flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                          <MetaIcon className="h-4 w-4 text-emerald-800 dark:text-emerald-300" aria-hidden="true" />
                           {label}
-                        </p>
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">({grouped.length})</span>
+                        </h3>
                         <div className="space-y-2">
                           {grouped.map((offer) => (
-                            <div key={offer.id} className="card p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between dark:border-slate-800">
+                            <article key={offer.id} className="card flex flex-col gap-4 rounded-2xl p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{offer.listing_title}</p>
-                                <p className="font-bold text-gray-900 dark:text-white">{rupiah(offer.offer_price)}</p>
-                                <p className="text-sm text-gray-600 dark:text-slate-300">
+                                <p className="break-words text-xs font-semibold text-slate-700 dark:text-slate-300">{offer.listing_title}</p>
+                                <p className="mt-1 text-lg font-extrabold text-slate-950 dark:text-white">{rupiah(offer.offer_price)}</p>
+                                <p className="mt-1 break-words text-sm text-slate-700 dark:text-slate-300">
                                   {offer.buyer_name}
-                                  {offer.message && <span className="text-gray-400"> · "{offer.message}"</span>}
+                                  {offer.message && <span className="text-slate-600 dark:text-slate-400"> · "{offer.message}"</span>}
                                 </p>
                               </div>
-                              <div className="flex gap-2 shrink-0">
+                              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
                                 <a
                                   href={`https://wa.me/${offer.buyer_wa.startsWith("0") ? "62" + offer.buyer_wa.slice(1) : offer.buyer_wa}`}
                                   target="_blank" rel="noreferrer"
-                                  className="btn-wa text-xs py-1.5 px-3"
+                                  className="btn-wa inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-xs"
                                 >
                                   <span className="inline-flex items-center gap-1.5">
-                                    <Icon.MessageCircle className="h-3.5 w-3.5" />
-                                    WA
+                                    <Icon.MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                                    WhatsApp
                                   </span>
                                 </a>
                                 {offer.status === "pending" && (
                                   <>
                                     <button
+                                    type="button"
                                       onClick={async () => {
                                         try {
                                           const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "accept" }) });
@@ -1103,14 +1132,15 @@ function DashboardInner() {
                                           load(wa);
                                         } catch (e) { toast.error(e.message); }
                                       }}
-                                      className="btn-primary text-xs py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                                      className="btn-primary min-h-11 justify-center rounded-lg border-emerald-800 bg-[#134e35] px-3 text-xs hover:bg-[#0a2e1f]"
                                     >
                                       <span className="inline-flex items-center gap-1.5">
-                                        <Icon.Check className="h-3.5 w-3.5" />
+                                        <Icon.Check className="h-3.5 w-3.5" aria-hidden="true" />
                                         Terima
                                       </span>
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={async () => {
                                         try {
                                           const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reject" }) });
@@ -1119,25 +1149,25 @@ function DashboardInner() {
                                           load(wa);
                                         } catch (e) { toast.error(e.message); }
                                       }}
-                                      className="btn-outline text-xs py-1.5 px-3 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                      className="btn-outline min-h-11 justify-center rounded-lg px-3 text-xs text-rose-800 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/20"
                                     >
                                       <span className="inline-flex items-center gap-1.5">
-                                        <Icon.X className="h-3.5 w-3.5" />
+                                        <Icon.X className="h-3.5 w-3.5" aria-hidden="true" />
                                         Tolak
                                       </span>
                                     </button>
                                   </>
                                 )}
                               </div>
-                            </div>
+                            </article>
                           ))}
                         </div>
-                      </div>
+                      </section>
                     );
                   })}
                 </div>
               )}
-            </div>
+            </section>
           ) : activeTab === "pro" ? (
             <div className="space-y-6">
               <div className="card p-6 border-2 border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-900/10">
@@ -1334,17 +1364,31 @@ function DashboardInner() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 grid gap-4 lg:grid-cols-2">
                     {active.map((i) => {
                       const expiry = daysLeft(i.expires_at);
                       return (
                       <div
                         key={i.id}
-                        className="card flex flex-col gap-3 p-3 sm:flex-row sm:items-center dark:border-slate-800"
+                        className="card grid gap-4 p-4 dark:border-slate-800 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.8fr)] sm:items-start sm:p-5"
                       >
-                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-950">
-                          {i.image_url && (
-                            <Image src={i.image_url} alt={i.title || "Foto produk"} width={64} height={64} loading="lazy" data-zoom data-zoom-alt={i.title || "Foto produk"} className="h-full w-full object-cover" />
+                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-emerald-50 dark:bg-slate-950 sm:aspect-square">
+                          {i.image_url ? (
+                            <Image
+                              src={i.image_url}
+                              alt={i.title || "Foto produk"}
+                              fill
+                              sizes="(min-width: 640px) 30vw, 100vw"
+                              loading="lazy"
+                              data-zoom
+                              data-zoom-alt={i.title || "Foto produk"}
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="grid h-full place-items-center text-emerald-900 dark:text-emerald-300">
+                              <Icon.Package className="h-10 w-10" aria-hidden="true" />
+                              <span className="sr-only">Foto produk belum tersedia</span>
+                            </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -1385,8 +1429,8 @@ function DashboardInner() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 truncate font-semibold">{i.title}</p>
-                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                          <p className="mt-2 break-words text-base font-extrabold text-slate-950 dark:text-white">{i.title}</p>
+                          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-700 dark:text-slate-300">
                             <span>{rupiah(i.price)} · stok {i.stock}</span>
                             {i.views > 0 && (
                               <span className="flex items-center gap-0.5 text-xs text-gray-400">
@@ -1441,10 +1485,10 @@ function DashboardInner() {
                           )}
 
                           {/* Tools Promosi */}
-                          <div className="flex items-center gap-2 mt-3">
+                          <div className="mt-4 grid grid-cols-2 gap-2">
                             <button
                               onClick={() => bump(i)}
-                              className="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex-1 text-xs px-3 py-1.5"
+                              className="btn-outline min-h-11 w-full justify-center rounded-lg border-emerald-200 px-3 text-xs text-emerald-800 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                               title="Naikkan barang ke atas"
                             >
                               <span className="inline-flex items-center gap-1.5">
@@ -1452,7 +1496,7 @@ function DashboardInner() {
                                 Sundul
                               </span>
                             </button>
-                            <button onClick={() => openMarkSold(i)} className="btn-primary flex-1 text-xs px-3 py-1.5">
+                            <button onClick={() => openMarkSold(i)} className="btn-primary min-h-11 w-full justify-center rounded-lg px-3 text-xs">
                               <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
                             </button>
                             {/* Bagikan: satu-satunya cara penjual menyebarkan
@@ -1463,7 +1507,7 @@ function DashboardInner() {
                                 penjual sesudah memasangnya. */}
                             <button
                               onClick={() => setBagikan(i)}
-                              className="btn-outline text-xs px-3 py-1.5"
+                              className="btn-outline min-h-11 w-full justify-center rounded-lg px-3 text-xs"
                               title="Bagikan ke grup WA atau aplikasi lain"
                             >
                               <span className="inline-flex items-center gap-1.5">
@@ -1474,16 +1518,27 @@ function DashboardInner() {
                             {/* More actions "..." */}
                             <div className="relative">
                               <button
+                                type="button"
                                 onClick={() => setOpenActionMenu(openActionMenu === i.id ? null : i.id)}
-                                className="btn-outline text-xs px-2.5 py-1.5 font-bold tracking-widest"
-                                title="Aksi lainnya"
+                                aria-label={`Aksi lainnya untuk ${i.title}`}
+                                aria-expanded={openActionMenu === i.id}
+                                aria-controls={openActionMenu === i.id ? `listing-actions-${i.id}` : undefined}
+                                className="btn-outline min-h-11 w-full justify-center rounded-lg px-3 text-xs font-bold"
                               >
-                                •••
+                                Aksi lainnya
                               </button>
                               {openActionMenu === i.id && (
                                 <>
-                                  <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenu(null)} />
-                                  <div className="absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-xl z-20 overflow-hidden">
+                                  <button
+                                    type="button"
+                                    aria-label={`Tutup menu aksi untuk ${i.title}`}
+                                    onClick={() => setOpenActionMenu(null)}
+                                    className="fixed inset-0 z-10 cursor-pointer bg-transparent"
+                                  />
+                                  <div
+                                    id={`listing-actions-${i.id}`}
+                                    className="absolute right-0 bottom-full z-20 mb-1 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900"
+                                  >
                                     <button
                                       onClick={() => { setAutobumpConfirm({ item: i }); setOpenActionMenu(null); }}
                                       className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -1649,68 +1704,85 @@ function DashboardInner() {
 
             </div>
           ) : activeTab === "dicari" ? (
-            <div className="space-y-4">
-              <h2 className="section-heading">Postingan Kebutuhan Dicari</h2>
-              {wantedItems.length === 0 ? (
-                <div className="card-shell mt-3 flex flex-col items-center justify-center rounded-3xl px-4 py-12 text-center">
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
-                    <Icon.Search className="w-24 h-24 text-gray-300 dark:text-slate-700 relative z-10" />
-                  </div>
-                  <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada postingan dicari</h3>
-                  <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
-                    Sedang mencari barang spesifik? Buat postingan di halaman Cari Barang agar penjual yang punya barang bisa langsung menghubungi Anda.
+            <section className="space-y-5">
+              <header className="flex flex-col gap-3 border-b border-emerald-950/10 pb-4 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Kebutuhanmu</p>
+                  <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-white">
+                    Barang yang sedang dicari
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    Kelola permintaan dan tandai kebutuhan yang sudah terpenuhi.
                   </p>
-                  <Link
-                    href="/dicari"
-                    className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-3 px-6 font-bold text-gray-700 bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 active:scale-95 shadow-sm dark:bg-transparent dark:border-slate-700 dark:text-slate-200"
-                  >
-                    <span className="relative flex items-center gap-2">
-                      <Icon.Edit2 className="w-4 h-4" /> Pasang Kebutuhan Baru
+                </div>
+                <Link
+                  href="/dicari"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#134e35] px-4 text-sm font-bold text-white transition-colors hover:bg-[#0a2e1f] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                >
+                  Pasang kebutuhan
+                </Link>
+              </header>
+              {wantedItems.length === 0 ? (
+                <div className="grid min-h-56 place-items-center rounded-2xl border border-dashed border-emerald-950/20 bg-white px-5 py-10 text-center dark:border-white/15 dark:bg-slate-900">
+                  <div>
+                    <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                      <Icon.Search className="h-6 w-6" aria-hidden="true" />
                     </span>
-                  </Link>
+                    <h3 className="mt-3 text-lg font-extrabold text-slate-950 dark:text-white">Belum ada kebutuhan</h3>
+                    <p className="mt-1 max-w-md text-sm leading-6 text-slate-700 dark:text-slate-300">
+                      Buat postingan agar penjual dapat melihat barang yang sedang kamu cari.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid gap-4 lg:grid-cols-2">
                   {wantedItems.map((wi) => (
-                    <div
+                    <article
                       key={wi.id}
-                      className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center justify-between dark:border-slate-800"
+                      className="card flex min-w-0 flex-col gap-4 rounded-2xl p-4 dark:border-slate-800 sm:p-5"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`badge ${wi.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400" : "bg-gray-200 text-gray-700 dark:bg-slate-800 dark:text-slate-400"}`}>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`rounded-md px-2 py-1 text-xs font-bold ${wi.status === "active" ? "bg-lime-100 text-emerald-950 dark:bg-lime-950/50 dark:text-lime-200" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"}`}>
                             {wi.status}
                           </span>
-                          <span className="badge bg-primary/10 text-primary">{wi.category}</span>
-                          <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1"><Icon.MapPin className="h-3 w-3 shrink-0" /> {wi.campus}</span>
+                          <span className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-950 dark:bg-emerald-950 dark:text-emerald-200">{wi.category}</span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+                            <Icon.MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            {wi.campus}
+                          </span>
                         </div>
-                        <p className="mt-1.5 font-bold text-gray-900 dark:text-white">{wi.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                          Budget: {wi.budget > 0 ? rupiah(wi.budget) : "Nego"} · Area: {wi.area || "Sekitar Kampus"}
+                        <h3 className="mt-3 break-words text-base font-extrabold text-slate-950 dark:text-white">{wi.title}</h3>
+                        <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                          Budget: {wi.budget > 0 ? rupiah(wi.budget) : "Nego"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
+                          Area: {wi.area || "Sekitar Kampus"}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-3 dark:border-slate-700 sm:flex sm:flex-wrap">
                         {wi.status === "active" && (
                           <button
+                            type="button"
                             onClick={() => resolveWanted(wi.id)}
-                            className="btn-primary text-xs"
+                            className="btn-primary min-h-11 justify-center rounded-lg bg-[#134e35] px-3 text-xs hover:bg-[#0a2e1f]"
                           >
-                            <Icon.Check className="h-3 w-3 inline mr-1" /> Tandai Terpenuhi
+                            <Icon.Check className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Tandai terpenuhi
                           </button>
                         )}
                         <button
+                          type="button"
                           onClick={() => deleteWanted(wi.id)}
-                          className="btn-outline text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                          className="btn-outline min-h-11 justify-center rounded-lg px-3 text-xs text-rose-800 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/20"
                         >
-                          <Icon.X className="h-3 w-3 inline mr-1" /> Hapus
+                          <Icon.X className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Hapus
                         </button>
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           ) : activeTab === "statistik" ? (
             <SellerAnalyticsView
               analytics={analytics}

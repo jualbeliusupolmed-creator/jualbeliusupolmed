@@ -1,8 +1,7 @@
-import { nextOnPages } from "@cloudflare/next-on-pages";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -20,4 +19,8 @@ const nextConfig = {
   },
 };
 
-export default nextOnPages(nextConfig);
+if (process.env.NODE_ENV === "development" && process.env.KAMPUSKITA_VINEXT !== "1") {
+  initOpenNextCloudflareForDev();
+}
+
+export default nextConfig;

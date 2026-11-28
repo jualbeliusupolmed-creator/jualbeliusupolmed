@@ -7,7 +7,7 @@ import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSessionAsync } from "@/lib/auth";
 import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 import { getSettings, isAllowedCampus, getCampusProvinceId } from "@/lib/settings";
-import { waitUntil } from "@vercel/functions";
+import { registerBackgroundTask } from "@/lib/backgroundTasks";
 import { evaluateModerationRules } from "@/lib/moderationRules";
 import { sendWa } from "@/lib/fonnte";
 
@@ -49,16 +49,14 @@ export async function GET(request) {
     const supa = getAdminClient();
 
     // Opportunistic worker: Flush antrean Instagram tiap beberapa menit jika ada traffic
-    if (Date.now() - lastBackgroundSweep > 90_000 && typeof waitUntil === "function") {
+    if (Date.now() - lastBackgroundSweep > 90_000) {
       lastBackgroundSweep = Date.now();
-      try {
-        waitUntil(
-          publishQueuedMadingInstagram({
-            origin: siteOriginFromRequest(request),
-            limit: 2,
-          }).catch(() => {})
-        );
-      } catch (_) {}
+      await registerBackgroundTask(
+        publishQueuedMadingInstagram({
+          origin: siteOriginFromRequest(request),
+          limit: 2,
+        }).catch(() => {})
+      );
     }
 
     const makeQuery = (columns) => {

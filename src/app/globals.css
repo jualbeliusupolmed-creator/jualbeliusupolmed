@@ -4,51 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet resmi Kampus Kita: Forest Emerald #047857 & Amber #F59E0B
-   Tone referensi (INSEAD AI Venture Lab): putih kekuningan halus #FCFCFA,
-   hijau tua #047857, hijau aksen #059669, teks #111827, muted #6B7280, pill #EEFEF9 */
+/* Forest green identifies the campus brand; lime is reserved for emphasis. */
 :root {
-  --usu: #047857;
-  --usu-light: #059669;
-  --usu-dark: #065f46;
-  --polmed: #047857;
-  --polmed-light: #059669;
-  --polmed-dark: #065f46;
+  --usu: #134e35;
+  --usu-light: #256b4f;
+  --usu-dark: #0a2e1f;
+  --polmed: #134e35;
+  --polmed-light: #256b4f;
+  --polmed-dark: #0a2e1f;
 
-  --primary: #047857; /* Forest Emerald — tombol utama referensi */
-  --primary-hover: #065f46;
-  --primary-light: #ecfdf5;
-  --primary-foreground: #fefefe;
-  --accent: #059669; /* hijau aksen seperti teks "Sprint 2027" */
-  --accent-secondary: #f59e0b;
-  --accent-foreground: #fefefe;
+  --primary: #134e35;
+  --primary-hover: #0a2e1f;
+  --primary-light: #e4f2e8;
+  --primary-foreground: #ffffff;
+  --accent: #bef264;
+  --accent-secondary: #bef264;
+  --accent-foreground: #0a2e1f;
   --wa: #25d366;
-  --page: #fcfcfa; /* putih kekuningan halus, bukan slate-50 */
+  --page: #f4faf5;
   --surface: #ffffff;
-  --surface-muted: #fcfcfa;
-  --line: rgba(17, 24, 39, 0.10);
-  --line-strong: rgba(17, 24, 39, 0.16);
-  --text: #111827; /* hampir hitam */
-  --text-muted: #6b7280; /* abu-abu */
+  --surface-muted: #edf6ef;
+  --line: rgba(19, 78, 53, 0.12);
+  --line-strong: rgba(19, 78, 53, 0.2);
+  --text: #0a2e1f;
+  --text-muted: #475569;
   --radius-card: 1rem;
   --radius-control: 0.75rem;
-  --shadow-card: 0 1px 3px rgba(17, 24, 39, 0.06), 0 8px 24px rgba(17, 24, 39, 0.04);
+  --shadow-card: 0 1px 3px rgba(10, 46, 31, 0.06), 0 8px 24px rgba(10, 46, 31, 0.04);
 
-  /* Dark mode token definitions (lifted for token audit) */
-  --dark-primary: #10b981;
-  --dark-primary-hover: #059669;
-  --dark-primary-light: #064e3b;
-  --dark-primary-foreground: #fefefe;
-  --dark-accent: #10b981;
-  --dark-accent-secondary: #f59e0b;
-  --dark-accent-foreground: #000000;
-  --dark-page: #0f172a;
-  --dark-surface: #111827;
-  --dark-surface-muted: #1e293b;
+  --dark-primary: #bef264;
+  --dark-primary-hover: #d9f99d;
+  --dark-primary-light: #173c2b;
+  --dark-primary-foreground: #0a2e1f;
+  --dark-accent: #bef264;
+  --dark-accent-secondary: #bef264;
+  --dark-accent-foreground: #0a2e1f;
+  --dark-page: #0a2117;
+  --dark-surface: #103323;
+  --dark-surface-muted: #173c2b;
   --dark-line: rgba(226, 232, 240, 0.14);
   --dark-line-strong: rgba(226, 232, 240, 0.22);
   --dark-text: #f8fafc;
-  --dark-text-muted: #94a3b8;
+  --dark-text-muted: #b6c8bc;
 }
 
 .dark {
@@ -139,7 +136,7 @@ body:has([data-mobile-overlay="sponsor"]) [data-mobile-overlay="notification"] {
 }
 
 body {
-  @apply bg-slate-50 text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-200;
+  @apply antialiased transition-colors duration-300;
   font-family: var(--font-jakarta), "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.01em;
   background-color: var(--page) !important;
@@ -211,10 +208,10 @@ body::before {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none bg-primary text-white shadow-[0_2px_8px_rgba(4,120,87,0.25)] hover:brightness-105 active:brightness-95 dark:shadow-[0_2px_12px_rgba(16,185,129,0.25)];
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(19,78,53,0.2)] hover:brightness-105 active:brightness-95;
   }
   .btn-accent {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none bg-accent text-white shadow-[0_2px_8px_rgba(6,89,50,0.2)] hover:brightness-105 active:brightness-95;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none bg-accent text-accent-foreground hover:brightness-105 active:brightness-95;
   }
   .btn-wa {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none bg-[#25D366] text-white shadow-[0_2px_8px_rgba(37,211,102,0.25)] hover:brightness-105 active:brightness-95;

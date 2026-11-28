@@ -291,7 +291,7 @@ export default async function ProdukPage({ params }) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
+    <div className="mx-auto max-w-7xl px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-7 lg:px-8 lg:pb-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(productJsonLd) }}
@@ -302,19 +302,20 @@ export default async function ProdukPage({ params }) {
       />
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={slug} />
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-slate-500 dark:text-slate-400">
-        <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
-        <span className="shrink-0">/</span>
-        <Link href={`/?cat=${listing.category}`} className="hover:text-primary shrink-0">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex min-w-0 items-center gap-1.5 text-[13px] text-slate-500 dark:text-slate-400"
+      >
+        <Link href="/" className="shrink-0 hover:text-primary">Beranda</Link>
+        <span aria-hidden="true" className="shrink-0">/</span>
+        <Link href={`/?cat=${encodeURIComponent(listing.category || "")}`} className="shrink-0 hover:text-primary">
           {listing.category}
         </Link>
-        <span className="shrink-0">/</span>
+        <span aria-hidden="true" className="shrink-0">/</span>
         <span className="truncate text-slate-500">{listing.title}</span>
       </nav>
 
-      {/* 12-Column Grid Matching 12.html blueprint */}
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      <div className="mt-5 grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-8">
         <ProductDetailInteractive
           listing={listing}
           listingSpecs={listingSpecs}
@@ -348,7 +349,7 @@ export default async function ProdukPage({ params }) {
             href={listing.type === "jasa" ? "/jasa" : "/jual-beli"}
             className="text-xs font-bold text-emerald-800 hover:underline dark:text-emerald-400"
           >
-            Lihat lainnya
+            {listing.type === "jasa" ? "Lihat jasa lainnya" : "Lihat produk lainnya"}
           </Link>
         </div>
         {related.length > 0 ? (

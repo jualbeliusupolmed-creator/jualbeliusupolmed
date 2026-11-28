@@ -13,7 +13,7 @@ const VIEW_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 // POST /api/listings/[id]/view  -> tambah 1 view (atomik via RPC)
 export async function POST(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     // batasi agar tidak gampang di-spam dari satu IP
     const rl = rateLimit(`view:${getClientIp(req)}:${id}`, {
       limit: 1,

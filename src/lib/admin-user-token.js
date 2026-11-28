@@ -1,4 +1,9 @@
-import { createHash, createHmac } from "@/lib/cryptoCompat";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  createHmac,
+} from "@/lib/cryptoCompat";
 import { customAlphabet } from "nanoid";
 
 function key() {

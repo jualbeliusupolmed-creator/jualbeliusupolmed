@@ -59,10 +59,10 @@ async function getInitialData(sessionIdentity) {
     if (!query) return { listings: [], total: 0 };
       
     const { data, count } = await fetchListingsWithProfiles(query);
-    return { listings: data || [], total: count || 0 };
+    return { listings: data || [], total: count || 0, error: false };
   } catch (e) {
-    console.error("getInitialData:", e?.message);
-    return { listings: [], total: 0 };
+    console.error("[Marketplace] Gagal mengambil daftar barang", e?.code || "UNKNOWN");
+    return { listings: [], total: 0, error: true };
   }
 }
 
@@ -154,7 +154,7 @@ async function getWantedItems() {
 
 export default async function HomePage() {
   const sessionIdentity = await getSellerSessionAsync();
-  const [{ listings, total }, featured, trending, settings, categories, stats, wantedItems] =
+  const [{ listings, total, error: listingsError }, featured, trending, settings, categories, stats, wantedItems] =
     await Promise.all([
       getInitialData(sessionIdentity),
       getFeatured(sessionIdentity),
@@ -184,6 +184,7 @@ export default async function HomePage() {
       <MarketplaceBrowser
         initialListings={listings}
         initialTotal={total}
+        initialLoadError={listingsError}
         categories={categories}
         stats={stats}
         wantedItems={wantedItems}

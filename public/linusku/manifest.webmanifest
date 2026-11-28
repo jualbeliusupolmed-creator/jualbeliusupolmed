@@ -1,0 +1,62 @@
+{
+  "id": "/linusku",
+  "name": "LINUSKU — Pelacak Bus Lintas USU",
+  "short_name": "LINUSKU",
+  "description": "Pantau posisi dan ETA Bus Lintas USU. Beroperasi Senin-Jumat 07.00-17.00 WIB.",
+  "lang": "id",
+  "dir": "ltr",
+  "categories": ["travel", "navigation", "utilities"],
+  "start_url": "/linusku",
+  "scope": "/linusku",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f6d39",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/linusku/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/linusku/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/linusku/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/linusku/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mode Tracker Driver",
+      "short_name": "Driver",
+      "description": "Buka mode pelacakan armada LINUSKU.",
+      "url": "/linusku/driver",
+      "icons": [
+        {
+          "src": "/linusku/icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing",
+    "navigation_exclusion_patterns": ["/linusku/api/*"]
+  }
+}

@@ -162,7 +162,7 @@ function ProductCard({ listing, tanpaPenjual = false }) {
         <Link
           href={detailUrl}
           className={cn(
-            "inline-flex min-h-8 items-center justify-center gap-1 rounded-lg bg-slate-100 px-2 text-[10px] font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:text-[11px]",
+            "inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-slate-100 px-2 text-[10px] font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:text-[11px]",
             !isAvailable ? "col-span-2" : ""
           )}
         >
@@ -174,7 +174,7 @@ function ProductCard({ listing, tanpaPenjual = false }) {
             href={`/chat-wa/${listing.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-2 text-[10px] font-bold text-white transition-colors duration-150 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:min-h-9 sm:text-[11px]"
+            className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-2 text-[10px] font-bold text-white transition-colors duration-150 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:text-[11px]"
           >
             <Icon.WhatsApp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             Chat WA
@@ -184,7 +184,7 @@ function ProductCard({ listing, tanpaPenjual = false }) {
       {isAvailable && (
         <CartButton
           listing={listing}
-          className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !shadow-sm text-slate-700 backdrop-blur-sm transition-transform duration-150 motion-reduce:transition-none active:scale-95 [&_svg]:!h-4 [&_svg]:!w-4"
+          className="!absolute !right-2 !top-2 !z-10 !flex !h-11 !w-11 !items-center !justify-center !shadow-sm text-slate-700 backdrop-blur-sm transition-transform duration-150 motion-reduce:transition-none active:scale-95 [&_svg]:!h-5 [&_svg]:!w-5"
         />
       )}
     </article>

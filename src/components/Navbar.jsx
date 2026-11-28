@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Icon } from "@/components/Icons";
+import PrimaryNavigation from "@/components/PrimaryNavigation";
 import { useSesi } from "@/components/SesiProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -229,24 +230,16 @@ export default function Navbar({ config }) {
     return "Kampus Kita";
   };
 
-  const navMenus = [
-    { name: "Beranda", href: "/", match: pathname === "/" },
-    { name: "Marketplace", href: "/jual-beli", match: pathname?.startsWith("/jual-beli") || pathname?.startsWith("/produk/") },
-    { name: "Open PO", href: "/open-po", match: pathname?.startsWith("/open-po"), badge: "PO" },
-    { name: "Menfess", href: "/mading", match: pathname?.startsWith("/mading") },
-    { name: "Obrolan", href: "/chat", match: pathname?.startsWith("/chat"), badgeCount: unreadChat },
-  ];
-
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/70 dark:border-white/[0.08] shadow-xs">
       {/* ── DESKTOP NAVBAR (Tinggi 64px — max-w-[1440px]) ── */}
-      <div className="hidden lg:block max-w-[1440px] mx-auto px-4 sm:px-6">
+      <div className="hidden xl:block max-w-[1440px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 gap-3">
           {/* Brand Identity (Kiri) */}
           <div className="flex items-center gap-3 shrink-0">
             <Link href="/" className="flex items-center gap-3 group focus-visible:outline-2 focus-visible:outline-emerald-600">
-              <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs group-hover:bg-emerald-900 transition-colors">
-                <svg className="w-5 h-5 text-emerald-300 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="w-9 h-9 rounded-xl bg-[#0a2e1f] text-[#bef264] flex items-center justify-center shadow-xs group-hover:bg-[#134e35] transition-colors">
+                <svg className="w-5 h-5 text-[#bef264] stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M9 22V12h6v10" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -257,101 +250,7 @@ export default function Navbar({ config }) {
             </Link>
           </div>
 
-          {/* Central Navigation Pill (Tengah) */}
-          <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/60 dark:border-white/10 shrink-0 overflow-x-auto">
-            {/* Beranda */}
-            <Link
-              href="/"
-              prefetch={true}
-              className={cn(
-                "flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
-                pathname === "/"
-                  ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
-                  : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Beranda</span>
-            </Link>
-
-            {/* Marketplace */}
-            <Link
-              href="/jual-beli"
-              prefetch={true}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
-                pathname?.startsWith("/jual-beli") || pathname?.startsWith("/produk/")
-                  ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
-                  : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Marketplace</span>
-            </Link>
-
-            {/* Open PO */}
-            <Link
-              href="/open-po"
-              prefetch={true}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
-                pathname?.startsWith("/open-po")
-                  ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
-                  : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Open PO</span>
-              <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded-full leading-none">
-                PO
-              </span>
-            </Link>
-
-            {/* Menfess */}
-            <Link
-              href="/mading"
-              prefetch={true}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
-                pathname?.startsWith("/mading")
-                  ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
-                  : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Menfess</span>
-            </Link>
-
-            {/* Obrolan */}
-            <Link
-              href="/chat"
-              prefetch={true}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 relative focus-visible:outline-2 focus-visible:outline-emerald-600",
-                pathname?.startsWith("/chat")
-                  ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
-                  : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
-              )}
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Obrolan</span>
-              {unreadChat > 0 && session?.wa && (
-                <span className="text-[9px] font-bold text-white bg-emerald-700 px-1.5 py-0.5 rounded-full leading-none">
-                  {unreadChat > 99 ? "99+" : unreadChat}
-                </span>
-              )}
-            </Link>
-          </nav>
+          <PrimaryNavigation variant="desktop" />
 
           {/* Right Controls */}
           <div className="flex items-center gap-2.5 shrink-0 whitespace-nowrap">
@@ -420,6 +319,18 @@ export default function Navbar({ config }) {
             </div>
 
             <Link
+              href="/chat"
+              aria-label="Pesan dan obrolan"
+              title="Pesan dan obrolan"
+              className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#134e35] dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <Icon.MessageCircle className="h-4 w-4" aria-hidden="true" />
+              {unreadChat > 0 && session?.wa && (
+                <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[#bef264] ring-2 ring-white dark:ring-slate-800" />
+              )}
+            </Link>
+
+            <Link
               href="/keranjang"
               aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
               title="Keranjang"
@@ -486,7 +397,7 @@ export default function Navbar({ config }) {
       </div>
 
       {/* ── MOBILE TOP APP BAR (Tinggi 56px — h-14) ── */}
-      <div className={cn("lg:hidden px-3 sm:px-4 flex items-center justify-between gap-2.5", isSubPage ? "h-14" : "min-h-14 py-1.5")}>
+      <div className={cn("xl:hidden px-3 sm:px-4 flex items-center justify-between gap-2.5", isSubPage ? "h-14" : "min-h-14 py-1.5")}>
         {isSubPage ? (
           /* Sub/Detail Pages: Back + Centered Title + Share/Action */
           <>
@@ -506,14 +417,14 @@ export default function Navbar({ config }) {
                 type="button"
                 onClick={() => setCariTerbuka(true)}
                 aria-label="Cari"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                className="h-11 w-11 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <Icon.Search className="w-4 h-4" aria-hidden="true" />
               </button>
               <Link
                 href="/keranjang"
                 aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="relative h-11 w-11 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 <Icon.ShoppingCart className="w-4 h-4" aria-hidden="true" />
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-xs">{cartCount > 99 ? "99+" : cartCount}</span>}
@@ -521,7 +432,7 @@ export default function Navbar({ config }) {
               <Link
                 href="/jual"
                 aria-label="Jual Barang"
-                className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="h-11 w-11 rounded-full bg-[#134e35] text-white flex items-center justify-center shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-[#134e35]"
               >
                 <Icon.Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
               </Link>
@@ -531,8 +442,8 @@ export default function Navbar({ config }) {
           /* Root Pages: Brand + campus selector + actions */
           <>
             <div className="flex items-center gap-2 min-w-0">
-              <Link href="/" aria-label="Kampus Kita - Beranda" className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs focus-visible:outline-2 focus-visible:outline-emerald-600">
-                <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" aria-hidden="true" />
+              <Link href="/" aria-label="Kampus Kita - Beranda" className="h-9 w-9 rounded-xl bg-[#0a2e1f] text-white flex items-center justify-center shrink-0 shadow-xs focus-visible:outline-2 focus-visible:outline-[#134e35]">
+                <Icon.GraduationCap className="w-4.5 h-4.5 text-[#bef264]" aria-hidden="true" />
               </Link>
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="flex flex-col text-sm font-extrabold leading-[0.95] tracking-tight text-slate-900 dark:text-white">
@@ -545,7 +456,7 @@ export default function Navbar({ config }) {
                     onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
                     aria-label={`Pilih kampus, saat ini ${selectedCampus === "Semua" ? "Semua kampus" : selectedCampus}`}
                     aria-expanded={campusDropdownOpen}
-                    className="inline-flex items-center gap-1 rounded-full border border-emerald-600/20 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-full border border-emerald-600/20 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                   >
                     <span>{selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
                     <svg className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -607,14 +518,14 @@ export default function Navbar({ config }) {
                 type="button"
                 onClick={() => setCariTerbuka(true)}
                 aria-label="Cari"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                className="h-11 w-11 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <Icon.Search className="w-4 h-4" aria-hidden="true" />
               </button>
               <Link
                 href="/keranjang"
                 aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="relative h-11 w-11 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 <Icon.ShoppingCart className="w-4 h-4" aria-hidden="true" />
                 {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-xs">{cartCount > 99 ? "99+" : cartCount}</span>}
@@ -622,7 +533,7 @@ export default function Navbar({ config }) {
               <Link
                 href="/chat"
                 aria-label="Pesan & Obrolan"
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
+                className="relative h-11 w-11 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 <Icon.MessageCircle className="w-4 h-4" aria-hidden="true" />
                 {unreadChat > 0 && Boolean(session?.wa) && (
@@ -633,7 +544,7 @@ export default function Navbar({ config }) {
                 <Link
                   href="/dashboard"
                   aria-label="Dashboard Akun"
-                  className="w-7 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                  className="h-11 w-11 rounded-full bg-[#134e35] text-white flex items-center justify-center text-xs font-bold shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-[#134e35]"
                 >
                   {session.name ? session.name[0].toUpperCase() : "U"}
                 </Link>
@@ -642,7 +553,7 @@ export default function Navbar({ config }) {
                   type="button"
                   onClick={() => setShowOtp(true)}
                   aria-label="Masuk Akun"
-                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                  className="h-11 w-11 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                 >
                   <Icon.User className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>

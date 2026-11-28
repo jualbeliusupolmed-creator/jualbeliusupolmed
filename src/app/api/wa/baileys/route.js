@@ -23,6 +23,7 @@ import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { uploadMedia } from "@/lib/mediaStorage";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findRecentDuplicateListing } from "@/lib/listingDedupe";
 import { loadConversationMemory, mergeConversationHistory } from "@/lib/botMemory";
 import { aiActionNeedsClarification, isFastPathCommand } from "@/lib/botIntent";
 import { loadMarketplaceRegion } from "@/lib/marketplaceRegion";
@@ -3293,29 +3294,41 @@ export async function POST(req) {
 
         const isFreeMode = settings.pricing?.freeMode !== false;
         const initialStatus = (isDistributor || isFreeMode) ? "active" : "pending";
+        const listingTitle = item.title || "Barang Dijual";
 
-        const { data: newListing, error: listingError } = await supa.from("listings").insert({
-          seller_wa: normalizedWa,
-          seller_name: profileName,
-          title: item.title || "Barang Dijual",
+        const existingDup = await findRecentDuplicateListing(supa, {
+          sellerWa: normalizedWa,
+          title: listingTitle,
           price: finalPrice,
-          description: item.description || message || "",
-          category: item.category || "Lainnya",
-          type: "barang",
-          condition: item.condition === "new" ? "new" : "used",
-          campus: sellerRegion.university.code,
-          university_id: sellerRegion.university.id,
-          seller_university_id: sellerRegion.university.id,
-          seller_province_id: sellerRegion.province,
-          image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
-          images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
-          status: initialStatus,
-          distributor_fee: isDistributor ? distFee : null,
-          expires_at: expiresAt,
-          bumped_at: new Date().toISOString(),
-        }).select().single();
+          windowMinutes: 30,
+        });
 
-        if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
+        let newListing = existingDup;
+        if (!newListing) {
+          const { data: insertedListing, error: listingError } = await supa.from("listings").insert({
+            seller_wa: normalizedWa,
+            seller_name: profileName,
+            title: listingTitle,
+            price: finalPrice,
+            description: item.description || message || "",
+            category: item.category || "Lainnya",
+            type: "barang",
+            condition: item.condition === "new" ? "new" : "used",
+            campus: sellerRegion.university.code,
+            university_id: sellerRegion.university.id,
+            seller_university_id: sellerRegion.university.id,
+            seller_province_id: sellerRegion.province,
+            image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
+            images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
+            status: initialStatus,
+            distributor_fee: isDistributor ? distFee : null,
+            expires_at: expiresAt,
+            bumped_at: new Date().toISOString(),
+          }).select().single();
+
+          if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
+          newListing = insertedListing;
+        }
         
         createdListings.push(newListing);
         if (!isDistributor && !isFreeMode) {

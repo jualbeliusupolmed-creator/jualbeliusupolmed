@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
@@ -35,17 +35,14 @@ const INITIAL_FORM = {
   specs: {},
 };
 
-function getCategoryFeeLabel(category, pricing, isFreeMode, sellerIsDistributor, sellerPunyaToko) {
-  if (isFreeMode || sellerIsDistributor || sellerPunyaToko) return "GRATIS";
-  const fee = adFeeFrom(pricing, "barang", 0);
-  return fee > 0 ? `Rp ${fee.toLocaleString("id-ID")}` : "GRATIS";
-}
-
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState(() => ({ ...INITIAL_FORM, specs: {} }));
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [submitStep, setSubmitStep] = useState("");
+  const submittingRef = useRef(false);
+  const uploadedMediaCacheRef = useRef(null);
   const [fileError, setFileError] = useState("");
   const [msg, setMsg] = useState("");
   const [createdListing, setCreatedListing] = useState(null);
@@ -61,10 +58,60 @@ export default function JualPage() {
   const [showCampusWarning, setShowCampusWarning] = useState(false);
 
   const [cfg, setCfg] = useState(null);
+  const [configStatus, setConfigStatus] = useState("loading");
+  const [configError, setConfigError] = useState("");
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
   const [sellerPunyaToko, setSellerPunyaToko] = useState(false);
 
   const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, profil, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
+
+  const loadConfig = useCallback(async (signal) => {
+    setConfigStatus("loading");
+    setConfigError("");
+    try {
+      const response = await fetch("/api/config", { signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!data || typeof data !== "object" || !data.pricing || typeof data.pricing !== "object") {
+        throw new Error("Konfigurasi tarif tidak lengkap");
+      }
+      setCfg(data);
+      setConfigStatus("ready");
+    } catch (error) {
+      if (signal?.aborted) return;
+      console.error("Gagal memuat konfigurasi form jual:", error);
+      setCfg(null);
+      setConfigStatus("error");
+      setConfigError("Tarif tayang belum dapat dimuat. Coba lagi sebelum menerbitkan iklan.");
+    }
+  }, []);
+
+  const saveDraft = useCallback((manual = false) => {
+    try {
+      const draftForm = { ...form, seller_name: "", seller_wa: "" };
+      const hasDraftContent = Object.keys(INITIAL_FORM).some(
+        (key) => JSON.stringify(draftForm[key]) !== JSON.stringify(INITIAL_FORM[key])
+      );
+
+      if (!hasDraftContent) {
+        localStorage.removeItem(DRAFT_KEY);
+        if (manual) setDraftStatus("Isi detail iklan sebelum menyimpan draft.");
+        return false;
+      }
+
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ form: draftForm, savedAt: new Date().toISOString() })
+      );
+      setDraftStatus(manual ? "Draft disimpan di browser ini." : "Draft tersimpan otomatis di browser ini.");
+      if (manual) setHasRecoveredDraft(false);
+      return true;
+    } catch (error) {
+      console.error("Gagal menyimpan draft iklan:", error);
+      setDraftStatus("Draft tidak bisa disimpan. Jangan tutup halaman sebelum selesai.");
+      return false;
+    }
+  }, [form]);
 
   // Auto-format WA input as user types
   const handleWaChange = useCallback((e) => {
@@ -100,57 +147,36 @@ export default function JualPage() {
 
   useEffect(() => {
     if (!draftReady) return undefined;
-    const timeout = window.setTimeout(() => {
-      try {
-        const draftForm = { ...form, seller_name: "", seller_wa: "" };
-        const hasDraftContent = Object.keys(INITIAL_FORM).some(
-          (key) => JSON.stringify(draftForm[key]) !== JSON.stringify(INITIAL_FORM[key])
-        );
-
-        if (hasDraftContent) {
-          localStorage.setItem(
-            DRAFT_KEY,
-            JSON.stringify({ form: draftForm, savedAt: new Date().toISOString() })
-          );
-          setDraftStatus("Draft tersimpan otomatis di browser ini.");
-        } else {
-          localStorage.removeItem(DRAFT_KEY);
-        }
-      } catch (error) {
-        console.error("Gagal menyimpan draft iklan:", error);
-        setDraftStatus("Draft tidak bisa disimpan. Jangan tutup halaman sebelum selesai.");
-      }
-    }, 350);
+    const timeout = window.setTimeout(() => saveDraft(), 350);
     return () => window.clearTimeout(timeout);
-  }, [draftReady, form]);
+  }, [draftReady, saveDraft]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (!sesiSiap) return;
-      const savedWa = sesiWa || "";
-      const savedName = sesiNama || "";
-      if (savedWa || savedName) {
-        setForm((f) => ({
-          ...f,
-          seller_wa: f.seller_wa || savedWa,
-          seller_name: f.seller_name || savedName,
-        }));
-        if (savedWa) {
-          fetch(`/api/listings?seller_wa=${encodeURIComponent(savedWa)}`)
-            .then((r) => r.json())
-            .then((d) => {
-              setSellerIsDistributor(!!d.profile?.distributor);
-              setSellerPunyaToko(!!d.punyaToko);
-            })
-            .catch(() => {});
-        }
+    const controller = new AbortController();
+    void loadConfig(controller.signal);
+    return () => controller.abort();
+  }, [loadConfig]);
+
+  useEffect(() => {
+    if (!sesiSiap) return;
+    const savedWa = sesiWa || "";
+    const savedName = sesiNama || "";
+    if (savedWa || savedName) {
+      setForm((f) => ({
+        ...f,
+        seller_wa: f.seller_wa || savedWa,
+        seller_name: f.seller_name || savedName,
+      }));
+      if (savedWa) {
+        fetch(`/api/listings?seller_wa=${encodeURIComponent(savedWa)}`)
+          .then((r) => r.json())
+          .then((d) => {
+            setSellerIsDistributor(!!d.profile?.distributor);
+            setSellerPunyaToko(!!d.punyaToko);
+          })
+          .catch((error) => console.error("Gagal memuat status penjual:", error));
       }
     }
-
-    fetch("/api/config")
-      .then((r) => r.json())
-      .then((d) => setCfg(d))
-      .catch(() => {});
   }, [sesiSiap, sesiWa, sesiNama]);
 
   // Check campus requirement
@@ -165,13 +191,8 @@ export default function JualPage() {
   const specConfig = getListingSpecConfig(form.category);
   const specPreview = useMemo(() => formatListingSpecs(form.category, form.specs), [form.category, form.specs]);
   const fee = adFeeFor(form.type, form.price);
-  const isFreeMode = fee === 0 || cfg?.pricing?.freeMode !== false;
+  const isFreeMode = fee === 0 || cfg?.pricing?.freeMode === true;
   const gratis = sellerIsDistributor || sellerPunyaToko || isFreeMode;
-  const sebabGratis = sellerIsDistributor
-    ? "Distributor"
-    : sellerPunyaToko
-    ? "punya toko"
-    : "Pasar Bebas Mahasiswa";
   const totalBiaya = gratis ? 0 : fee;
 
   function validateListingDetails() {
@@ -251,6 +272,7 @@ export default function JualPage() {
 
   async function handleSubmit(e) {
     if (e) e.preventDefault();
+    if (submittingRef.current || busy) return;
     setMsg("");
     setFileError("");
 
@@ -260,6 +282,11 @@ export default function JualPage() {
     // memberitahu ke mana harus pergi.
     if (showCampusWarning) {
       toast.error("Pilih kampus di Profil terlebih dahulu sebelum memasang iklan.", { duration: 5000 });
+      return;
+    }
+
+    if (configStatus !== "ready") {
+      toast.error(configError || "Tarif tayang belum tersedia. Muat ulang konfigurasi sebelum menerbitkan iklan.");
       return;
     }
 
@@ -293,9 +320,23 @@ export default function JualPage() {
   }
 
   async function processListing(formattedWa) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setBusy(true);
+    setSubmitStep(media?.length ? "Mengunggah foto…" : "Memeriksa iklan…");
+    let navigating = false;
     try {
-      const images = await uploadMedia(media);
+      const mediaSig = (media || [])
+        .map((m) => (m.url ? `u:${m.url}` : m.file ? `f:${m.file.name}:${m.file.size}:${m.file.lastModified}` : ""))
+        .join("|");
+      let images;
+      if (uploadedMediaCacheRef.current?.sig === mediaSig && Array.isArray(uploadedMediaCacheRef.current.urls)) {
+        images = uploadedMediaCacheRef.current.urls;
+      } else {
+        images = await uploadMedia(media);
+        uploadedMediaCacheRef.current = { sig: mediaSig, urls: images };
+      }
+      setSubmitStep("Memeriksa iklan…");
       const image_url = images[0] || null;
       const effectiveCampus = profil?.campus || (typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : "") || "USU";
       const effectiveUnivId = profil?.home_university_id || (typeof window !== "undefined" ? localStorage.getItem("preferred_university_id") : "") || "usu";
@@ -341,6 +382,8 @@ export default function JualPage() {
 
       if (data.pending_review || data.listing?.status === "pending") {
         toast.success(data.message || "Iklan dikirim dan sedang menunggu peninjauan. Pantau statusnya di Dashboard.");
+        setSubmitStep("Membuka dashboard…");
+        navigating = true;
         router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
         return;
       }
@@ -348,30 +391,38 @@ export default function JualPage() {
       if (data.isDistributor) {
         const feeInfo = data.distributorFee > 0 ? ` Fee bagi hasil: ${rupiah(data.distributorFee)}` : "";
         toast.success(`Barang berhasil ditayangkan! (Gratis via Distributor)${feeInfo}`);
+        setSubmitStep("Membuka halaman produk…");
+        navigating = true;
         router.push(goToProduct);
         return;
       }
 
       if (data.punyaToko) {
         toast.success("Barang langsung ditayangkan — gratis karena kamu punya toko!");
+        setSubmitStep("Membuka halaman produk…");
+        navigating = true;
         router.push(goToProduct);
         return;
       }
 
-      if (data.isPro || data.isFreeMode || gratis) {
+      if (data.isPro || data.isFreeMode) {
         toast.success("Barang berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
+        setSubmitStep("Membuka halaman produk…");
+        navigating = true;
         router.push(goToProduct);
         return;
       }
 
       if (data.paymentUrl) {
         setQrisUrl(data.paymentUrl);
-        setQrisFinalAmount(data.finalAmount || null);
+        setQrisFinalAmount(data.finalAmount ?? data.amount ?? null);
         setCreatedOrderId(data.orderId || data.paymentId || "");
         setCreatedListing(data.listing || null);
         setShowQRISModal(true);
       } else {
         toast.warning("Iklan diterima, tetapi informasi pembayaran belum tersedia. Periksa statusnya di Dashboard atau hubungi Bantuan.");
+        setSubmitStep("Membuka dashboard…");
+        navigating = true;
         router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
       }
     } catch (err) {
@@ -379,7 +430,11 @@ export default function JualPage() {
       toast.error(err.message || "Gagal membuat listing");
       setMsg(err.message || "Gagal membuat listing");
     } finally {
-      setBusy(false);
+      if (!navigating) {
+        submittingRef.current = false;
+        setBusy(false);
+        setSubmitStep("");
+      }
     }
   }
 
@@ -392,8 +447,8 @@ export default function JualPage() {
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
               Jual Barang
             </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Pasang iklan sekali jalan langsung tayang.
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              Lengkapi satu form. Biaya dan status tayang mengikuti pengaturan yang berlaku.
             </p>
           </div>
           {sesiWa && (
@@ -405,7 +460,7 @@ export default function JualPage() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
-          <p aria-live="polite" className="text-xs text-slate-500 dark:text-slate-400">
+          <p aria-live="polite" className="text-xs text-slate-600 dark:text-slate-300">
             {draftReady ? draftStatus || "Draft tersimpan otomatis di browser ini." : "Menyiapkan draft…"}
           </p>
           {draftReady && hasRecoveredDraft && (
@@ -429,7 +484,7 @@ export default function JualPage() {
                     console.error("Gagal menghapus draft iklan:", error);
                   }
                 }}
-                className="text-xs font-semibold text-slate-500 underline hover:text-slate-800 dark:hover:text-white active:opacity-70"
+                className="text-xs font-semibold text-slate-600 underline hover:text-slate-800 dark:text-slate-300 dark:hover:text-white active:opacity-70"
               >
                 Hapus draft
               </button>
@@ -458,14 +513,14 @@ export default function JualPage() {
           {/* Card 1: Foto Barang */}
           <section className="card p-5 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <label className="text-sm font-bold text-slate-900 dark:text-white">
-                Foto Barang <span className="font-normal text-slate-400 text-xs">(opsional, disarankan)</span>
-              </label>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                Foto Barang <span className="font-normal text-slate-600 text-xs dark:text-slate-300">(opsional, disarankan)</span>
+              </h2>
               <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                 Maksimal 5 Foto
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               Foto pertama otomatis menjadi sampul kartu produk.
             </p>
             <MediaUploader
@@ -474,6 +529,7 @@ export default function JualPage() {
               max={5}
               error={fileError}
               setError={setFileError}
+              inputLabel="Tambah foto barang"
             />
           </section>
 
@@ -487,9 +543,15 @@ export default function JualPage() {
                 value={form.type}
                 onChange={set("type")}
               >
-                <option value="barang">Barang ({rupiah(adFeeFor("barang", form.price))})</option>
-                <option value="sewa">Sewa ({rupiah(adFeeFor("barang", form.price))})</option>
-                <option value="poster">Poster ({rupiah(adFeeFor("poster"))})</option>
+                <option value="barang">
+                  Barang{configStatus === "ready" ? ` (${rupiah(adFeeFor("barang", form.price))})` : ""}
+                </option>
+                <option value="sewa">
+                  Sewa{configStatus === "ready" ? ` (${rupiah(adFeeFor("barang", form.price))})` : ""}
+                </option>
+                <option value="poster">
+                  Poster{configStatus === "ready" ? ` (${rupiah(adFeeFor("poster"))})` : ""}
+                </option>
               </select>
             </div>
 
@@ -509,26 +571,32 @@ export default function JualPage() {
               </div>
             ) : (
               <div>
-                <label className="label">Kondisi Barang</label>
-                <div className="flex gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl">
+                <span id="form-condition-label" className="label">Kondisi Barang</span>
+                <div
+                  role="group"
+                  aria-labelledby="form-condition-label"
+                  className="flex gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl"
+                >
                   <button
                     type="button"
+                    aria-pressed={form.condition === "used"}
                     onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
-                    className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`min-h-11 flex-1 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                       form.condition === "used"
                         ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                        : "text-slate-600 hover:text-slate-800 dark:text-slate-300"
                     }`}
                   >
                     Bekas
                   </button>
                   <button
                     type="button"
+                    aria-pressed={form.condition === "new"}
                     onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
-                    className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`min-h-11 flex-1 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
                       form.condition === "new"
                         ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white"
-                        : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                        : "text-slate-600 hover:text-slate-800 dark:text-slate-300"
                     }`}
                   >
                     <span className="inline-flex items-center justify-center gap-1">
@@ -549,10 +617,7 @@ export default function JualPage() {
               >
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
-                    {c.name} {(() => {
-                      const feeLabel = getCategoryFeeLabel(c.name, cfg?.pricing, isFreeMode, sellerIsDistributor, sellerPunyaToko);
-                      return feeLabel === "GRATIS" ? "✓ GRATIS" : feeLabel;
-                    })()}
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -587,7 +652,7 @@ export default function JualPage() {
             <div className="sm:col-span-2 flex items-center justify-between rounded-2xl border border-dashed border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-950/20 px-4 py-3 text-sm">
               <div>
                 <p className="font-semibold text-slate-900 dark:text-white">Template deskripsi kategori</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-300">
                   Format praktis untuk rincian cepat barang.
                 </p>
               </div>
@@ -659,7 +724,7 @@ export default function JualPage() {
               <label htmlFor="form-area" className="floating-label">
                 Lokasi Titik Temu COD (Opsional)
               </label>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
                 Contoh: Gerbang Utama, Perpustakaan, atau kosongkan jika fleksibel sekitar kampus.
               </p>
             </div>
@@ -690,7 +755,7 @@ export default function JualPage() {
                 maxLength={15}
               />
               <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp Kontak</label>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
                 Format: 0812-3456-7890 atau 6281234567890 (otomatis diformat)
               </p>
             </div>
@@ -704,11 +769,11 @@ export default function JualPage() {
                   <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                     Spesifikasi Tambahan ({form.category})
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
                     Boleh dikosongkan jika tidak ada detail spesifik.
                   </p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   Opsional
                 </span>
               </div>
@@ -725,7 +790,7 @@ export default function JualPage() {
                     <label htmlFor={`spec-${field.key}`} className="floating-label">
                       {field.label}
                     </label>
-                    <p className="mt-1 px-1 text-[11px] text-slate-400">{field.placeholder}</p>
+                    <p className="mt-1 px-1 text-[11px] text-slate-600 dark:text-slate-300">{field.placeholder}</p>
                   </div>
                 ))}
               </div>
@@ -734,25 +799,57 @@ export default function JualPage() {
 
           {/* Mobile Bottom CTA Area */}
           <div className="lg:hidden space-y-3 pt-2">
+            {configStatus !== "ready" && (
+              <div aria-live="polite" className="space-y-2 text-center">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  {configStatus === "loading" ? "Memuat tarif tayang..." : configError}
+                </p>
+                {configStatus === "error" && (
+                  <button
+                    type="button"
+                    onClick={() => void loadConfig()}
+                    disabled={configStatus === "loading"}
+                    className="btn-outline min-h-11 px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Coba muat ulang tarif
+                  </button>
+                )}
+              </div>
+            )}
+            {configStatus === "ready" && (
+              <p className="text-center text-sm text-slate-600 dark:text-slate-300">
+                Perkiraan biaya tayang: <strong>{gratis ? "Rp 0" : rupiah(totalBiaya)}</strong>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => saveDraft(true)}
+              disabled={!draftReady || busy}
+              className="btn-outline w-full min-h-12 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Simpan Draft
+            </button>
             <button
               type="submit"
-              disabled={busy || !!fileError || showCampusWarning}
+              disabled={busy || !!fileError || showCampusWarning || configStatus !== "ready"}
               className="btn-primary w-full min-h-12 text-base font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
             >
               {busy
-                ? "Memproses…"
+                ? (submitStep || "Memproses…")
                 : showCampusWarning
                 ? "Pilih Kampus Dulu"
-                : gratis
-                ? "Tayangkan Iklan Sekarang"
-                : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}
+                : configStatus === "loading"
+                ? "Memuat Tarif..."
+                : configStatus === "error"
+                ? "Tarif Belum Tersedia"
+                : "Terbitkan Barang"}
             </button>
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-center text-xs text-slate-600 dark:text-slate-300">
               Dengan menayangkan iklan, kamu menyetujui{" "}
               <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan</Link> &{" "}
               <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>.
             </p>
-            {msg && <p className="text-center text-sm text-rose-600">{msg}</p>}
+            {msg && <p className="text-center text-sm text-rose-700 dark:text-rose-300">{msg}</p>}
           </div>
         </div>
 
@@ -776,11 +873,11 @@ export default function JualPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={media[0].preview}
-                    alt="Preview"
+                    alt={form.title.trim() ? `Pratinjau foto ${form.title.trim()}` : "Pratinjau foto barang"}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5">
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 dark:text-slate-300 gap-1.5">
                     <Icon.Camera className="w-7 h-7 opacity-40" aria-hidden="true" />
                     <span className="text-[11px] font-medium">Belum ada foto</span>
                   </div>
@@ -799,12 +896,12 @@ export default function JualPage() {
                     {form.price ? rupiah(Number(form.price)) : "Rp 0"}
                   </span>
                   {form.type === "sewa" && (
-                    <span className="text-[10px] text-teal-600 font-medium">
+                    <span className="text-[10px] text-teal-700 dark:text-teal-300 font-medium">
                       /{form.rental_period || "hari"}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-slate-500">
+                <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-slate-600 dark:text-slate-300">
                   <Icon.MapPin className="w-3 h-3 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                   <span className="truncate">
                     {form.area.trim() || "Sekitar Kampus"}
@@ -819,51 +916,82 @@ export default function JualPage() {
             <h3 className="font-bold text-slate-900 dark:text-white text-sm">Ringkasan Biaya</h3>
             <dl className="space-y-2 text-xs sm:text-sm">
               <div className="flex justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Tipe Iklan</dt>
+                <dt className="text-slate-600 dark:text-slate-300">Tipe Iklan</dt>
                 <dd className="font-semibold capitalize text-slate-800 dark:text-slate-200">{form.type}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-500 dark:text-slate-400">Biaya Tayang</dt>
+                <dt className="text-slate-600 dark:text-slate-300">Perkiraan biaya tayang</dt>
                 <dd className="font-bold text-slate-900 dark:text-white">
-                  {gratis ? "Rp 0 (GRATIS)" : rupiah(totalBiaya)}
+                  {configStatus === "ready"
+                    ? (gratis ? "Rp 0 (Gratis)" : rupiah(totalBiaya))
+                    : configStatus === "error"
+                    ? "Belum tersedia"
+                    : "Memuat tarif..."}
                 </dd>
               </div>
               <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
               <div className="flex justify-between text-base">
-                <dt className="font-bold text-slate-900 dark:text-white">Total Bayar</dt>
+                <dt className="font-bold text-slate-900 dark:text-white">Estimasi total</dt>
                 <dd className="font-black text-emerald-700 dark:text-emerald-400">
-                  {rupiah(totalBiaya)}
+                  {configStatus === "ready"
+                    ? rupiah(totalBiaya)
+                    : configStatus === "error"
+                    ? "Belum tersedia"
+                    : "Memuat tarif..."}
                 </dd>
               </div>
             </dl>
 
             <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
-              {gratis
-                ? "Iklan langsung aktif dan tayang seketika di marketplace tanpa menunggu persetujuan admin."
-                : "Selesaikan pembayaran QRIS agar iklanmu langsung aktif di katalog."}
+              Biaya final ditentukan server berdasarkan pengaturan dan status akun. Jika pembayaran diperlukan, nominal QRIS akan ditampilkan sebelum dibayar.
             </div>
 
-            <button
-              type="submit"
-              disabled={busy || !!fileError || showCampusWarning}
-              className="btn-primary w-full min-h-12 text-sm font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
-            >
-              {busy
-                ? "Memproses…"
-                : showCampusWarning
-                ? "Pilih Kampus Dulu"
-                : gratis
-                ? "Tayangkan Iklan Sekarang"
-                : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}
-            </button>
+            {configStatus === "error" && (
+              <div role="alert" className="space-y-2 text-sm text-rose-700 dark:text-rose-300">
+                <p>{configError}</p>
+                <button
+                  type="button"
+                  onClick={() => void loadConfig()}
+                  className="btn-outline min-h-11 w-full text-sm font-semibold"
+                >
+                  Coba muat ulang tarif
+                </button>
+              </div>
+            )}
 
-            <p className="text-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+            <div className="hidden space-y-2 lg:block">
+              <button
+                type="button"
+                onClick={() => saveDraft(true)}
+                disabled={!draftReady || busy}
+                className="btn-outline w-full min-h-12 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Simpan Draft
+              </button>
+              <button
+                type="submit"
+                disabled={busy || !!fileError || showCampusWarning || configStatus !== "ready"}
+                className="btn-primary w-full min-h-12 text-sm font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
+              >
+                {busy
+                  ? (submitStep || "Memproses…")
+                  : showCampusWarning
+                  ? "Pilih Kampus Dulu"
+                  : configStatus === "loading"
+                  ? "Memuat Tarif..."
+                  : configStatus === "error"
+                  ? "Tarif Belum Tersedia"
+                  : "Terbitkan Barang"}
+              </button>
+            </div>
+
+            <p className="text-center text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
               Dengan menayangkan iklan, kamu menyetujui{" "}
               <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan Komunitas</Link> &{" "}
               <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>. Calon pembeli akan menghubungimu via WhatsApp.
             </p>
 
-            {msg && <p className="text-center text-xs text-rose-600">{msg}</p>}
+            {msg && <p className="text-center text-xs text-rose-700 dark:text-rose-300">{msg}</p>}
           </div>
         </aside>
       </form>

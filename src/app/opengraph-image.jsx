@@ -1,8 +1,5 @@
 import { ImageResponse } from "next/og";
 
-// Edge runtime wajib di sini: bundel Node dari @vercel/og gagal di-prerender
-// saat path proyek mengandung spasi (fileURLToPath "Invalid URL").
-export const runtime = "edge";
 export const alt =
   "Kampus Kita — marketplace dan komunitas mahasiswa Indonesia";
 export const size = { width: 1200, height: 630 };

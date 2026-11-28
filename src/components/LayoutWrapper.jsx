@@ -28,17 +28,17 @@ export default function LayoutWrapper({ children }) {
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin && !isLinusku) {
       fetch("/api/config")
         .then((res) => res.json())
         .then((data) => setConfig(data))
         .catch((err) => console.error("Gagal memuat config:", err));
     }
-  }, [isAdmin]);
+  }, [isAdmin, isLinusku]);
 
   // Sinkronisasi Google OAuth
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isLinusku) return;
 
     // A. Tangani query param ?_gwa=...
     const params = new URLSearchParams(window.location.search);
@@ -90,7 +90,7 @@ export default function LayoutWrapper({ children }) {
           });
       }
     }
-  }, []);
+  }, [isLinusku]);
 
   return (
     <SesiProvider>
@@ -98,7 +98,7 @@ export default function LayoutWrapper({ children }) {
         children
       ) : (
         <div className={cn(
-          "w-full relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans",
+          "w-full relative overflow-x-clip bg-[var(--page)] text-[var(--text)] flex flex-col justify-between font-sans",
           isChat ? "h-screen h-dvh overflow-hidden" : "min-h-screen"
         )}>
           {/* Emergency Alert Banner */}
@@ -136,7 +136,7 @@ export default function LayoutWrapper({ children }) {
           <div className="w-full min-w-0 flex-1 flex flex-col min-h-0">
             <main className={cn(
               "flex-1 flex flex-col w-full min-h-0",
-              !isChat && !isTeman ? "pb-24 lg:pb-0" : ""
+              !isChat && !isTeman ? "pb-6 xl:pb-0" : ""
             )}>
               {children}
             </main>
@@ -148,9 +148,9 @@ export default function LayoutWrapper({ children }) {
           <InstallPrompt />
           <NotifPrompt />
           <PopupSponsor config={config} />
-          <BottomNavbar />
           <ThemeToggleFloating />
           {!hideFooter && <Footer config={config} />}
+          <BottomNavbar />
         </div>
       )}
       <GlobalImageLightbox />
