@@ -14,8 +14,8 @@ perbaikan build dan kompatibilitas crypto.
 - Perubahan disimpan pada branch
   `feat/kampuskita-redesign-restoration-20261128` dengan commit fitur
   `98d9b4de`. `origin/main` kemudian diintegrasikan ke branch fitur; 21 konflik
-  diselesaikan tanpa mengubah branch `main`. Integrasi belum dipush dan belum
-  dibuat PR.
+  diselesaikan tanpa mengubah branch `main`. Branch fitur sudah dipush ke
+  `origin`; PR belum dibuat dan `main` tidak diubah.
 - Dua migration LINUSKU ditambahkan sebagai file sumber saja:
   `supabase/migrations/20261124125504_linusku_driver_access_requests.sql` dan
   `supabase/migrations/20261124133735_restrict_linusku_setting_rpc.sql`.
@@ -95,10 +95,12 @@ File implementasi utama:
   tetap sukses; ini bukan validasi koneksi backend produksi.
 - Tes marketplace setelah memperbaiki hitungan tayangan/riwayat produk dan
   state aksesibel Open PO — **6 lulus**.
-- `git diff --check` — lulus sebelum build; perlu dijalankan lagi setelah
-  perubahan dokumentasi/verifikasi terakhir.
-- Worker dev tetap menjalankan snapshot `origin/main` commit `9703ae00`;
-  build branch fitur ini tidak melakukan deployment.
+- `git diff --check` — lulus setelah perubahan dokumentasi dan kode.
+- Build branch fitur dideploy ke Worker dev
+  `kampuskita-redesign-dev` (version
+  `071ebb2f-013c-44e6-8673-120715a135d0`) dengan konfigurasi backend placeholder.
+  GET `/`, `/linusku`, `/open-po`, dan `/jelajahi` merespons HTTP 200.
+  Deployment produksi tidak dilakukan.
 - Tidak ada screenshot visual baru. Perubahan lanjutan pada UI hanya import
   helper class; dokumen legal hanya menerima koreksi sintaks. Tes dan build
   mencakup halaman LINUSKU, Open PO, Mading, WTB, marketplace, dashboard, dan

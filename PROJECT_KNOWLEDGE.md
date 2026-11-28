@@ -1905,12 +1905,14 @@ deployment atau verifikasi layanan produksi.
   tetapi belum memiliki alur pendaftaran.
 - Peta LINUSKU membangun marker melalui DOM API dan `textContent` untuk data
   halte/bus.
-- Worker dev `kampuskita-redesign-dev` berjalan dari commit upstream `9703ae00`
-  di `https://kampuskita-redesign-dev.jualbeliusupolmed.workers.dev`.
-  Pemeriksaan GET `/` dan `/linusku` memberi HTTP 200; konfigurasi dev memakai
-  placeholder backend `.invalid`. Tidak ada migrasi database, deployment
+- Worker dev `kampuskita-redesign-dev` berjalan di
+  `https://kampuskita-redesign-dev.jualbeliusupolmed.workers.dev`, menggunakan
+  placeholder backend `.invalid`. Versi terbaru berasal dari commit branch
+  fitur `206b45cb` (Worker version
+  `071ebb2f-013c-44e6-8673-120715a135d0`). GET `/`, `/linusku`, `/open-po`, dan
+  `/jelajahi` merespons HTTP 200. Tidak ada migrasi database, deployment
   produksi, atau pengiriman pesan WhatsApp.
-- Perubahan fitur lokal tersimpan pada branch
-  `feat/kampuskita-redesign-restoration-20261128`, commit `98d9b4de`.
-  Branch ini sedang diintegrasikan dengan `origin/main`; belum dipush dan belum
-  ada PR.
+- Perubahan fitur tersimpan pada branch
+  `feat/kampuskita-redesign-restoration-20261128`, termasuk commit fitur
+  `98d9b4de` dan commit integrasi `206b45cb`; branch sudah dipush ke GitHub.
+  `main` tidak diubah dan PR belum dibuat.
