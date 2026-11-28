@@ -3,7 +3,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="https://api.nusagate.com/v1",
-    api_key=os.environ["nsk_D1EWG3GWymp2BkQwOIop68jqOHGhAsCt"],
+    api_key=os.environ["NUSAGATE_API_KEY_FROM_SECRET_MANAGER"],
 )
 
 res = client.chat.completions.create(
@@ -18,11 +18,11 @@ print(res.usage)
 
 
 
-export NUSAGATE_API_KEY=nsk_...
+export NUSAGATE_API_KEY=$NUSAGATE_API_KEY
 sol "jelaskan recursion dalam satu paragraf"
 
 curl https://api.nusagate.com/v1/chat/completions \
-  -H "nsk_D1EWG3GWymp2BkQwOIop68jqOHGhAsCt \
+  -H "NUSAGATE_API_KEY_FROM_SECRET_MANAGER \
   -H "Content-Type: application/json" \
   -d '{
     "model": "glm-5.3-flash",
@@ -34,13 +34,13 @@ curl https://api.nusagate.com/v1/chat/completions \
 
 
 
-  export NUSAGATE_API_KEY=nsk_H34DnEAm6OloWat3RiqtEeh2mFoCu42Y
+  export NUSAGATE_API_KEY=$NUSAGATE_API_KEY
 sol "jelaskan recursion dalam satu paragraf"
 
-export NUSAGATE_API_KEY=nsk_...
+export NUSAGATE_API_KEY=$NUSAGATE_API_KEY
 sol "jelaskan recursion dalam satu paragraf"
 
 curl -sN https://api.nusagate.com/v1/messages \
-  -H "Authorization: Bearer $nsk_H34DnEAm6OloWat3RiqtEeh2mFoCu42Y" \
+  -H "Authorization: Bearer $NUSAGATE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"gemini-3.8-flash","max_tokens":100,"stream":true,"messages":[{"role":"user","content":"say hi"}]}' | head -c 400

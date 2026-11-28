@@ -32,7 +32,42 @@ JEDA_RESTART_DETIK="${JEDA_RESTART_DETIK:-600}"   # jangan menendang lebih serin
 
 HITUNG_FILE="$STATE_DIR/.penjaga-hitung"
 TERAKHIR_FILE="$STATE_DIR/.penjaga-restart-terakhir"
+ALERT_TERAKHIR_FILE="$STATE_DIR/.penjaga-alert-terakhir"
 LOG="$STATE_DIR/penjaga-bot.log"
+
+# Muat kredensial alert eksternal (opsional: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ALERT_WEBHOOK_URL)
+if [ -s /root/.alert_env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . /root/.alert_env
+    set +a
+fi
+
+kirim_alert() {
+    local pesan="$1"
+    local jeda="${2:-1800}" # default cooldown 30 menit agar tidak spam
+    local sekarang
+    sekarang=$(date +%s)
+    local lalu
+    lalu=$(cat "$ALERT_TERAKHIR_FILE" 2>/dev/null || echo 0)
+    if [ $(( sekarang - lalu )) -lt "$jeda" ]; then
+        return 0
+    fi
+    if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+        curl -s -m 8 -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=[Penjaga $APP] $pesan" >/dev/null 2>&1 || true
+        echo "$sekarang" > "$ALERT_TERAKHIR_FILE"
+    fi
+    if [ -n "${ALERT_WEBHOOK_URL:-}" ]; then
+        local json_pesan
+        json_pesan=$(printf '%s' "[Penjaga $APP] $pesan" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        curl -s -m 8 -X POST "$ALERT_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{\"content\":\"$json_pesan\",\"text\":\"$json_pesan\"}" >/dev/null 2>&1 || true
+        echo "$sekarang" > "$ALERT_TERAKHIR_FILE"
+    fi
+}
 
 catat() {
     # Dipanggil tiap dua menit selamanya: tanpa batas ukuran, log ini pelan-pelan
@@ -53,6 +88,7 @@ badan=$(printf '%s' "$jawaban" | sed '$d')
 # cuma menambah ketukan ke nomor yang sedang ditolak. Jadi penjaga mundur.
 if printf '%s' "$badan" | grep -q '"terkunci":true'; then
     catat "Sesi TERKUNCI — butuh tindakan manusia (buka kunci di dashboard). Penjaga tidak me-restart."
+    kirim_alert "🔒 Sesi WhatsApp TERKUNCI — butuh buka kunci & scan ulang di dashboard." 3600
     echo 0 > "$HITUNG_FILE"
     exit 0
 fi
@@ -100,6 +136,7 @@ fi
 # Jadi: pakai skrip jalankan yang memang membawa env, dan kalau tidak ada, restart
 # TANPA --update-env supaya env yang sudah tersimpan di pm2 dipertahankan.
 catat "AMBANG TERCAPAI ($n × $jenis) — menghidupkan ulang $APP"
+kirim_alert "⚠️ Bot bermasalah ($n × $jenis: $sebab). Penjaga me-restart $APP sekarang." 900
 if [ -x "$SKRIP_JALAN" ]; then
     if "$SKRIP_JALAN" >> "$LOG" 2>&1; then
         catat "$SKRIP_JALAN selesai."

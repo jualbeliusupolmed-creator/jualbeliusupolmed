@@ -42,6 +42,13 @@ if [ -s /root/.supabase_env ]; then
     set +a
 fi
 
+# Kredensial alert eksternal opsional (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ALERT_WEBHOOK_URL)
+if [ -s /root/.alert_env ]; then
+    set -a
+    . /root/.alert_env
+    set +a
+fi
+
 # Token bot kedua, supaya dashboard bot pertama bisa memperlihatkan DUA perangkat
 # lewat /perangkat2/*. Kalau berkasnya belum ada, bot pertama tetap jalan dan
 # panel kedua sekadar tidak muncul.

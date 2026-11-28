@@ -93,6 +93,23 @@ Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari es
 - Status penerapan migrasi, RLS/Advisor Supabase, kredensial akun sosial, pengiriman aktual, dan kesehatan bot harus diverifikasi di layanan masing-masing. Catatan repo atau status `connected` saja bukan bukti end-to-end.
 - Ini belum sama dengan jaringan nasional yang beroperasi penuh. Pengujian admin lintas provinsi/kampus, publikasi nyata per akun, atribusi FYP, integrasi akun pengguna kanonikal, dan proses Open PO yang menyatu harus dinilai menurut bukti alur masing-masing.
 
+### Pembaruan 27 November 2026 — Fondasi redesign website Kampus Kita
+
+- Navigasi utama responsif menggunakan lima tujuan: Jual Beli, Open PO, LINUSKU, Berita, dan Jelajahi. Akses akun serta aksi sekunder tetap dipertahankan.
+- `/blog` menjadi portal artikel terbit yang terpisah dari Mading/Menfess; `/jelajahi` menjadi hub yang hanya mengarah ke fitur tersedia dan menandai modul tanpa backend khusus.
+- LINUSKU tetap memakai layout tersendiri, dengan navigasi utama situs dan tautan bagian Peta/Halte. Kontrol tema menunggu hydration sebelum membaca preferensi sistem agar render server dan klien konsisten.
+- `/jual-beli` kini memakai pencarian dan filter yang jelas, aksi Jual/Buat Permintaan, tautan Open PO, daftar WTB nyata, serta akses LINUSKU tanpa contoh produk atau ETA buatan. Data listing, API, dan otorisasi tidak diubah; kegagalan memuat listing sekarang menampilkan pesan dan aksi coba lagi.
+- Perubahan ini hanya fondasi parsial; tidak ada perubahan API, skema/database, workflow transaksi, otorisasi, maupun deployment. Halaman lain masih perlu dikerjakan dan diuji bertahap.
+
+### Pembaruan 28 November 2026 — Batch komposisi Marketplace
+
+- `/jual-beli` kini memakai tiga rail desktop untuk filter, katalog, dan informasi WTB/LINUSKU; mobile memakai filter disclosure, dua aksi utama sejajar, banner Open PO, kategori cepat, lalu grid produk.
+- FAB Jual Cepat dihapus karena mengulang aksi Jual yang sudah terlihat dan menutupi judul katalog pada viewport mobile.
+- Filter kategori DB-backed menggunakan nama kategori saat memuat halaman selanjutnya agar sesuai filter yang sudah dipakai endpoint browse. Tidak ada perubahan endpoint, query server, skema, atau data.
+- Browser smoke test mengubah filter kategori, mereset ke Semua, membuka/menutup filter mobile, dan menguji pencarian. Viewport aktual yang dapat diatur browser adalah 487px saat diminta 390px, dan 1800px saat diminta 1440px; tidak ada klaim verifikasi tepat pada breakpoint 390/1440.
+- Build produksi berjalan bersamaan dengan preview `next dev` dan membuat berkas CSS lokal tidak tersedia. Dev server lokal dimulai ulang, lalu halaman dan CSS kembali merespons 200. Jangan menjalankan build dan mengandalkan preview dev yang sama secara bersamaan tanpa reload/restart.
+- Tes terakhir: 95 file dan 478 test lulus, lint, typecheck, dan build lulus sebelum penghapusan markup FAB. Desain keseluruhan website masih parsial; audit visual penuh desktop/mobile dan modul prioritas lainnya masih tertunda.
+
 ### Pembaruan 3 November 2026 — Peleburan Identitas Pengguna, Backfill Total USU-POLMED, & Otomasi Omnichannel
 
 - **Peleburan Akun Kanonikal Menyeluruh (Merge Seller Profiles & user_id)**:
@@ -1482,3 +1499,397 @@ deployment atau verifikasi layanan produksi.
 - Belum ada uji produksi dengan akun Sumut dan Jakarta. Open PO dan barang dicari
   masih mengikuti alur wilayah tersendiri; halaman SEO/akses anonim juga tetap
   publik.
+
+### 23 November 2026 — prototipe Vinext/Cloudflare Workers Free tanpa deploy
+
+- Cabang `cloudflare-free-vinext-prototype` dibuat untuk menguji jalur
+  Vinext/Cloudflare Workers secara lokal. Tidak ada deploy, login Cloudflare,
+  perubahan DNS, bucket R2, perubahan data Supabase, pengiriman WhatsApp,
+  atau aktivasi cron.
+- Dependency prototipe dipin ke Vinext `1.4.6`, React/React DOM
+  `19.3.1`, react-server-dom-webpack `19.3.1`, Cloudflare Vite plugin
+  `2.0.0-rc.3`, plugin RSC `0.5.39`, dan `@vinext/cloudflare` `1.4.0`.
+- Konfigurasi Vite diisolasi agar tidak membaca `.env*`; worker prototipe
+  mendelegasikan request ke `vinext/server/fetch-handler`. Konfigurasi OpenNext
+  lama tidak lagi masuk jalur Vinext.
+- Build Vinext lokal berhasil dan mengeluarkan
+  `.cloudflare/output/v1/workers/default/bundle/`. Setelah mengaktifkan scope
+  ESM pada package root, preview lokal berhasil melayani `/` dan
+  `/panduan-aman` dengan HTTP 200 serta `/robots.txt` dengan HTTP 200.
+- Ukur komponen JavaScript bundle prototipe: sekitar `519.535 KB` gzip
+  kumulatif, atau `0.495 MiB`. Ini hanya catatan ukuran hasil build tersebut,
+  bukan pembandingan dengan batas plan; klaim batas bundle Free `3 MiB` pada
+  catatan awal dikoreksi pada 26 November 2026.
+- Build lengkap perlu dijalankan kembali di mesin bersih dan preview perlu
+  diuji dengan environment terpisah untuk database sebelum keputusan deploy.
+  `npm run lint` berhasil. Tes penuh saat verifikasi tidak sepenuhnya hijau:
+  356 tes lulus dan 10 gagal, terutama `createCipheriv`/`createHmac` pada
+  crypto compatibility serta timeout render. Kegagalan ini belum menjadi bukti
+  penyebab regresi dari prototipe dan harus diperiksa terpisah sebelum rilis.
+
+### 24 November 2026 — deploy Workers pertama dan smoke test
+
+- Aplikasi berhasil dideploy ke Cloudflare Workers sebagai
+  `https://kampuskita.jualbeliusupolmed.workers.dev`.
+- Deploy menggunakan jalur Vinext/Cloudflare Vite, tanpa mengubah DNS atau
+  domain kustom. URL Workers adalah jalur publish sementara.
+- Jalur cache R2 tidak diaktifkan karena R2 belum di-enable pada akun saat
+  deploy. Konfigurasi cache prototype `self-contained` serta binding R2/Durable
+  Object cache dihapus dari config deploy agar Worker dapat online.
+- Sebanyak 44 environment variable aplikasi yang relevan diunggah sebagai
+  environment bindings/secrets Worker. Nilai rahasia tidak dicatat di kode,
+  dokumentasi, atau log repository.
+- Smoke test produksi Workers: `/` HTTP 200, `/faq` HTTP 200,
+  `/robots.txt` HTTP 200, dan `/api/listings/browse` HTTP 200.
+- Belum ada perubahan DNS, pemindahan trafik apex/`www`, aktivasi domain
+  kustom, R2, cron, atau penonaktifan deployment Vercel lama.
+
+### 24 November 2026 — Integrasi lokal LINUSKU di `/linusku`
+
+- Source LINUSKU ditambahkan sebagai route lokal `/linusku`, `/linusku/admin`,
+  `/linusku/driver`, dan `/linusku/api/*`, dengan aset serta service worker
+  terpisah di `public/linusku/`. CSS upstream dibatasi ke `.linusku-root` agar
+  tidak mengubah halaman marketplace.
+- Helper LINUSKU memakai `linuskuSupabase.ts` dan
+  `linuskuSupabaseServer.ts` dengan environment variable khusus LINUSKU; tidak
+  memakai URL atau key Supabase marketplace sebagai fallback. Proyek Supabase
+  LINUSKU belum dihubungkan atau diverifikasi; tidak ada perubahan
+  schema/database.
+- Vinext Worker mengizinkan service worker `/linusku/sw.js` mengendalikan
+  canonical route `/linusku` melalui `Service-Worker-Allowed`. Scope service
+  worker membatasi cache ke path LINUSKU. Root layout tidak mendaftarkan
+  service worker marketplace pada route `/linusku`, sehingga tidak membuat
+  scope `/` baru saat aplikasi dibuka di sana.
+- `npm run lint` dan build lokal `npm run build:vinext` lulus; 52 tes LINUSKU
+  terpilih lulus; smoke test route `/linusku` dan API health lokal merespons
+  HTTP 200. Preview browser masih mencatat 404 untuk
+  `/_vercel/insights/script.js` dari integrasi Vercel Analytics global; belum
+  diubah karena keputusan penggantian/penonaktifannya berlaku untuk seluruh
+  marketplace, bukan khusus LINUSKU. Full suite terakhir belum sepenuhnya hijau:
+  443 tes lulus dan 12 gagal sebelum pembaruan ekspektasi tautan LINUSKU;
+  kegagalan lain mencakup test crypto (`createHmac`/`createCipheriv`) dan
+  timeout render font.
+- Perubahan LINUSKU ini belum dideploy. Sebelum deploy, perlu konfigurasi
+  Supabase LINUSKU yang memang dimiliki aplikasi tersebut dan verifikasi pada
+  Cloudflare preview/Worker; jangan menjalankan schema atau migration sebagai
+  bagian dari langkah integrasi ini.
+
+### 24 November 2026 — Deploy LINUSKU ke Cloudflare Workers
+
+- LINUSKU memakai fallback environment Supabase KampusKita:
+  `NEXT_PUBLIC_SUPABASE_URL` dan publishable/anon key di client, serta
+  `SUPABASE_SECRET_KEY` atau `SUPABASE_SERVICE_ROLE_KEY` hanya di server.
+  URL di `.env.local` LINUSKU dan KampusKita mengarah ke project yang sama;
+  public key LINUSKU juga tervalidasi. Build menerima 11 variabel publik
+  marketplace dan memetakan variabel publik Supabase/CARTO LINUSKU secara
+  terpisah. `.env.local` utuh dan `VERCEL_OIDC_TOKEN` tidak diunggah; server
+  secret tetap berasal dari Worker KampusKita.
+- Migrasi `20261124125504_linusku_driver_access_requests` menyediakan tabel
+  permintaan akses driver dengan RLS dan akses service-role saja.
+- Migrasi `20261124133735_restrict_linusku_setting_rpc` mencabut EXECUTE dari
+  `PUBLIC`, `anon`, dan `authenticated` untuk
+  `public.get_linusku_setting(text, jsonb)`, lalu memberikan EXECUTE hanya ke
+  `service_role`. ACL diverifikasi setelah migrasi.
+- Vinext memakai `kvDataAdapter()` dengan binding `VINEXT_KV_CACHE`. Namespace
+  `kampuskita-vinext-kv-cache` dibuat saat deploy untuk cache ISR/data. Workers
+  KV ada di paket Free: 100.000 reads/hari, 1.000 writes/deletes/list requests
+  per hari, dan 1 GB penyimpanan; operasi yang melampaui kuota Free akan gagal.
+- Deploy Worker `kampuskita` berhasil ke
+  `https://kampuskita.jualbeliusupolmed.workers.dev` (versi terakhir
+  `33347ad5-9fee-45dd-a8c7-947ded51c99c`). Tidak ada perubahan DNS atau
+  pemindahan trafik Vercel.
+- Smoke test produksi menerima HTTP 200 pada `/`, `/linusku`,
+  `/linusku/admin`, `/linusku/driver`, `/linusku/api/health`, dan
+  `/linusku/sw.js`; service worker mengirim
+  `Service-Worker-Allowed: /linusku`. Nama secret Supabase Worker diverifikasi
+  tanpa membaca nilainya. `GET /linusku/api/admin/health` tanpa sesi menolak
+  akses dengan HTTP 401; login admin berotorisasi belum diuji menggunakan sesi
+  pemilik.
+- `LINUSKU_ADMIN_EMAILS` di env sumber saat ini tidak dibaca oleh kode; allowlist
+  tetap ditentukan di kode. Alamat admin sumber cocok dengan allowlist aktif,
+  tetapi perubahan allowlist memerlukan tinjauan otorisasi tersendiri.
+- Browser menampilkan judul “LINUSKU | Pelacak Bus Lintas USU”. Sumber posisi
+  saat ini berstatus **Demo / Simulasi**, bukan feed posisi bus live.
+- Keputusan operasional pemilik: rencana cutover domain ditunda ke 25 November
+  2026; sampai feed GPS live siap, gunakan laporan pengguna dan posisi dari
+  supir sebagai sumber sementara. DNS belum dialihkan dan alur laporan produksi
+  belum diuji dengan pengiriman data nyata.
+- Validasi lokal setelah konfigurasi cache: `npm test` (461 tes), `npm run lint`,
+  dan `npm run build:vinext` lulus. Security Advisor masih melaporkan temuan
+  fungsi SECURITY DEFINER marketplace, tabel RLS tanpa policy, dan leaked
+  password protection nonaktif; hasil ini bukan klaim bahwa seluruh database
+  sudah aman.
+
+### 25 November 2026 — verifikasi feed komunitas dan supir
+
+- Pemeriksaan Supabase bersifat read-only. Flag LINUSKU sudah sesuai: `simulationMode=false`,
+  `crowdReportingEnabled=true`, dan `maintenanceMode=false`; tidak ada perubahan
+  setting yang diperlukan.
+- Agregat saat pemeriksaan: 3 bus aktif, 0 posisi supir dalam 30 menit terakhir,
+  dan 0 laporan pengguna dalam 24 jam terakhir. Tidak ada koordinat atau
+  identitas yang dibaca, dan tidak ada data uji yang dikirim.
+- Mode komunitas/supir sudah diizinkan oleh konfigurasi, tetapi belum ada data
+  terbaru untuk ditampilkan. Tampilan di luar jam operasional dapat tetap
+  menunjukkan simulasi.
+- Cutover DNS belum dilakukan. Jadwal yang disepakati adalah 25 November 2026;
+  perlu konfirmasi dan pemeriksaan rollback sebelum perubahan DNS.
+
+### 25 November 2026 — memperbaiki geometri jalur peta LINUSKU
+
+- API produksi semula mengembalikan `source=fallback` dengan 11 titik, yaitu
+  titik halte yang dihubungkan garis lurus. Penyebab visualnya: helper OSRM
+  menangkap kegagalan request tanpa diagnostik, lalu memakai garis halte.
+- OSRM menghasilkan 213 titik jalan untuk urutan halte default yang sama.
+  Geometri OSM terkompresi ditambahkan sebagai jalur bawaan untuk koordinat
+  halte default, sehingga tampilan tidak bergantung pada request router eksternal
+  saat peta dibuka. Susunan halte khusus tetap mencoba OSRM.
+- Setelah deploy, `/linusku/api/route` merespons HTTP 200 dengan
+  `source=osm-cache` dan 213 titik. Tidak ada perubahan DNS, setting Supabase,
+  atau data operasional.
+- `npm test` lulus (462 tes), `npm run lint`, dan `npm run build:vinext` lulus.
+- Pengecekan browser setelah deploy menemukan basemap kota CARTO menampilkan
+  watermark “API KEY REQUIRED”. Masalah tile ini diperbaiki pada perubahan UI
+  LINUSKU di bawah.
+
+### 25 November 2026 — memperbaiki tampilan peta dan panel LINUSKU
+
+- Basemap Kota sekarang memakai OpenStreetMap jika CARTO key tidak tersedia,
+  sehingga respons CARTO yang berisi watermark key tidak lagi dianggap tile
+  berhasil. Label satelit dari CARTO hanya ditampilkan jika key tersedia.
+- Peta menyesuaikan ukuran container sebelum membingkai rute. Halte terpilih
+  pada awal buka tidak lagi memaksa zoom ke satu titik; memilih halte lain tetap
+  memusatkan peta ke halte tersebut.
+- Pada viewport tablet sempit, peta dan panel informasi disusun vertikal.
+  Lebar kolom peta dan panel dipastikan penuh di ponsel, legenda ETA membungkus
+  isi tanpa memotong label.
+- Setelah deploy, route API tetap HTTP 200 dengan 213 titik `osm-cache`.
+  Pemeriksaan browser pada lebar CSS 960, 767, dan 390 px tidak menemukan
+  overflow horizontal; tile OSM termuat tanpa kegagalan pada viewport yang
+  diuji.
+- `npm test` lulus (462 tes), `npm run lint`, dan build yang dijalankan saat
+  deploy berhasil. Tidak ada perubahan DNS, Vercel, atau Supabase.
+
+### 25 November 2026 — menghubungkan domain utama ke Worker
+
+- `kampuskita.my.id` sudah ditambahkan sebagai custom domain Production pada
+  Worker `kampuskita`. Asosiasi domain pada Pages `jualbeliusupolmed` dilepas
+  atas persetujuan pemilik; Cloudflare juga menghapus CNAME Pages yang konflik.
+- Audit zona Cloudflare menemukan 9 record: A untuk `bot`, CNAME `www.bot`,
+  CNAME `www` ke Vercel, 3 MX, TXT pada host DKIM dan apex, serta A apex yang
+  diproxy. Worker `kampuskita` tercantum sebagai Connected Worker untuk apex.
+  Nilai MX/TXT tidak dicatat.
+- DNS publik masih didelegasikan ke `ns1.idwebhost.id` dan `ns2.idwebhost.id`.
+  Resolver publik tidak menemukan A, AAAA, CNAME, MX, atau TXT untuk apex;
+  panel IDWebhost juga menampilkan zona kosong. Cloudflare menetapkan
+  `edna.ns.cloudflare.com` dan `santino.ns.cloudflare.com`; nameserver di
+  registrar belum diubah.
+- Cutover akan mengaktifkan record Cloudflare yang saat ini tidak terpublikasi.
+  Sebelum perubahan, `www` masih mengarah ke Vercel. Pemilik memilih untuk
+  mengarahkan `www` ke Worker dan mempertahankan 3 MX serta 2 TXT saat cutover;
+  record `bot` tetap dipertahankan. Penambahan domain Worker untuk `www` dan
+  perubahan nameserver belum dilakukan.
+- Verifikasi HTTPS belum tuntas: apex belum resolve dan pemeriksaan URL
+  `workers.dev` mengalami ketidakcocokan nama sertifikat.
+
+### 26 November 2026 — hardening Cloudflare lokal, belum dideploy
+
+- Smoke test GET-only ke apex, `www`, dan `/linusku` pada kedua host lulus:
+  empat URL merespons HTTP 200. Ini memverifikasi respons HTTP, bukan alur
+  login, transaksi, upload, email, atau alur interaktif aplikasi.
+- Jadwal Cloudflare OpenNext lokal dipadatkan dari tujuh trigger menjadi empat.
+  Helper Cron memetakan trigger gabungan UTC pukul 01, 02, dan 03 ke route
+  harian yang sesuai, termasuk laporan mingguan pada Senin pukul 01. Tes route
+  dan dispatch Cron terarah lulus; perubahan ini belum dideploy dan jadwal aktif
+  di Cloudflare belum diverifikasi.
+- Dry-run Vinext melalui CLI `cf deploy --dry-run --provision=false` berhasil
+  dengan 422 aset dan bundle 2,711.49 KiB gzip. Build masih menandai sejumlah
+  route tidak dapat diklasifikasikan otomatis dan image tetap `unoptimized`.
+  Dry-run ini bukan validasi penuh untuk cookies/sesi, Supabase, upload, API,
+  Cron, atau kesiapan mengganti Worker produksi.
+- Koreksi ukuran plan berdasarkan [dokumentasi resmi batas Workers Cloudflare](https://developers.cloudflare.com/workers/platform/limits/):
+  batas ukuran Worker adalah 64 MiB uncompressed untuk Free maupun Paid, tanpa
+  batas ukuran gzip. Klaim terdahulu bahwa batas Free adalah 3 MiB gzip tidak
+  benar.
+- `npm run cloudflare:build` kini berhasil dari build lokal; typecheck aplikasi
+  lulus setelah menambahkan `tsconfig.json` untuk alias `@/*`, module resolution
+  `bundler`, strict checking, serta pengecualian entry Worker yang dihasilkan
+  OpenNext setelah build Next. Ekspor konstanta helper dari route handler admin
+  dibuat internal agar sesuai kontrak Route Next.js.
+- Dry-run Wrangler atas hasil OpenNext bersih membaca 952 aset dan mengukur
+  `Total Upload: 31,325.16 KiB` uncompressed (`5,417.84 KiB` gzip), di bawah
+  batas bundle Worker 64 MiB. Ini menghapus blocker ukuran bundle yang
+  sebelumnya dilaporkan, bukan bukti performa runtime atau batas CPU memadai.
+- Batas Workers Free lain yang perlu diperiksa: 10 ms CPU per request, 100.000
+  request per hari, dan 5 Cron Trigger per akun. Worker ini memakai 4 trigger;
+  jumlah trigger akun total dan CPU runtime belum diverifikasi.
+- Audit dependency terakhir melaporkan 0 vulnerability. `npm run lint` lulus;
+  seluruh 90 berkas tes dan 462 tes lulus. Output tes memuat peringatan Fontconfig
+  di lingkungan lokal, tetapi tidak menyebabkan tes gagal.
+- `wrangler deployments list` ditolak karena sesi Cloudflare CLI tidak memiliki
+  akses. Versi Worker aktif, plan akun, log, limit runtime, serta Cron produksi
+  belum dapat diperiksa melalui CLI. Tidak ada deploy, perubahan dashboard/DNS,
+  migrasi Supabase, atau perubahan layanan produksi pada langkah ini.
+- Sebelum memilih adapter atau menjalankan deploy, lakukan verifikasi
+  terautentikasi terhadap deployment aktif dan plan akun. Jalankan build bersih,
+  uji fungsi lintas route termasuk sesi dan API, dan pastikan konfigurasi Cron
+  serta prosedur rollback tersedia. Jangan menganggap dry-run Vinext sebagai
+  persetujuan cutover.
+
+### 26 November 2026 — verifikasi DNS publik terbaru
+
+- Resolver publik kini mengembalikan nameserver Cloudflare
+  `edna.ns.cloudflare.com` dan `santino.ns.cloudflare.com`, berbeda dari hasil
+  pemeriksaan historis 25 November yang masih menunjuk ke IDWebHost.
+- Smoke test GET-only ulang untuk apex dan `www`, pada `/` dan `/linusku`,
+  menghasilkan HTTP 200 untuk keempat URL. Respons root apex dan `www`
+  menyertakan `server: cloudflare` dan `cf-ray`; ini membuktikan permintaan
+  melewati edge Cloudflare, tetapi tidak mengidentifikasi origin atau
+  membuktikan route tersebut dilayani oleh Worker `kampuskita`.
+- Pemeriksaan DNS publik tanpa menampilkan nilai TXT menemukan 3 record MX dan
+  1 record TXT pada apex. Isi TXT di host DKIM tidak diperiksa, dan pengiriman
+  atau penerimaan email belum diuji.
+- Tidak ada perubahan DNS, dashboard, atau deployment yang dilakukan pada
+  pemeriksaan ini. `wrangler deployments list --name kampuskita` tetap ditolak
+  dengan `No access to the specified resource`, dan tab dashboard yang
+  dibagikan masih berada di halaman login. Versi Worker aktif, origin trafik,
+  plan akun, log, CPU, dan Cron produksi tetap belum diverifikasi.
+- Uji OpenNext preview lokal tanpa `.dev.vars` menunjukkan `/faq`, `/linusku`,
+  `/linusku/admin`, dan `/linusku/driver` merespons HTTP 200. `/` timeout,
+  `/linusku/api/health` merespons 503, dan `/linusku/sw.js` merespons 404 setelah
+  rule `run_worker_first` ditambahkan untuk mengizinkan header scope Worker.
+  Endpoint health belum dapat dinilai tanpa konfigurasi preview yang valid.
+  Preview lokal sudah dihentikan; ini bukan pengujian produksi.
+- Helper header service worker kini dipakai bersama oleh entrypoint OpenNext
+  dan Vinext, dengan dua tes terarah lulus. Header `Service-Worker-Allowed`
+  masih belum terverifikasi bekerja pada preview OpenNext; selesaikan uji
+  asset-routing ini sebelum adapter OpenNext dianggap siap.
+- `initOpenNextCloudflareForDev()` dibatasi ke `NODE_ENV=development`, karena
+  helper OpenNext tersebut ditujukan untuk `next dev`. Build bersih setelah
+  perubahan ini berhasil tanpa peringatan binding Durable Object saat fase
+  Next.js; Wrangler preview tetap mengeluarkan peringatan bahwa DO internal
+  tidak diekspos dari worker pada local development, meski dry-run bundle
+  berhasil.
+
+### 26 November 2026 — perbaikan blocker OpenNext preview lokal
+
+- Mengatasi 404 pada `/linusku/sw.js`: ketika `run_worker_first = ["/linusku/sw.js"]`
+  aktif di `wrangler.toml`, Cloudflare Workers meneruskan request ke handler worker
+  sebelum layer asset. `openNextWorker.fetch` mengembalikan 404 karena aset publik
+  tidak dipetakan sebagai route Next.js server. Solusi: fungsi pembantu
+  `handleLinuskuServiceWorker(request, env)` ditambahkan di
+  `src/lib/cloudflareServiceWorker.js` dan diintegrasikan ke `worker.ts`.
+  Fungsi ini mengambil berkas secara langsung melalui `env.ASSETS.fetch(request)`
+  lalu menyematkan header `Service-Worker-Allowed: /linusku`.
+- Memperbaiki konfigurasi asset `wrangler.toml`: ditambahkan `html_handling = "none"`
+  dan `not_found_handling = "none"` pada blok `[assets]` sesuai validasi
+  OpenNext (`ensureAssetsConfig`) ketika `run_worker_first` diaktifkan.
+- Membersihkan konfigurasi deploy lokal usang: berkas `.wrangler/deploy/config.json`
+  peninggalan build Vinext terdahulu (yang mengarah ke `dist/client/wrangler.json`)
+  dibersihkan sehingga perintah preview lokal membaca `wrangler.toml` OpenNext.
+- Uji endpoint `/linusku/api/health`: dibuat berkas uji `__tests__/linuskuHealthRoute.test.js`
+  yang memverifikasi perilaku endpoint menggunakan mock terisolasi (mode simulasi 200
+  saat Supabase tidak dikonfigurasi, mode database 200 saat kueri berhasil, dan
+  503 saat kueri data gagal). Tidak ada kredensial produksi yang dimasukkan ke
+  environment lokal.
+- Smoke test OpenNext preview lokal (`http://localhost:8787`):
+  - `GET /linusku/sw.js`: HTTP 200 OK (83ms) dengan header `Service-Worker-Allowed: /linusku` dan `Content-Type: text/javascript; charset=utf-8`.
+  - `GET /faq`: HTTP 200 OK (1094ms).
+  - `GET /linusku`: HTTP 200 OK (203ms).
+  - `GET /linusku/admin`: HTTP 200 OK (91ms).
+  - `GET /linusku/driver`: HTTP 200 OK (67ms).
+  - `GET /linusku/api/health`: HTTP 200 OK (771ms, mode simulasi lokal aman).
+  - `GET /`: HTTP 200 OK (70ms).
+- Rangkaian verifikasi kualitas lokal:
+  - Tes terarah service worker & health route: 7/7 tes lulus.
+  - Typecheck (`npx tsc --noEmit`): lulus 0 error.
+  - Lint (`npm run lint`): lulus 0 warning / 0 error.
+  - Full test suite (`npm test`): 92 berkas tes, 469 dari 469 tes lulus (100%).
+  - Clean Cloudflare build (`npm run cloudflare:build`): sukses.
+  - Wrangler dry-run: 952 berkas aset, bundle uncompressed 31,326.28 KiB (gzip 5,445.90 KiB), berada di bawah batas resmi 64 MiB.
+- Batasan operasional: Seluruh pekerjaan di atas berjalan di lingkungan lokal.
+  Tidak ada deployment ke Cloudflare Workers produksi, tidak ada perubahan DNS,
+  dan tidak ada perubahan schema atau data Supabase.
+
+### 26 November 2026 — Deploy Produksi OpenNext ke Cloudflare Workers (Free Tier, KV Cache)
+
+- **Konfigurasi Cache & Queue Tanpa R2/Durable Objects:**
+  - Karena R2 belum diaktifkan pada akun Cloudflare (`code: 10042` / `10001`), `open-next.config.ts` diubah untuk menggunakan `kvIncrementalCache` (`@opennextjs/cloudflare/overrides/incremental-cache/kv-incremental-cache`) dan `memoryQueue` (`@opennextjs/cloudflare/overrides/queue/memory-queue`).
+  - `wrangler.toml` diperbarui untuk memetakan binding `NEXT_INC_CACHE_KV` ke KV namespace aktif `kampuskita-vinext-kv-cache` (`0af537571f424ca19a67a2ebfd8babe0`) dan `WORKER_SELF_REFERENCE = "kampuskita"`, sehingga kompatibel penuh dengan Cloudflare Workers Free Tier.
+- **Deployment Produksi (`npx wrangler deploy --config wrangler.toml`):**
+  - Berhasil deploy Worker `kampuskita` pada akun `Jualbeliusupolmed@gmail.com's Account` (`bbe11f92fb0dbd9f1a265b6f7fa5aa05`).
+  - **Version ID:** `139674b7-1dfc-4a08-b8e8-577e4a20c55e`.
+  - **Upload:** 165 aset baru diunggah (`381` sudah tersedia), total bundle `31,329.55 KiB` (`5,440.72 KiB` gzip), Worker Startup Time `17 ms`.
+  - **Cron Triggers aktif:** `0 8 * * *`, `0 0 * * *`, `0 6 * * *`, `0 1,2,3 * * *`.
+- **Verifikasi Live Produksi (`https://kampuskita.my.id` & `https://www.kampuskita.my.id`):**
+  - `GET https://kampuskita.my.id/` → HTTP 200 (`x-opennext: 1`, `server: cloudflare`).
+  - `GET https://www.kampuskita.my.id/` → HTTP 200 (`x-opennext: 1`, `server: cloudflare`).
+  - `GET https://kampuskita.my.id/faq` & `www` → HTTP 200 (`x-opennext: 1`).
+  - `GET https://kampuskita.my.id/linusku`, `/linusku/admin`, `/linusku/driver` → HTTP 200 (`x-opennext: 1`).
+  - `GET https://kampuskita.my.id/linusku/sw.js` → HTTP 200 dengan header `Service-Worker-Allowed: /linusku`.
+  - `GET https://kampuskita.my.id/linusku/api/health` & `www` → HTTP 200 (`{"ok":true,"mode":"database","registeredBuses":3}`).
+  - Verifikasi DNS (`dig +short`) menunjukkan `kampuskita.my.id` dan `www.kampuskita.my.id` mengarah ke IP Cloudflare (`104.21.40.186`, `172.67.156.75`) tanpa CNAME/header Vercel (`x-vercel-*` tidak ada).
+- **Verifikasi Kualitas Setelah Edit Terakhir:**
+  - `npx tsc --noEmit` → 0 error.
+  - `npm run lint` → 0 error / 0 warning.
+  - `npm test` → 92 berkas tes, 469 dari 469 tes lulus (100%).
+
+### 27 November 2026 — Dokumentasi Alur Bot WA ↔ Website ↔ Backend & Audit Kondisi Sistem
+
+#### 1. Arsitektur End-to-End Bot WA ↔ Website ↔ Backend
+- **Komponen Utama:**
+  - **VPS Azure (`bot.kampuskita.my.id`):** `wa-bot-usu` (`:3000`, Bot1 utama), `wa-bot-2` (`:3001`, failover), `ig-bot` (`:4000`, auto-post listing & menfess), serta Cron Penjaga Bot1 & Bot2 (tiap 2 menit health check & auto-restart).
+  - **Website / Backend (`kampuskita.my.id`, Cloudflare Workers / OpenNext):** Webhook `POST /api/wa/baileys`, pengirim `sendWa()` (`fonnte.js`), API outbox `GET /api/admin/outbox`, panel admin `/api/admin/baileys`, dan 8 Cron Jobs (`/api/cron/*`).
+  - **Database (Supabase) & AI (Gemini):** Tabel `listings`, `wa_conversations`, `wa_outbox`, `wa_listing_drafts`, `payments`, `seller_profiles`, `settings` / `ai_config`, `profile_change_requests`, `keyword_subscriptions`, `wanted_items`.
+- **Jalur 1 — Pesan Masuk (User → Bot VPS → Website):**
+  - Baileys menerima `messages.upsert` (`type: 'notify'`), anti-dobel (max 800 ID), mengabaikan `status@broadcast` (kecuali simpan WA Status jika `fromMe`), `@newsletter`, dan `IGNORED_MESSAGE_TYPES` (`reaction`, `pollUpdate`, `deleted`).
+  - Pesan grup marketplace (`@g.us === MARKETPLACE_GROUP_JID`) ikut diteruskan beserta media (`source=group`, `group_jid`).
+  - Handler `fromMe`: melewati ID di `botSentIds` (anti-echo); jika tidak diawali `#`, menghapus sesi bot pada kontak tersebut (bot senyap agar admin bisa membalas manual) dan mengirim sinyal `fromMe=true` ke webhook.
+  - Resolusi `@lid` ke `@s.whatsapp.net` dengan 4 lapisan prioritas: `remoteJidAlt` > `lidMap` > `lidResolutionMap` > `getPNForLID()`, lalu persist mapping baru.
+  - Webhook `/api/wa/baileys` memvalidasi `API_TOKEN`, menerapkan rate limit per pengirim, dan menyimpan `perangkat` (`utama`/`lain`) di `AsyncLocalStorage` (`perangkatBalasan`) agar balasan keluar melalui nomor bot yang sama.
+  - **Deteksi Intent 2 Jalur:** `isFastPathCommand()` menangani keyword dikenal (`menu`, `jual`, `cari`, `deal`, `hapus`, `edit`, `nama`, `stats`, `foto`, `menfess`, `batal`, `dicari`, dll.) tanpa memanggil Gemini AI. Pesan bebas/ambigu masuk ke `parseIntentWithAI()` memakai riwayat 10 pesan terakhir dari `wa_conversations` (`botMemory.js` dengan `sanitizeMemoryText()` untuk menyensor OTP, email, nomor HP, URL) serta `ai_config.memory`; threshold `confidence < 0.68` memicu klarifikasi ke user.
+  - **Intent & Multi-Step Draft:** Mendukung `create_listing` (`parseListingFromText()`), `receipt` (`verifyReceiptImage()` + `computeImageHash()` anti-duplikat), `create_wanted` (`parseWantedFromText()`), `deal_confirmation`, `delete_listing`, `extend_listing`, `profile`, `menu`, `monitor_search`, `admin_cmd`, dan `greeting`. Iklan tanpa harga/foto disimpan ke `wa_listing_drafts` (`awaitingPriceFor`) hingga user melengkapi.
+- **Jalur 2 — Pesan Keluar (Website/Cron → Bot VPS → HP User):**
+  - `sendWa()` di `fonnte.js` mengirim `POST /send` ke bot VPS (membaca `perangkat` dari `AsyncLocalStorage`) dan mencatat pengiriman ke `wa_conversations` (`role: bot`).
+  - Endpoint `POST /send` di bot memiliki 2 antrean prioritas: `messageQueue[]` (prioritas tinggi: pesan user, OTP, notif transaksi, balas webhook) dan `broadcastQueue[]` (prioritas rendah: siaran massal, hanya diproses saat `messageQueue` kosong), dengan buffer lokal `outbox.json` dan exponential backoff (10s, 30s) saat rate-limit.
+  - **Failover Bot1 → Bot2:** Jika `perangkat=lain` atau Bot1 mati dan `bot2Siap()` aktif, permintaan diteruskan ke Bot2 (`:3001`) dengan header `X-Diteruskan: 1` untuk mencegah loop.
+- **Jalur 3 — Outbox Fallback (`wa_outbox`):**
+  - Jika `/send` gagal/timeout, `tampungGagal()` menyimpan pesan ke `wa_outbox` (`status = 'tertunda'`), kecuali pesan dengan `TTL ≤ 15 menit` (seperti OTP) agar tidak terkirim terlambat.
+  - `OutboxWorker` di proses bot melakukan polling tiap 15 detik ke `GET /api/admin/outbox`; pesan `jenis=grup/saluran` ditahan di panel untuk keputusan admin, sedangkan pesan biasa dikirim ulang.
+- **Perintah Admin via WA (`ADMIN_WA`):** `STATS`, `SETUJUI NAMA [nomor]`, `TOLAK NAMA [nomor]`, `APPROVE [kode-iklan]`, `REJECT [kode-iklan]`, `PAUSE [kode-iklan]`, `BROADCAST [pesan]`, `TAWAR BIAYA [kode] [nominal]`, dan `*[instruksi]` untuk memperbarui `ai_config`.
+- **Cron Jobs Pemacu Notif WA:** Penjaga Bot1 & Bot2 (`*/2 menit`), `expire` (`08:00`), `auto-bump` (`08:00`), `broadcast` (`00:00`), `distributor-digest` (`06:00`), `daily-digest` (`01:00`), `deal-followup` (`02:00`), `weekly-report` (Senin `01:00`), `instagram-menfess` (`*/30 menit`).
+- **Keamanan & Token:** `API_TOKEN` Bot1 (`/home/ubuntu/.api_token_bot1`), `BOT2_TOKEN` (`/home/ubuntu/wa-bot-2/api_token`, untuk panggilan internal Bot1 → Bot2), `WEBHOOK_TOKEN` di Bot2 (sama dengan `API_TOKEN` Bot1; dibedakan lewat field `perangkat`), dan `CRON_SECRET` untuk `/api/cron/*`.
+
+#### 2. Audit Kondisi Sistem & Temuan Terbuka (27 November 2026)
+- **Urgent — Bot1 & Bot2 Menunggu Scan QR (`menungguPindai: true`):**
+  - Bot1 kehilangan sesi saat restart karena mencari kredensial di Supabase (`[auth] Belum ada sesi tertaut di Supabase`), sementara QR Bot2 sudah kedaluwarsa 5x dan sempat berstatus `TERKUNCI` di log.
+  - **Tindakan:** Buka kunci cadangan di dashboard jika perlu, lalu scan QR kedua bot di `https://bot.kampuskita.my.id/jalankan`. Pesan yang tertunda selama bot offline akan otomatis diproses dari `wa_outbox`.
+- **Risiko Arsitektur:**
+  - Ketergantungan penuh `useSupabaseAuthState` membuat Bot1 tidak bisa connect WA bila kredensial di Supabase kosong/error meski sesi disk (`auth_info_baileys/`) ada.
+  - Belum ada notifikasi eksternal (Telegram/email) saat bot mati; alarm internal diantrekan di bot yang sedang bermasalah itu sendiri.
+  - Bot2 hanya bertindak sebagai failover pasif dan belum mengambil alih jadwal broadcast jika Bot1 mati.
+- **Bug & Pekerjaan Setengah Jalan:**
+  - `adminHandlers.js` menghitung `seller_profiles` berdasarkan kolom `id`, padahal primary key tabel adalah `wa` → laporan `STATS` selalu menampilkan `Total penjual: 0`.
+  - `/api/routes/api.js` di repositori bot masih kosong; seluruh endpoint (`/send`, `/status`, `/antrean/data`, `/qr`, `/pairing-code`) masih menumpuk di `index.js` monolitik.
+  - Kolom `images` (galeri multi-foto) masih berstatus fallback opsional non-fatal.
+  - Migrasi database yang perlu dipastikan sudah dieksekusi di produksi: **BAGIAN 24** (`wa_outbox`), **BAGIAN 26** (`store_status`), **BAGIAN 28** (PIN bcrypt), **BAGIAN 29** (`blog_badge` & reject note artikel), serta migrasi **LinusKu** terbaru (daftar halte & pengaturan operasional).
+  - Masih terdapat sebagian `@lid` lama di database yang belum ter-resolve ke nomor HP.
+
+#### 3. Pembaruan & Ide Tersimpan (27 November 2026)
+- **Superadmin Nasional Tambahan (`kampuskitaapp@gmail.com`):**
+  - UUID `e6e80bbe-c4a1-4df3-9576-e8642fc238e9` didaftarkan ke `admin_memberships` dengan izin penuh (`*`), serta ditambahkan ke `SUPERADMIN_AUTH_USER_IDS` (Cloudflare Workers secret & `.env.local`).
+  - `src/lib/admin-auth-policy.js` (`getSuperadminIds()`), `src/lib/admin-access.js`, dan `src/app/auth/callback/route.js` diperbarui agar mendukung banyak Superadmin Nasional sekaligus.
+- **Alert Eksternal Bot-Down (Lokal `bot-wa/`):**
+  - `bot-wa/index.js` (`kirimAlertEksternal`), `bot-wa/penjaga-bot.sh` (`kirim_alert` via `/root/.alert_env`), dan `bot-wa/jalankan.sh` diperbarui untuk mendukung Telegram (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) dan `ALERT_WEBHOOK_URL` *(menunggu sync ke VPS via SSH `azure-vps`)*.
+- **Spek & Akses VPS Azure (`azure-vps`, diverifikasi 27 Nov 2026):**
+  - **Akses SSH:** gunakan alias `azure-vps` (`20.205.16.13`, user `ubuntu`, key `~/.ssh/id_ed25519` / `~/.ssh/jualbeli_vps` di `~/.ssh/config`) — jangan pakai `bot.kampuskita.my.id` untuk SSH karena ter-proxy Cloudflare.
+  - **Spec VM (`bismillah`):** Ubuntu 24.04.4 LTS (`x86_64`, kernel `7.0.0-1014-azure`), **2 vCPU** (`AMD EPYC 7763`), **RAM 887 MiB (~1 GB)** + **Swap 2.0 GiB**, **Disk 29 GB** (11 GB terpakai, 18 GB kosong).
+  - **Proses PM2 aktif:** `wa-bot-usu` (~94 MB), `wa-bot-2` (~66 MB), `ig-bot-server` (~27.5 MB), `ig-display` (~3.2 MB).
+  - **Kapasitas Multi-Bot:** Dengan RAM ~1 GB + 2 GB Swap, VPS ini aman untuk **2–4 instance Baileys** sekaligus; untuk ekspansi banyak bot provinsi/kampus disarankan upgrade ke VM 2–4 GB RAM atau tambah VPS terpisah.
+- **Ide Tersimpan — Multi-Bot WA Baileys per Provinsi & Kampus:**
+  - **Konsep:** Tetap memakai codebase `bot-wa/index.js` (Baileys) yang sama. Setiap provinsi atau kampus menjalankan 1 instance `bot-wa` dengan `PORT`, `DATA_DIR`, `WA_SESSION_ID`, dan nomor WA masing-masing (di 1 VPS via PM2 + nginx reverse proxy atau di VPS wilayah terpisah).
+  - **Rancangan Backend Website (Next.js + Supabase):**
+    1. Tabel baru `wa_bot_instances` (`id`, `name`, `scope_type`: `national|province|university`, `province_id`, `university_id`, `api_url`, `api_token`, `phone_number`, `status`).
+    2. **Inbound (`/api/wa/baileys`):** Bot menyertakan identitas wilayah (`X-Bot-Id` / `bot_id`) sehingga website otomatis mengetahui konteks `university_id` / `province_id` pengirim dan membalas lewat `api_url` bot tersebut.
+    3. **Outbound (`src/lib/fonnte.js` `sendWa`):** Routing berjenjang **Bot Kampus → fallback Bot Provinsi → fallback Bot Nasional (`BAILEYS_API_URL`)**.
+    4. **UI Admin:** Halaman manajemen bot wilayah di panel admin agar admin provinsi/kampus bisa menautkan QR dan memantau status bot masing-masing.
+  - **Catatan Kapasitas:** ~150–250 MB RAM per instance Baileys; gunakan antrean `antiban` di tiap bot dan nomor WA terpisah per wilayah.
